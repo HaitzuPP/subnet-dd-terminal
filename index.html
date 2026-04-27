@@ -473,7 +473,7 @@ input[type=number]::placeholder { color: #bbb; }
 
   /* --- Hist nav bar --- */
   .hist-navbar { padding: 6px 10px; gap: 6px; }
-  .hist-pill { font-size: 9px; padding: 3px 8px; }
+  .hist-pill { font-size: 9px; padding: 3px 8px; min-height: 36px; display: inline-flex; align-items: center; }
 
   /* --- Panels --- */
   .panel { padding: 14px 14px 44px; max-width: 100%; }
@@ -504,7 +504,7 @@ input[type=number]::placeholder { color: #bbb; }
   .sec-title { font-size: 9px; flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
 
   /* --- Period toggles --- */
-  .tgl { padding: 3px 8px; font-size: 9px; }
+  .tgl { padding: 3px 8px; font-size: 9px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
   #period-toggles { flex-wrap: wrap; gap: 3px; }
 
   /* --- Charts --- */
@@ -592,7 +592,7 @@ input[type=number]::placeholder { color: #bbb; }
 <!-- HISTORY NAV BAR -->
 <div class="hist-navbar">
   <div class="hist-pills-wrap" id="hist-pills"></div>
-  <button class="btn btn-ghost" id="clear-hist-btn" style="font-size:10px;padding:4px 10px;min-height:unset;flex-shrink:0;">Clear</button>
+  <button class="btn btn-ghost" id="clear-hist-btn" style="font-size:10px;padding:4px 10px;flex-shrink:0;">Clear</button>
 </div>
 
 <!-- =========================================================
@@ -776,7 +776,7 @@ function readCache(key) {
 
 // Migrate: clear old v3 keys so they don't eat quota
 (function migrateLegacyCache() {
-  Object.keys(localStorage).filter(k => k.startsWith('sn_v3_')).forEach(k => localStorage.removeItem(k));
+  Object.keys(localStorage).filter(k => /^sn_v[1-4]_/.test(k)).forEach(k => localStorage.removeItem(k));
 })();
 
 // ============================================================
@@ -1061,7 +1061,7 @@ function renderDashboard(data, fromCache) {
     <div class="meta-divider"></div>
     <div class="meta-primary">
       <div class="meta-primary-val">
-        <span class="rank-badge ${rankClass(pool.rank)}">#${pool.rank}</span>
+        <span class="rank-badge ${rankClass(pool.rank)}">#${pool.rank ?? '—'}</span>
       </div>
       <div class="meta-primary-lbl">Emission Rank</div>
     </div>
@@ -1087,8 +1087,8 @@ function renderDashboard(data, fromCache) {
       <div class="meta-lbl">30d</div>
     </div>
     <div class="meta-actions">
-      <span class="meta-ts" style="color:\${freshnessColor};font-weight:700;" title="Fetched \${fmtDateTime(data.ts)}">\${freshnessStr}</span>
-      <span class="meta-ts" style="color:#bbb;margin-left:4px;">\${fmtDateTime(data.ts)}</span>
+      <span class="meta-ts" style="color:${freshnessColor};font-weight:700;" title="Fetched ${fmtDateTime(data.ts)}">${freshnessStr}</span>
+      <span class="meta-ts" style="color:#bbb;margin-left:4px;">${fmtDateTime(data.ts)}</span>
     </div>
   `;
 
@@ -1168,9 +1168,9 @@ function renderAnalystSignal(data) {
   const warnings = [];
 
   // Buy/sell pressure
-  const bsRaw = parseFloat(pool.buy_sell_ratio_24h || pool.buys_sell_ratio || 0);
-  const buys = parseInt(pool.buys_24h || pool.buys || 0);
-  const sells = parseInt(pool.sells_24h || pool.sells || 0);
+  const bsRaw = parseFloat(pool.buy_sell_ratio || pool.buy_sell_ratio_24h || pool.buys_sell_ratio || 0);
+  const buys = parseInt(pool.buys_24_hr || pool.buys_24h || pool.buys || 0);
+  const sells = parseInt(pool.sells_24_hr || pool.sells_24h || pool.sells || 0);
   if (buys + sells > 0) {
     const ratio = buys / (sells || 1);
     if (ratio < 0.7) warnings.push('heavy sell pressure (' + buys + ' buys vs ' + sells + ' sells)');
@@ -1671,7 +1671,7 @@ function drawIndexedChart(data) {
 function drawPriceChart(data, period) {
   const s = chartSeries(data, period);
   if (!s.prices || !s.prices.filter(Boolean).length) {
-    clearCanvas('main-chart', 'No data for this period');
+    canvasMsg('main-chart', 'No data for this period');
     return;
   }
   // Reuse drawDualChart with no rank overlay
@@ -1742,6 +1742,7 @@ function drawDualChart(id, labels, prices, ranks, hasRank) {
   if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
 
   const validPrices = prices.filter(v => v !== null);
+  if (!validPrices.length) { canvasMsg(id, 'No price data'); return; }
   const priceMin = Math.min(...validPrices) * 0.99;
   const priceMax = Math.max(...validPrices) * 1.01;
   const validRanks = (ranks || []).filter(r => r !== null);
@@ -2137,6 +2138,9 @@ function renderHistoryPills() {
 
 function loadFromHistory(netuid) {
   document.getElementById('netuid-input').value = netuid;
+  PERIOD = '7d'; PRICE_PERIOD = '7d';
+  document.querySelectorAll('#period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
+  document.querySelectorAll('#price-period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
   loadSubnet(netuid, true);
 }
 
@@ -2168,11 +2172,9 @@ function showDB(state) {
 }
 
 function showDBError(msg) {
-  showDB('');
-  document.getElementById('db-empty').classList.remove('hidden');
   const e = document.getElementById('db-error');
   e.innerHTML = `<div class="err-box"><strong>Error:</strong> ${msg}</div>`;
-  e.classList.remove('hidden');
+  showDB('error');
 }
 
 function setActiveTab(name) {
@@ -2234,6 +2236,7 @@ function pct(v) {
 
 // fmtVal: format a TAO amount in either TAO or USD depending on USD_MODE
 function fmtVal(taoAmt, taoPriceUSD) {
+  if (taoAmt === null || taoAmt === undefined) return 'N/A';
   if (USD_MODE && taoPriceUSD) {
     const usd = taoAmt * taoPriceUSD;
     if (usd >= 1e6)  return '$' + (usd / 1e6).toFixed(2) + 'M';
@@ -2477,7 +2480,7 @@ function renderMinerSection(data) {
     const rewardTAO=parseFloat(m.daily_mining_alpha_as_tao||0)/1e9;
     const alphaStake=parseFloat(m.alpha_stake||m.total_alpha_stake||0)/1e9;
     const hotkeySS58=(m.hotkey&&m.hotkey.ss58)?m.hotkey.ss58:(m.hotkey||'');
-    const daysReg=m.registered_at_block?Math.max(1,Math.floor((Date.now()/1000-m.registered_at_block*12)/86400)):30;
+    const daysReg=(()=>{ if(m.registered_at){return Math.max(1,Math.floor((Date.now()-new Date(m.registered_at))/86400000));} if(m.registered_at_block&&pool&&pool.block_number){return Math.max(1,Math.floor((pool.block_number-m.registered_at_block)*12/86400));} return 30; })();
     const expectedStake=rewardTAO*daysReg;
     let deltaStr='—',deltaColor='#bbb';
     if (alphaStake>0&&expectedStake>0.001) { const d=(alphaStake-expectedStake)/expectedStake*100; deltaStr=(d>=0?'+':'')+d.toFixed(1)+'%'; deltaColor=d>=-20?'#1a7a3a':d>=-60?'#e67e22':'#c0392b'; }
