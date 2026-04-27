@@ -2216,6 +2216,26 @@ function drawOwnerStackedChart(data) {
 function drawOwnerFlowChart() { /* superseded by drawOwnerStackedChart */ }
 
 
+function saveHistory(data) {
+  let h = readHistory().filter(x => x.netuid !== data.netuid);
+  h.unshift({
+    netuid:   data.netuid,
+    name:     data.pool.name || '',
+    symbol:   data.pool.symbol || '',
+    price:    data.pool.price,
+    rank:     data.pool.rank,
+    p1d:      data.pool.price_change_1_day,
+    rootProp: data.pool.root_prop,
+    ts:       data.ts,
+  });
+  localStorage.setItem(HK, JSON.stringify(h.slice(0, 30)));
+  renderHistoryPills();
+}
+
+function readHistory() {
+  try { return JSON.parse(localStorage.getItem(HK) || '[]'); } catch(e) { return []; }
+}
+
 function renderHistoryPills() {
   const h = readHistory();
   const el = document.getElementById('hist-pills');
