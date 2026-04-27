@@ -2830,11 +2830,10 @@ function renderMinerSection(data) {
   const activeKeys       = meta.active_keys       != null ? meta.active_keys       : null;
   const maxNeurons       = meta.max_neurons       != null ? meta.max_neurons       : null;
 
-  // ── Rewarded miner chart from subnet history ──────────────────
+  // ── History chart buckets ─────────────────────────────────────
   const histAsc = [...(subnetHistory || [])].reverse();
   const hasHistory = histAsc.length >= 2;
 
-  // Group by month first; fall back to weekly if <2 months
   const monthMap = {};
   for (const h of histAsc) {
     if (h.timestamp && h.active_miners != null) {
@@ -2849,77 +2848,89 @@ function renderMinerSection(data) {
     bucketLabels = bucketKeys.map(k => { const [y, m] = k.split('-'); return ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)] + " '" + y.slice(2); });
     bucketCounts = bucketKeys.map(k => monthMap[k]);
   } else {
-    // Weekly fallback
     bucketMode = 'weekly';
     const weekMap = {};
     for (const h of histAsc) {
       if (h.timestamp && h.active_miners != null) {
         const d = new Date(h.timestamp);
-        const wday = d.getDay(); const diff = (d.getDate() - wday + (wday === 0 ? -6 : 1));
+        const wday = d.getDay();
+        const diff = (d.getDate() - wday + (wday === 0 ? -6 : 1));
         const mon = new Date(d); mon.setDate(diff);
         const key = mon.toISOString().slice(0, 10);
         weekMap[key] = h.active_miners;
       }
     }
     bucketKeys = Object.keys(weekMap).sort();
-    bucketLabels = bucketKeys.map(k => k.slice(5)); // MM-DD
+    bucketLabels = bucketKeys.map(k => k.slice(5));
     bucketCounts = bucketKeys.map(k => weekMap[k]);
   }
-  // Alias for backward compat
   const monthLabels = bucketLabels;
   const monthCounts = bucketCounts;
 
-  // Trend label
   let trendHTML = '';
   if (monthCounts.length >= 2) {
     const delta = monthCounts[monthCounts.length - 1] - monthCounts[0];
-    const cls   = delta > 0 ? 'green' : delta < 0 ? 'red' : '';
+    const col   = delta > 0 ? '#1a7a3a' : delta < 0 ? '#c0392b' : '#888';
     const sign  = delta > 0 ? '+' : '';
-    trendHTML = '<span class="' + cls + '" style="font-size:10px;font-weight:700;">' + sign + delta + ' since ' + monthLabels[0] + '</span>';
+    trendHTML = '<span style="font-size:10px;font-weight:700;color:' + col + ';">' + sign + delta + ' since ' + monthLabels[0] + '</span>';
   }
 
-  // ── Miner selling behaviour from metagraph ────────────────────
+  // ── Miner rows with Alpha Stake Δ ─────────────────────────────
   const miners = (metagraph || [])
     .filter(n => n.hotkey && (parseFloat(n.daily_mining_alpha_as_tao || 0) > 0 || parseFloat(n.incentive || 0) > 0))
     .sort((a, b) => parseFloat(b.daily_mining_alpha_as_tao || 0) - parseFloat(a.daily_mining_alpha_as_tao || 0))
     .slice(0, 10);
 
+  const totalMinerRewardTAO = miners.reduce((s, m) => s + parseFloat(m.daily_mining_alpha_as_tao || 0) / 1e9, 0);
+  const noMiners = miners.length === 0;
+
   const minerRows = miners.map(m => {
-    const rewardTAO = parseFloat(m.daily_mining_alpha_as_tao || 0) / 1e9;
+    const rewardTAO  = parseFloat(m.daily_mining_alpha_as_tao || 0) / 1e9;
     const alphaStake = parseFloat(m.alpha_stake || m.total_alpha_stake || 0) / 1e9;
     const hotkeySS58 = (m.hotkey && m.hotkey.ss58) ? m.hotkey.ss58 : (m.hotkey || '');
-    const daysRegistered = m.registered_at_block
-      ? Math.max(1, Math.floor((Date.now()/1000 - m.registered_at_block * 12) / 86400))
+    const daysReg    = m.registered_at_block
+      ? Math.max(1, Math.floor((Date.now() / 1000 - m.registered_at_block * 12) / 86400))
       : 30;
-    const expectedStake = rewardTAO * daysRegistered;
-    let signal, sigClass;
-    if (alphaStake <= 0) { signal = 'no stake'; sigClass = 'grey'; }
-    else if (expectedStake > 0 && alphaStake < expectedStake * 0.2) { signal = 'selling'; sigClass = 'red'; }
-    else if (expectedStake > 0 && alphaStake >= expectedStake * 0.7) { signal = 'holding'; sigClass = 'green'; }
-    else { signal = 'partial'; sigClass = 'amber'; }
+    const expectedStake = rewardTAO * daysReg;
 
-    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
-      + '<span style="min-width:32px;font-size:10px;color:#bbb;">UID ' + m.uid + '</span>'
-      + '<span class="key-pill" style="flex:1;">' + truncKey(hotkeySS58) + '</span>'
-      + '<span style="min-width:76px;text-align:right;font-weight:700;color:#1a7a3a;">' + fmtVal(rewardTAO, taoPriceUSD) + '/d</span>'
-      + '<span style="min-width:64px;text-align:right;color:#888;" title="alpha tokens staked">' + fmtAlpha(alphaStake) + ' α</span>'
-      + '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;'
-        + (sigClass === 'green' ? 'background:#e8f5e9;color:#1a7a3a;'
-          : sigClass === 'red' ? 'background:#fdecea;color:#c0392b;'
-          : sigClass === 'amber' ? 'background:#fff3cd;color:#856404;'
-          : 'background:#f5f5f5;color:#888;') + '">' + signal + '</span>'
+    // Alpha Stake Δ vs expected accumulation
+    let deltaStr = '—', deltaColor = '#bbb';
+    if (alphaStake > 0 && expectedStake > 0.001) {
+      const delta = (alphaStake - expectedStake) / expectedStake * 100;
+      deltaStr  = (delta >= 0 ? '+' : '') + delta.toFixed(1) + '%';
+      deltaColor = delta >= -20 ? '#1a7a3a' : delta >= -60 ? '#e67e22' : '#c0392b';
+    }
+
+    // Signal
+    let signal, sigCls;
+    if (alphaStake <= 0)                                          { signal = 'no stake'; sigCls = 'grey'; }
+    else if (expectedStake > 0 && alphaStake < expectedStake * 0.2) { signal = 'selling';  sigCls = 'red'; }
+    else if (expectedStake > 0 && alphaStake >= expectedStake * 0.7) { signal = 'holding';  sigCls = 'green'; }
+    else                                                           { signal = 'partial';  sigCls = 'amber'; }
+
+    const pillBg = sigCls === 'green' ? 'background:#e8f5e9;color:#1a7a3a;'
+      : sigCls === 'red'   ? 'background:#fdecea;color:#c0392b;'
+      : sigCls === 'amber' ? 'background:#fff3cd;color:#856404;'
+      : 'background:#f5f5f5;color:#888;';
+
+    return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
+      + '<span style="min-width:36px;font-size:10px;color:#bbb;flex-shrink:0;">UID ' + m.uid + '</span>'
+      + '<span class="key-pill" style="flex:1;overflow:hidden;min-width:0;">' + truncKey(hotkeySS58) + '</span>'
+      + '<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">' + fmtVal(rewardTAO, taoPriceUSD) + '/d</span>'
+      + '<span style="min-width:60px;text-align:right;font-weight:700;color:' + deltaColor + ';flex-shrink:0;" title="vs expected accumulation since registration">' + deltaStr + '</span>'
+      + '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;' + pillBg + '">' + signal + '</span>'
       + '</div>';
   }).join('');
 
-  const totalMinerRewardTAO = miners.reduce((s, m) => s + parseFloat(m.daily_mining_alpha_as_tao || 0) / 1e9, 0);
-  const minerRewardStr = totalMinerRewardTAO > 0 ? 'top 10 earn ' + fmtVal(totalMinerRewardTAO, taoPriceUSD) + '/d combined' : '';
-  const noMiners = miners.length === 0;
-
   el.innerHTML = `
     <div class="sec-hdr" style="margin-bottom:12px;">
-      <span class="sec-title">Miner Activity</span>
-      ${trendHTML}
+      <span class="sec-title">Miner Rewards & Selling Behaviour</span>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        ${activeMiners !== null ? `<span style="font-size:9px;font-weight:700;padding:2px 10px;border-radius:10px;background:#e8f5e9;color:#1a7a3a;">${activeMiners} active this epoch</span>` : ''}
+        ${trendHTML}
+      </div>
     </div>
+
     <div class="stats-grid" style="margin-bottom:14px;">
       <div class="stat-card">
         <div class="stat-val">${activeMiners !== null ? activeMiners : '—'}</div>
@@ -2938,37 +2949,35 @@ function renderMinerSection(data) {
       </div>
       ${totalMinerRewardTAO > 0 ? `<div class="stat-card">
         <div class="stat-val">${fmtVal(totalMinerRewardTAO, taoPriceUSD)}</div>
-        <div class="stat-lbl">Total Miner Rewards</div>
-        <div class="stat-sub">per day (top 10)</div>
+        <div class="stat-lbl">Top 10 Daily</div>
+        <div class="stat-sub">combined mining rewards</div>
       </div>` : ''}
     </div>
+
     ${hasHistory && monthLabels.length >= 2 ? `
     <div class="chart-box" style="margin-bottom:14px;">
       <div class="chart-title">${bucketMode === 'monthly' ? 'REWARDED MINERS — MONTHLY' : 'REWARDED MINERS — WEEKLY'}</div>
       <div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div>
     </div>` : ''}
+
     ${!noMiners ? `
-    <div class="sec-hdr" style="margin-bottom:8px;">
-      <span class="sec-title">Miner Selling Behaviour</span>
-      <span style="font-size:9px;color:#888;">${minerRewardStr}</span>
-    </div>
-    <div style="margin-bottom:6px;">
-      <div style="display:flex;gap:8px;padding:3px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#bbb;border-bottom:0.5px solid #eee;">
-        <span style="min-width:32px;">UID</span>
+    <div style="margin-bottom:4px;">
+      <div style="display:flex;gap:6px;padding:4px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;border-bottom:1.5px solid #eee;">
+        <span style="min-width:36px;flex-shrink:0;">UID</span>
         <span style="flex:1;">Hotkey</span>
-        <span style="min-width:76px;text-align:right;">Daily reward</span>
-        <span style="min-width:52px;text-align:right;">Stake</span>
-        <span style="min-width:52px;text-align:right;">Signal</span>
+        <span style="min-width:74px;text-align:right;flex-shrink:0;">Daily Reward</span>
+        <span style="min-width:60px;text-align:right;flex-shrink:0;" title="Alpha stake vs expected accumulation since registration">Stake Δ</span>
+        <span style="min-width:52px;text-align:right;flex-shrink:0;">Signal</span>
       </div>
       ${minerRows}
     </div>
-    <div style="font-size:10px;color:#888;margin-bottom:20px;">
-      Hold/sell signal: compares actual alpha stake vs expected accumulation (daily reward × days registered). Low stake relative to reward history = likely distributing to market.
-    </div>` : ''}
+    <div style="font-size:10px;color:#888;padding:8px 10px;background:#f9f9f9;border-radius:4px;margin-top:8px;line-height:1.5;">
+      <strong>Alpha Stake Δ</strong> = deviation of actual alpha stake from expected if miner held all rewards since registration. Negative = distributing to market; positive = accumulating.
+    </div>` : '<div style="font-size:11px;color:#bbb;padding:12px 0;">No active miners found in metagraph.</div>'}
   `;
 
+  // Draw trend chart
   if (hasHistory && monthLabels.length >= 2) {
-    const maxCount = Math.max(...monthCounts, 1);
     const colors = monthCounts.map((v, i) => {
       if (i === 0) return 'rgba(26,122,58,0.7)';
       const prev = monthCounts[i - 1];
@@ -2996,9 +3005,6 @@ function renderMinerSection(data) {
   }
 }
 
-// ============================================================
-// VALIDATOR SECTION
-// ============================================================
 function renderValidatorSection(data) {
   const el = document.getElementById('validator-section');
   if (!el) return;
@@ -3006,7 +3012,7 @@ function renderValidatorSection(data) {
   const { metagraph, validatorHistories, pool, taoPriceUSD, netuid, meta } = data;
   if (!metagraph || !metagraph.length) { el.innerHTML = ''; return; }
 
-  // Identify validators — accept validator_permit OR validator_trust > 0.05
+  // Identify validators
   const validators = metagraph
     .filter(n => n.hotkey && n.coldkey && (n.validator_permit === true || parseFloat(n.validator_trust || 0) > 0.05))
     .sort((a, b) => parseFloat(b.emission || 0) - parseFloat(a.emission || 0));
@@ -3018,129 +3024,163 @@ function renderValidatorSection(data) {
     return;
   }
 
-  // ── Daily distribution totals ──────────────────────────────────
-  const totalDailyTAO = validators.reduce((s, v) => s + parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9, 0);
-
   // ── Hold/sell signal per validator ────────────────────────────
   function valSignal(v) {
     const hist = (validatorHistories || {})[v.uid] || [];
     if (!hist.length) return { signal: 'no data', cls: 'grey', sparkData: [] };
     const sorted = [...hist].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    const nPts = sorted.length;
-    const sparkData = sorted.slice(-6).map(h => parseFloat(h.balance_as_tao || h.balance || 0) / 1e9);
-    const ptLabel = nPts + (nPts === 1 ? ' snapshot' : ' snapshots');
-    const dailyRewardTAO = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
+    const sparkData = sorted.slice(-8).map(h => parseFloat(h.balance_as_tao || h.balance || 0) / 1e9);
     if (sorted.length >= 2) {
-      const earliest = parseFloat(sorted[0].balance_as_tao || sorted[0].balance || 0) / 1e9;
-      const latest   = parseFloat(sorted[sorted.length - 1].balance_as_tao || sorted[sorted.length - 1].balance || 0) / 1e9;
-      const days = Math.max(1, (new Date(sorted[sorted.length-1].timestamp) - new Date(sorted[0].timestamp)) / 86400000);
-      const expected = earliest + dailyRewardTAO * days;
-      const ratio = expected > 0.01 ? latest / expected : 1;
-      if (ratio >= 0.85)      return { signal: 'holding',    cls: 'green',  sparkData };
-      else if (ratio >= 0.5)  return { signal: 'partial',    cls: 'amber',  sparkData };
-      else                    return { signal: 'distributing', cls: 'red',   sparkData };
+      const earliest     = parseFloat(sorted[0].balance_as_tao || sorted[0].balance || 0) / 1e9;
+      const latest       = parseFloat(sorted[sorted.length - 1].balance_as_tao || sorted[sorted.length - 1].balance || 0) / 1e9;
+      const days         = Math.max(1, (new Date(sorted[sorted.length - 1].timestamp) - new Date(sorted[0].timestamp)) / 86400000);
+      const dailyRew     = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
+      const expected     = earliest + dailyRew * days;
+      const ratio        = expected > 0.01 ? latest / expected : 1;
+      if (ratio >= 0.85)     return { signal: 'holding',      cls: 'green',  sparkData };
+      else if (ratio >= 0.5) return { signal: 'partial',      cls: 'amber',  sparkData };
+      else                   return { signal: 'distributing', cls: 'red',    sparkData };
     }
     return { signal: 'insufficient', cls: 'grey', sparkData };
   }
 
-  // ── Aggregate signal ──────────────────────────────────────────
-  const signals = validators.map(v => valSignal(v));
-  const holdCount = signals.filter(s => s.signal === 'holding').length;
-  const sellCount = signals.filter(s => s.signal === 'distributing').length;
-  const aggSignal = holdCount > sellCount
+  const signals      = validators.map(v => valSignal(v));
+  const holdCount    = signals.filter(s => s.signal === 'holding').length;
+  const sellCount    = signals.filter(s => s.signal === 'distributing').length;
+  const totalDailyTAO = validators.reduce((s, v) => s + parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9, 0);
+
+  // Aggregate badge
+  const aggLabel = holdCount >= sellCount
     ? holdCount + ' of ' + validators.length + ' holding'
     : sellCount + ' of ' + validators.length + ' distributing';
-  const aggCls = holdCount > sellCount ? 'holding' : sellCount > holdCount ? 'selling' : 'mixed';
+  const aggBg = holdCount > sellCount ? 'background:#e8f5e9;color:#1a7a3a;'
+    : sellCount > holdCount ? 'background:#fdecea;color:#c0392b;'
+    : 'background:#fff3cd;color:#856404;';
 
-  // ── Flow bar (horizontal share) ───────────────────────────────
-  const flowSegments = validators.map((v, i) => {
+  // ── Flow bar ──────────────────────────────────────────────────
+  const flowSegs = validators.map((v, i) => {
     const reward = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
-    const pct = totalDailyTAO > 0 ? (reward / totalDailyTAO * 100) : 0;
-    const sig = signals[i];
-    const bgColor = sig.cls === 'green' ? '#1a7a3a' : sig.cls === 'red' ? '#c0392b' : sig.cls === 'amber' ? '#e67e22' : '#aaa';
-    const label = pct >= 10 ? ('UID ' + v.uid + ' · ' + pct.toFixed(0) + '%') : (pct >= 5 ? ('' + v.uid) : '');
-    return { pct, bgColor, label, sig: sig.signal, uid: v.uid, reward };
+    const pct    = totalDailyTAO > 0 ? reward / totalDailyTAO * 100 : 0;
+    const sig    = signals[i];
+    const bg     = sig.cls === 'green' ? '#1a7a3a' : sig.cls === 'red' ? '#c0392b' : sig.cls === 'amber' ? '#e67e22' : '#aaa';
+    return { pct, bg, sig, uid: v.uid, reward };
   });
 
-  const flowBarsHTML = flowSegments.map((seg, i) => {
-    const w = Math.max(seg.pct, 0.5).toFixed(1);
-    return '<div style="display:inline-block;height:32px;width:' + w + '%;background:' + seg.bgColor + ';opacity:0.85;'
-      + (i === 0 ? 'border-radius:2px 0 0 2px;' : i === flowSegments.length - 1 ? 'border-radius:0 2px 2px 0;' : '')
-      + 'vertical-align:top;overflow:hidden;font-family:Arial;font-size:9px;color:white;font-weight:700;'
-      + 'display:inline-flex;align-items:center;padding:0 4px;white-space:nowrap;">'
-      + seg.label + '</div>';
+  const FLOW_H = 40;
+  const flowBarsHTML = flowSegs.map((seg, i) => {
+    const w       = Math.max(seg.pct, 0.5).toFixed(2);
+    const radius  = i === 0 ? '3px 0 0 3px' : i === flowSegs.length - 1 ? '0 3px 3px 0' : '0';
+    const rewardStr = fmtVal(seg.reward, taoPriceUSD);
+    const pctStr  = seg.pct.toFixed(1) + '%';
+    // Show label only if segment is wide enough (>10%)
+    const labelFull = seg.pct >= 14 ? ('UID ' + seg.uid + ' · ' + rewardStr + '/d · ' + pctStr)
+                    : seg.pct >= 8  ? ('UID ' + seg.uid + ' · ' + pctStr)
+                    : seg.pct >= 4  ? ('' + seg.uid)
+                    : '';
+    return '<div style="display:inline-flex;align-items:center;justify-content:center;vertical-align:top;'
+      + 'height:' + FLOW_H + 'px;width:' + w + '%;background:' + seg.bg + ';border-radius:' + radius + ';'
+      + 'overflow:hidden;padding:0 3px;box-sizing:border-box;" title="UID ' + seg.uid + ' · ' + pctStr + ' · ' + rewardStr + '/d · ' + seg.sig.signal + '">'
+      + '<span style="font-family:Arial;font-size:9px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+      + labelFull + '</span></div>';
   }).join('');
 
-  // ── Per-validator rows ────────────────────────────────────────
-  function sparkHTML(sparkData) {
-    if (!sparkData.length) return '';
+  // ── Validator rows with sparklines ────────────────────────────
+  function sparkHTML(sparkData, color) {
+    if (!sparkData || !sparkData.length) return '';
     const mx = Math.max(...sparkData, 0.001);
     const bars = sparkData.map(v => {
-      const h = Math.max(2, Math.round((v / mx) * 20));
-      return '<div style="width:5px;height:' + h + 'px;border-radius:1px 1px 0 0;background:currentColor;flex-shrink:0;"></div>';
+      const h = Math.max(2, Math.round((v / mx) * 18));
+      return '<div style="width:5px;height:' + h + 'px;border-radius:1px 1px 0 0;background:' + color + ';flex-shrink:0;opacity:0.8;"></div>';
     }).join('');
-    return '<div style="display:flex;align-items:flex-end;gap:2px;height:22px;">' + bars + '</div>';
+    return '<div style="display:flex;align-items:flex-end;gap:2px;height:20px;">' + bars + '</div>';
   }
 
+  const ownerHkRaw  = (meta || {}).owner_hotkey;
+  const ownerHkSS58 = ownerHkRaw && (ownerHkRaw.ss58 || ownerHkRaw);
+
   const valRows = validators.map((v, i) => {
-    const reward = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
-    const sig = signals[i];
-    const ownerHk = (meta || {}).owner_hotkey; const ownerHkSS58 = ownerHk && (ownerHk.ss58 || ownerHk);
+    const reward  = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
+    const pct     = totalDailyTAO > 0 ? (reward / totalDailyTAO * 100).toFixed(1) + '%' : '—';
+    const sig     = signals[i];
     const isOwner = v.is_owner_hotkey || (ownerHkSS58 && v.hotkey && v.hotkey.ss58 === ownerHkSS58);
-    const pillStyle = sig.cls === 'green' ? 'background:#e8f5e9;color:#1a7a3a;'
-      : sig.cls === 'red' ? 'background:#fdecea;color:#c0392b;'
+    const pillBg  = sig.cls === 'green' ? 'background:#e8f5e9;color:#1a7a3a;'
+      : sig.cls === 'red'   ? 'background:#fdecea;color:#c0392b;'
       : sig.cls === 'amber' ? 'background:#fff3cd;color:#856404;'
       : 'background:#f5f5f5;color:#888;';
-    const spark = '<span style="color:' + (sig.cls === 'green' ? '#1a7a3a' : sig.cls === 'red' ? '#c0392b' : '#aaa') + ';">'
-      + sparkHTML(sig.sparkData) + '</span>';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
-      + '<span style="min-width:32px;font-size:10px;color:#bbb;">UID ' + v.uid + '</span>'
-      + '<span class="key-pill" style="flex:1;">' + truncKey(v.hotkey.ss58) + (isOwner ? ' <span style="font-size:8px;background:#e8f5e9;color:#1a7a3a;padding:1px 4px;border-radius:2px;margin-left:3px;">owner</span>' : '') + '</span>'
-      + '<span style="min-width:76px;text-align:right;font-weight:700;color:#1a7a3a;">' + fmtVal(reward, taoPriceUSD) + '/d</span>'
-      + '<div style="min-width:52px;">' + spark + '</div>'
-      + '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;' + pillStyle + '">' + sig.signal + '</span>'
+    const sparkColor = sig.cls === 'green' ? '#1a7a3a' : sig.cls === 'red' ? '#c0392b' : '#aaa';
+    const hkSS58 = v.hotkey && v.hotkey.ss58 ? v.hotkey.ss58 : (v.hotkey || '');
+
+    return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
+      + '<span style="min-width:36px;font-size:10px;color:#bbb;flex-shrink:0;">UID ' + v.uid + '</span>'
+      + '<span class="key-pill" style="flex:1;overflow:hidden;min-width:0;">' + truncKey(hkSS58)
+        + (isOwner ? ' <span style="font-size:8px;background:#e8f5e9;color:#1a7a3a;padding:1px 4px;border-radius:2px;margin-left:3px;">owner</span>' : '')
+        + '</span>'
+      + '<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">' + fmtVal(reward, taoPriceUSD) + '/d</span>'
+      + '<span style="min-width:36px;text-align:right;font-size:10px;color:#888;flex-shrink:0;">' + pct + '</span>'
+      + '<div style="min-width:48px;flex-shrink:0;">' + sparkHTML(sig.sparkData, sparkColor) + '</div>'
+      + '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;' + pillBg + '">' + sig.signal + '</span>'
       + '</div>';
   }).join('');
 
-  // ── Time series chart ─────────────────────────────────────────
+  // ── Time-series chart ─────────────────────────────────────────
   const hasHistData = Object.keys(validatorHistories || {}).length > 0;
   const timeSeriesHTML = hasHistData
     ? '<div class="chart-box" style="margin-bottom:14px;">'
-      + '<div class="chart-title">VALIDATOR STAKE — ACTUAL (solid) vs EXPECTED IF HELD (dashed)</div>'
+      + '<div class="chart-title">VALIDATOR CUMULATIVE STAKE — ACTUAL (solid) vs EXPECTED IF HELD (dashed)</div>'
       + '<div class="chart-wrap chart-wrap-tall"><canvas id="validator-ts-chart"></canvas></div>'
       + '</div>'
-      + '<div style="font-size:10px;color:#888;margin-bottom:20px;">Lines above dashed = compounding (holding). Below dashed = distributing. Per-validator history covers up to 200 snapshots.</div>'
-    : '<div style="font-size:11px;color:#bbb;margin-bottom:14px;padding:10px 14px;border:1.5px dashed #eee;border-radius:5px;">Validator stake history not yet available — data loads on first fresh fetch. Click Refresh to populate.</div>';
+      + '<div style="font-size:10px;color:#888;padding:8px 10px;background:#f9f9f9;border-radius:4px;margin-bottom:6px;line-height:1.5;">'
+      + 'Lines tracking <strong>above</strong> the dashed baseline = compounding (holding rewards). <strong>Below</strong> = distributing to market. Per-validator history covers up to 200 daily snapshots.</div>'
+    : '<div style="font-size:11px;color:#bbb;padding:10px 14px;border:1.5px dashed #eee;border-radius:5px;margin-bottom:14px;">Validator stake history not yet loaded — click <strong>Refresh</strong> to populate.</div>';
 
   el.innerHTML = `
     <div class="sec-hdr" style="margin-bottom:12px;">
-      <span class="sec-title">Validator Rewards</span>
-      <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;
-        ${aggCls === 'holding' ? 'background:#e8f5e9;color:#1a7a3a;' : aggCls === 'selling' ? 'background:#fdecea;color:#c0392b;' : 'background:#fff3cd;color:#856404;'}"
-      >${aggSignal}</span>
+      <span class="sec-title">Validator Reward Distribution</span>
+      <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;${aggBg}">${aggLabel}</span>
     </div>
 
-    <div class="sec-hdr" style="margin-bottom:6px;">
-      <span class="sec-title">Daily Alpha Distribution</span>
-      <span style="font-size:9px;color:#bbb;">\${fmtVal(totalDailyTAO, taoPriceUSD)} / day total</span>
-    </div>
-    <div style="width:100%;height:32px;margin-bottom:6px;line-height:0;font-size:0;">
-      ${flowBarsHTML}
-    </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
-      <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#1a7a3a;display:inline-block;"></span>holding</span>
-      <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#c0392b;display:inline-block;"></span>distributing</span>
-      <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#e67e22;display:inline-block;"></span>partial</span>
-      <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#aaa;display:inline-block;"></span>no data</span>
+    <div class="stats-grid" style="margin-bottom:14px;">
+      <div class="stat-card">
+        <div class="stat-val">${validators.length}</div>
+        <div class="stat-lbl">Active Validators</div>
+        <div class="stat-sub">with permits or trust</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${fmtVal(totalDailyTAO, taoPriceUSD)}</div>
+        <div class="stat-lbl">Total Daily Reward</div>
+        <div class="stat-sub">combined validator alpha</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:${holdCount > sellCount ? '#1a7a3a' : '#c0392b'};">${holdCount}</div>
+        <div class="stat-lbl">Holding</div>
+        <div class="stat-sub">of ${validators.length} validators</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color:${sellCount > 0 ? '#c0392b' : '#aaa'};">${sellCount}</div>
+        <div class="stat-lbl">Distributing</div>
+        <div class="stat-sub">selling into market</div>
+      </div>
     </div>
 
     <div style="margin-bottom:6px;">
-      <div style="display:flex;gap:8px;padding:3px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#bbb;border-bottom:0.5px solid #eee;">
-        <span style="min-width:32px;">UID</span>
+      <div class="chart-title" style="margin-bottom:6px;">DAILY ALPHA SHARE BY VALIDATOR</div>
+      <div style="width:100%;height:40px;line-height:0;font-size:0;margin-bottom:8px;">${flowBarsHTML}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+        <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#1a7a3a;display:inline-block;"></span>holding</span>
+        <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#c0392b;display:inline-block;"></span>distributing</span>
+        <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#e67e22;display:inline-block;"></span>partial</span>
+        <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#aaa;display:inline-block;"></span>no data</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;gap:6px;padding:4px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;border-bottom:1.5px solid #eee;">
+        <span style="min-width:36px;flex-shrink:0;">UID</span>
         <span style="flex:1;">Hotkey</span>
-        <span style="min-width:76px;text-align:right;">Daily reward</span>
-        <span style="min-width:52px;">Trend</span>
-        <span style="min-width:72px;text-align:right;">Signal</span>
+        <span style="min-width:74px;text-align:right;flex-shrink:0;">Daily Reward</span>
+        <span style="min-width:36px;text-align:right;flex-shrink:0;">Share</span>
+        <span style="min-width:48px;flex-shrink:0;">Trend</span>
+        <span style="min-width:72px;text-align:right;flex-shrink:0;">Signal</span>
       </div>
       ${valRows}
     </div>
@@ -3150,31 +3190,21 @@ function renderValidatorSection(data) {
 
   // Draw time-series chart
   if (hasHistData) {
-    const colors = ['#1a7a3a','#2980b9','#e67e22','#8e44ad','#c0392b'];
+    const palette = ['#1a7a3a','#2980b9','#e67e22','#8e44ad','#c0392b','#16a085'];
     const datasets = [];
-
     validators.forEach((v, i) => {
-      const hist = (validatorHistories[v.uid] || [])
+      const hist = ((validatorHistories || {})[v.uid] || [])
         .slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
       if (!hist.length) return;
-
-      // Actual stake line
+      const col = palette[i % palette.length];
       const actualPts = hist.map(h => ({ x: h.timestamp.slice(0, 10), y: parseFloat(h.balance_as_tao || h.balance || 0) / 1e9 }));
-
-      // Expected line: starting balance + daily reward * elapsed days
-      const dailyRew = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
-      const startBal = actualPts[0]?.y || 0;
-      const startTs  = new Date(hist[0]?.timestamp).getTime();
-      const expPts = hist.map(h => {
-        const days = (new Date(h.timestamp).getTime() - startTs) / 86400000;
-        return { x: h.timestamp.slice(0, 10), y: startBal + dailyRew * days };
-      });
-
-      const col = colors[i % colors.length];
-      datasets.push({ label: 'UID ' + v.uid + ' actual', data: actualPts, borderColor: col, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.2 });
-      datasets.push({ label: 'UID ' + v.uid + ' expected', data: expPts, borderColor: col, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, tension: 0.15, segment: { borderDash: ctx => [5,4] } });
+      const dailyRew  = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
+      const startBal  = actualPts[0] ? actualPts[0].y : 0;
+      const startTs   = new Date(hist[0].timestamp).getTime();
+      const expPts    = hist.map(h => ({ x: h.timestamp.slice(0, 10), y: startBal + dailyRew * (new Date(h.timestamp).getTime() - startTs) / 86400000 }));
+      datasets.push({ label: 'UID ' + v.uid, data: actualPts, borderColor: col, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.2 });
+      datasets.push({ label: 'UID ' + v.uid + ' (expected)', data: expPts, borderColor: col, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, tension: 0.15 });
     });
-
     const ctx = document.getElementById('validator-ts-chart');
     if (ctx && datasets.length) {
       if (ctx._chartInst) ctx._chartInst.destroy();
@@ -3186,13 +3216,12 @@ function renderValidatorSection(data) {
           parsing: { xAxisKey: 'x', yAxisKey: 'y' },
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { display: true, position: 'top', labels: { font: { family: 'Arial', size: 9 }, color: '#888', boxWidth: 12,
-              filter: i => !i.text.includes('expected') } },
+            legend: { display: true, position: 'top', labels: {
+              font: { family: 'Arial', size: 9 }, color: '#888', boxWidth: 12,
+              filter: i => !i.text.includes('(expected)')
+            }},
             tooltip: { callbacks: {
-              label: c => {
-                const val = c.parsed.y;
-                return c.dataset.label + ': ' + fmtVal(val, taoPriceUSD);
-              }
+              label: c => c.dataset.label + ': ' + fmtVal(c.parsed.y, taoPriceUSD)
             }}
           },
           scales: {
@@ -3206,6 +3235,7 @@ function renderValidatorSection(data) {
     }
   }
 }
+
 
 </script>
 </body>
