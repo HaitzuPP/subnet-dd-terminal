@@ -70,45 +70,50 @@ input[type=number]::placeholder { color: #bbb; }
 
 #status-msg { font-size: 11px; color: #999; font-style: italic; }
 
-/* ---- TAB BAR ---- */
-.tabbar {
+/* ---- HISTORY NAV BAR ---- */
+.hist-navbar {
   display: flex;
-  border-bottom: 1.5px solid #ddd;
-  padding: 0 32px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 32px;
+  border-bottom: 1.5px solid #eee;
   background: #fff;
   position: sticky;
   top: 0;
   z-index: 20;
+  min-height: 40px;
 }
-.tab {
+.hist-pills-wrap {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.hist-pills-wrap::-webkit-scrollbar { display: none; }
+.hist-pill {
   font-family: Arial, sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 11px 18px;
-  background: transparent;
-  border: none;
-  border-bottom: 2.5px solid transparent;
+  padding: 3px 10px;
+  background: #f5f5f5;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
   cursor: pointer;
-  color: #aaa;
-  margin-bottom: -1.5px;
-  transition: color 0.12s, border-color 0.12s;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  white-space: nowrap;
+  color: #555;
+  transition: all 0.1s;
+  letter-spacing: 0.2px;
 }
-.tab.active { color: #111; border-bottom-color: #111; }
-.tab:hover:not(.active) { color: #555; }
-.tab-badge {
-  display: none;
-  background: #1a7a3a;
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 8px;
-  margin-left: 5px;
-  vertical-align: middle;
-  line-height: 1.6;
-}
+.hist-pill:hover { background: #111; color: #fff; border-color: #111; }
+.hist-pill.pill-active { background: #111; color: #fff; border-color: #111; }
+.hist-empty-pill { font-size: 10px; color: #ccc; font-style: italic; }
+
+/* ---- META PRIMARY (large callouts) ---- */
+.meta-primary { text-align: center; min-width: 110px; }
+.meta-primary-val { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.meta-primary-lbl { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
 
 /* ---- PANELS ---- */
 .panel { display: none; padding: 26px 32px 56px; max-width: 1080px; }
@@ -447,18 +452,9 @@ input[type=number]::placeholder { color: #bbb; }
   .btn { min-height: 44px; padding: 10px 14px; } /* 44px minimum tap target */
   .btn, input[type=number] { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
-  /* --- Tab bar --- */
-  .tabbar { padding: 0 4px; }
-  .tab {
-    flex: 1;
-    padding: 10px 4px;
-    font-size: 9px;
-    letter-spacing: 0.2px;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  /* --- Hist nav bar --- */
+  .hist-navbar { padding: 6px 10px; gap: 6px; }
+  .hist-pill { font-size: 9px; padding: 3px 8px; }
 
   /* --- Panels --- */
   .panel { padding: 14px 14px 44px; max-width: 100%; }
@@ -480,8 +476,9 @@ input[type=number]::placeholder { color: #bbb; }
   .stat-lbl   { font-size: 8px; }
   .stat-sub   { font-size: 10px; }
 
-  /* --- Signal card --- */
-  #signal-card > div { padding: 12px 14px !important; }
+  /* --- Meta primary --- */
+  .meta-primary { min-width: 80px; }
+  .meta-primary-val { font-size: 16px; }
 
   /* --- Section headers --- */
   .sec-hdr   { flex-wrap: wrap; gap: 6px; }
@@ -560,14 +557,10 @@ input[type=number]::placeholder { color: #bbb; }
   </div>
 </div>
 
-<!-- TAB BAR -->
-<div class="tabbar">
-  <button class="tab active" data-tab="dashboard">Dashboard</button>
-  <button class="tab" data-tab="owner">Owner Wallet</button>
-  <button class="tab" data-tab="history">
-    History
-    <span class="tab-badge" id="hist-badge"></span>
-  </button>
+<!-- HISTORY NAV BAR -->
+<div class="hist-navbar">
+  <div class="hist-pills-wrap" id="hist-pills"></div>
+  <button class="btn btn-ghost" id="clear-hist-btn" style="font-size:10px;padding:4px 10px;min-height:unset;flex-shrink:0;">Clear</button>
 </div>
 
 <!-- =========================================================
@@ -591,14 +584,14 @@ input[type=number]::placeholder { color: #bbb; }
 
   <div id="db-content" class="hidden">
 
-    <!-- 1. Identity + current price -->
+    <!-- 1. Identity + primary callouts -->
     <div id="meta-card" class="meta-card"></div>
 
-    <!-- 2. Synthesis signal -->
-    <div id="signal-card" style="margin-bottom:20px;"></div>
-
-    <!-- 3. Stats grid -->
+    <!-- 2. Stats grid -->
     <div id="stats-grid" class="stats-grid" style="margin-bottom:20px;"></div>
+
+    <!-- 3. Owner wallet inline -->
+    <div id="owner-dash"></div>
 
     <!-- Period selector — single global toggle controlling all 4 charts below -->
     <div class="sec-hdr" style="margin-bottom:14px;">
@@ -620,13 +613,7 @@ input[type=number]::placeholder { color: #bbb; }
       <div class="chart-wrap"><canvas id="flow-chart"></canvas></div>
     </div>
 
-    <!-- 5. Alpha Staked (standalone) -->
-    <div class="chart-box" style="margin-bottom:14px;">
-      <div class="chart-title">ALPHA STAKED — TOTAL TOKENS COMMITTED</div>
-      <div class="chart-wrap chart-wrap-tall"><canvas id="staked-chart"></canvas></div>
-    </div>
-
-    <!-- 6. Alpha price + rank — own period toggle controlling both charts below -->
+    <!-- 5. Alpha price + rank — own period toggle controlling both charts below -->
     <div class="sec-hdr" style="margin-bottom:10px;">
       <span class="sec-title">Price &amp; Rank</span>
       <div class="toggles" id="price-period-toggles">
@@ -654,33 +641,6 @@ input[type=number]::placeholder { color: #bbb; }
   </div>
 </div>
 
-<!-- =========================================================
-     OWNER WALLET
-     ========================================================= -->
-<div class="panel" id="panel-owner">
-
-  <div id="ow-empty" class="state-box">
-    <span class="state-icon">&#128272;</span>
-    <div class="state-title">No subnet loaded</div>
-    <div>Run a subnet search first</div>
-  </div>
-
-  <div id="ow-content" class="hidden">
-    <div id="owner-id-card" class="owner-card"></div>
-    <div id="owner-body"></div>
-  </div>
-</div>
-
-<!-- =========================================================
-     HISTORY
-     ========================================================= -->
-<div class="panel" id="panel-history">
-  <div class="hist-controls">
-    <span class="sec-title">Queried Subnets</span>
-    <button class="btn btn-ghost" id="clear-hist-btn" style="font-size:11px;padding:5px 12px;">Clear all</button>
-  </div>
-  <div id="hist-content"></div>
-</div>
 
 <script>
 'use strict';
@@ -930,8 +890,7 @@ async function loadSubnet(netuid, useCache) {
 // ============================================================
 function renderAll(data, fromCache) {
   renderDashboard(data, fromCache);
-  renderOwner(data);
-  renderHistory();
+  renderHistoryPills();
 }
 
 // ============================================================
@@ -946,6 +905,9 @@ function renderDashboard(data, fromCache) {
   const p1d  = toF(pool.price_change_1_day)  || 0;
   const p7d  = toF(pool.price_change_1_week) || 0;
   const p30d = toF(pool.price_change_1_month)|| 0;
+
+  // Market cap — computed here so it's available for the banner
+  const mcapTAO = (toF(pool.market_cap) || 0) / 1e9;
 
   // Subnet age from registration timestamp
   let ageStr = null;
@@ -970,7 +932,18 @@ function renderDashboard(data, fromCache) {
       </div>
       <div class="meta-name" style="margin-top:2px;">${pool.name || 'Unnamed'}</div>
       <div class="meta-symbol">${pool.symbol || ''}</div>
-      ${subnetDesc ? `<div style="font-size:11px;color:#666;margin-top:5px;line-height:1.4;max-width:360px;">${subnetDesc.slice(0, 200)}${subnetDesc.length > 200 ? '…' : ''}</div>` : ''}
+      ${subnetDesc ? `<div style="font-size:11px;color:#666;margin-top:5px;line-height:1.4;max-width:360px;">${subnetDesc.slice(0, 200)}${subnetDesc.length > 200 ? '...' : ''}</div>` : ''}
+    </div>
+    <div class="meta-divider"></div>
+    <div class="meta-primary">
+      <div class="meta-primary-val">
+        <span class="rank-badge ${rankClass(pool.rank)}">#${pool.rank}</span>
+      </div>
+      <div class="meta-primary-lbl">Emission Rank</div>
+    </div>
+    <div class="meta-primary">
+      <div class="meta-primary-val">${fmtAlpha(mcapTAO)} <span style="font-size:12px;font-weight:400;color:#aaa;">TAO</span></div>
+      <div class="meta-primary-lbl">Market Cap</div>
     </div>
     <div class="meta-divider"></div>
     <div class="meta-stat">
@@ -989,17 +962,6 @@ function renderDashboard(data, fromCache) {
       <div class="meta-val ${p30d >= 0 ? 'green' : 'red'}">${pct(p30d)}</div>
       <div class="meta-lbl">30d</div>
     </div>
-    <div class="meta-divider"></div>
-    <div class="meta-stat">
-      <div class="meta-val">
-        <span class="rank-badge ${rankClass(pool.rank)}">#${pool.rank}</span>
-      </div>
-      <div class="meta-lbl">Emission Rank</div>
-    </div>
-    <div class="meta-stat">
-      <div class="meta-val">${(toF(pool.fear_and_greed_index) || 0).toFixed(1)}</div>
-      <div class="meta-lbl">Fear/Greed</div>
-    </div>
     <div class="meta-actions">
       ${fromCache ? `<span class="tag tag-amber">Cached</span>` : ''}
       <span class="meta-ts">${fmtDate(data.ts)}</span>
@@ -1011,7 +973,7 @@ function renderDashboard(data, fromCache) {
   const stakers = stakerCount !== null ? stakerCount.toLocaleString() : 'N/A';
   // Convert rao to human-readable TAO amounts
   const poolTAO      = (toF(pool.total_tao)              || 0) / 1e9;
-  const mcapTAO      = (toF(pool.market_cap)             || 0) / 1e9;
+  // mcapTAO already computed above for the banner
   const alphaStkd    = (toF(pool.alpha_staked)           || 0) / 1e9;
   const buyTAO       = (toF(pool.tao_buy_volume_24_hr)   || 0) / 1e9;
   const sellTAO      = (toF(pool.tao_sell_volume_24_hr)  || 0) / 1e9;
@@ -1054,15 +1016,95 @@ function renderDashboard(data, fromCache) {
   drawPriceChart(data, PRICE_PERIOD);
   drawRankChart(data, PRICE_PERIOD);
 
-  // --- Net flow + staked (global toggle) ---
+  // --- Net flow (global toggle) ---
   drawCharts(data, PERIOD);
 
-  // --- Synthesis signal card ---
-  drawSignalCard(data);
+  // --- Owner wallet inline ---
+  renderOwnerDash(data);
 }
 
 // ============================================================
-// SYNTHESIS SIGNAL CARD
+// OWNER WALLET — INLINE DASHBOARD SECTION
+// ============================================================
+function renderOwnerDash(data) {
+  const { pool, meta, ownerBalance, ownerBalHistory, taoPriceUSD, netuid } = data;
+  const el = document.getElementById('owner-dash');
+  if (!el) return;
+
+  const ownerObj = (meta || {}).owner || null;
+  const ownerSS58 = ownerObj && (ownerObj.ss58 || (typeof ownerObj === 'string' ? ownerObj : null));
+
+  // Only render if we have something to show
+  if (!ownerBalance && (!ownerBalHistory || !ownerBalHistory.length)) {
+    el.innerHTML = '';
+    return;
+  }
+
+  // Holdings cards
+  let holdingsHTML = '';
+  if (ownerBalance) {
+    const alphaAmt   = (toF(ownerBalance.balance)        || 0) / 1e9;
+    const taoAmt     = (toF(ownerBalance.balance_as_tao) || 0) / 1e9;
+    const usdVal     = taoPriceUSD ? taoAmt * taoPriceUSD : null;
+    holdingsHTML = `
+      <div class="holdings-grid" style="margin-bottom:14px;">
+        <div class="stat-card">
+          <div class="stat-val">${fmtAlpha(alphaAmt)}</div>
+          <div class="stat-lbl">Owner Alpha</div>
+          <div class="stat-sub">${(pool.symbol && /[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : 'tokens'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">${fmtAlpha(taoAmt)} <span style="font-size:11px;font-weight:400;color:#aaa;">TAO</span></div>
+          <div class="stat-lbl">Owner TAO Value</div>
+          <div class="stat-sub">at current alpha price</div>
+        </div>
+        ${usdVal !== null ? `<div class="stat-card">
+          <div class="stat-val">$${fmtUSD(usdVal)}</div>
+          <div class="stat-lbl">Owner USD Value</div>
+          <div class="stat-sub">${taoPriceUSD ? 'live TAO/USD' : 'est.'}</div>
+        </div>` : ''}
+      </div>
+    `;
+  }
+
+  el.innerHTML = `
+    <div class="sec-hdr" style="margin-bottom:12px;">
+      <span class="sec-title">Owner Wallet</span>
+      ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank"
+        style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats &#8599;</a>` : ''}
+    </div>
+    ${holdingsHTML}
+    <div class="sec-hdr" style="margin-bottom:10px;">
+      <span class="sec-title">Monthly Stake Balance Change</span>
+      <div class="toggles" id="owner-period-toggles">
+        <button class="tgl ${OWNER_PERIOD === '3m'   ? 'active' : ''}" data-period="3m">3M</button>
+        <button class="tgl ${OWNER_PERIOD === '6m'   ? 'active' : ''}" data-period="6m">6M</button>
+        <button class="tgl ${OWNER_PERIOD === 'dtao' ? 'active' : ''}" data-period="dtao">dTAO</button>
+      </div>
+    </div>
+    <div class="chart-box" style="margin-bottom:14px;">
+      <div class="chart-title">NET MONTHLY CHANGE IN OWNER STAKE BALANCE (TAO)</div>
+      <div class="chart-wrap"><canvas id="owner-flow-chart"></canvas></div>
+    </div>
+    <div style="font-size:10px;color:#ccc;margin-bottom:20px;">
+      Green bars = month-over-month accumulation. Red bars = drawdown or disposal. Derived from daily balance snapshots.
+    </div>
+  `;
+
+  document.getElementById('owner-period-toggles').addEventListener('click', e => {
+    const b = e.target.closest('.tgl');
+    if (!b || !STATE) return;
+    document.querySelectorAll('#owner-period-toggles .tgl').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    OWNER_PERIOD = b.dataset.period;
+    drawOwnerFlowChart(STATE.ownerBalHistory || [], OWNER_PERIOD);
+  });
+
+  drawOwnerFlowChart(ownerBalHistory || [], OWNER_PERIOD);
+}
+
+// ============================================================
+// SYNTHESIS SIGNAL CARD (kept for reference, no longer rendered)
 // ============================================================
 function drawSignalCard(data) {
   const el = document.getElementById('signal-card');
@@ -1486,10 +1528,9 @@ function drawRankChart(data, period) {
   });
 }
 
-// Net flow + staked — driven by the global #period-toggles
+// Net flow — driven by the global #period-toggles
 function drawCharts(data, period) {
   drawNetFlowChart(data, period);
-  drawStakedChart(data, period);
 }
 
 function drawDualChart(id, labels, prices, ranks, hasRank) {
@@ -1974,7 +2015,7 @@ function drawOwnerFlowChart(history, period) {
   if (!canvas) return;
 
   if (!history || !history.length) {
-    noDataMsg('owner-flow-chart', 'No balance history returned from API for this owner');
+    canvasMsg('owner-flow-chart', 'No balance history returned from API for this owner');
     return;
   }
 
@@ -1989,7 +2030,7 @@ function drawOwnerFlowChart(history, period) {
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   if (!sorted.length) {
-    noDataMsg('owner-flow-chart', 'No data for selected period');
+    canvasMsg('owner-flow-chart', 'No data for selected period');
     return;
   }
 
@@ -2002,7 +2043,7 @@ function drawOwnerFlowChart(history, period) {
 
   const keys = Object.keys(buckets).sort();
   if (keys.length < 2) {
-    noDataMsg('owner-flow-chart', 'Need at least 2 months of balance snapshots to compute changes');
+    canvasMsg('owner-flow-chart', 'Need at least 2 months of balance snapshots to compute changes');
     return;
   }
 
@@ -2193,83 +2234,47 @@ function saveHistory(data) {
     ts:          data.ts,
   });
   localStorage.setItem(HK, JSON.stringify(h.slice(0, 30)));
-  updateBadge();
+  renderHistoryPills();
 }
 
 function readHistory() {
   try { return JSON.parse(localStorage.getItem(HK) || '[]'); } catch(e) { return []; }
 }
 
-function renderHistory() {
+function renderHistoryPills() {
   const h = readHistory();
-  updateBadge();
-  const el = document.getElementById('hist-content');
+  const el = document.getElementById('hist-pills');
+  if (!el) return;
 
   if (!h.length) {
-    el.innerHTML = '<div class="hist-empty">No subnets queried yet. Run a search to build history.</div>';
+    el.innerHTML = '<span class="hist-empty-pill">No recent subnets</span>';
     return;
   }
 
-  const now = Date.now();
-  el.innerHTML = `
-    <div class="table-wrap" style="margin-bottom:10px;">
-      <table class="hist-table">
-        <thead>
-          <tr>
-            <th>Subnet</th><th>Name</th><th>Price</th>
-            <th>Rank</th><th>Root Prop</th><th>24h</th>
-            <th>Queried</th><th>Cache</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${h.map(x => {
-            const fresh = (now - x.ts) < 3600000;
-            const rp = (toF(x.rootProp) * 100 || 0).toFixed(3);
-            return `
-              <tr onclick="loadFromHistory(${x.netuid})">
-                <td class="bold">SN${x.netuid}</td>
-                <td>${x.name} <span class="grey">${x.symbol || ''}</span></td>
-                <td>${fmtPrice(x.price)}</td>
-                <td><span class="rank-badge ${rankClass(x.rank)}">#${x.rank}</span></td>
-                <td>${rp}%</td>
-                <td class="${(toF(x.p1d)||0) >= 0 ? 'green' : 'red'}">${pct(toF(x.p1d)||0)}</td>
-                <td class="grey">${fmtDate(x.ts)}</td>
-                <td><span class="cache-pill ${fresh ? 'cache-fresh' : 'cache-stale'}">${fresh ? 'fresh' : 'stale'}</span></td>
-                <td><span class="load-btn">Load</span></td>
-              </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>
-    <div style="font-size:10px;color:#ccc;margin-top:4px;">
-      Tap any row to load from cache. Use Refresh in the dashboard to re-query live.
-    </div>
-  `;
+  el.innerHTML = h.map(x => {
+    const isActive = STATE && Number(STATE.netuid) === Number(x.netuid);
+    const label = x.name ? `SN${x.netuid} ${x.name.slice(0, 10)}` : `SN${x.netuid}`;
+    const rankStr = x.rank ? ` #${x.rank}` : '';
+    return `<button class="hist-pill${isActive ? ' pill-active' : ''}"
+      onclick="loadFromHistory(${x.netuid})"
+      title="${x.name || 'SN'+x.netuid} — queried ${fmtDate(x.ts)}">${label}${rankStr}</button>`;
+  }).join('');
 }
 
 function loadFromHistory(netuid) {
   document.getElementById('netuid-input').value = netuid;
-  setActiveTab('dashboard');
   loadSubnet(netuid, true);
 }
 
 function updateBadge() {
-  const h  = readHistory();
-  const b  = document.getElementById('hist-badge');
-  if (h.length) {
-    b.textContent = h.length;
-    b.style.display = 'inline-block';
-  } else {
-    b.style.display = 'none';
-  }
+  // History is now shown as pills in the navbar — no badge needed
 }
 
 function clearHistory() {
   if (!confirm('Clear all history and cached data?')) return;
   localStorage.removeItem(HK);
   Object.keys(localStorage).filter(k => k.startsWith('sn_v4_') || k.startsWith('sn_v3_') || k.startsWith('sn_v2_')).forEach(k => localStorage.removeItem(k));
-  renderHistory();
-  updateBadge();
+  renderHistoryPills();
 }
 
 // ============================================================
@@ -2415,11 +2420,11 @@ document.getElementById('run-btn').addEventListener('click', () => {
   setMsg('');
   PERIOD = '7d';
   PRICE_PERIOD = '7d';
+  OWNER_PERIOD = '3m';
   RANK_EXPANDED = false;
   document.querySelectorAll('#period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
   document.querySelectorAll('#price-period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
   loadSubnet(v, true);
-  setActiveTab('dashboard');
 });
 
 document.getElementById('netuid-input').addEventListener('keydown', e => {
@@ -2429,10 +2434,6 @@ document.getElementById('netuid-input').addEventListener('keydown', e => {
 document.getElementById('refresh-btn').addEventListener('click', () => {
   const v = parseInt(document.getElementById('netuid-input').value);
   if (v) loadSubnet(v, false);
-});
-
-document.querySelectorAll('.tab').forEach(b => {
-  b.addEventListener('click', () => setActiveTab(b.dataset.tab));
 });
 
 document.getElementById('period-toggles').addEventListener('click', e => {
@@ -2461,7 +2462,7 @@ document.getElementById('clear-hist-btn').addEventListener('click', clearHistory
 // ============================================================
 // INIT
 // ============================================================
-renderHistory();
+renderHistoryPills();
 updateBadge();
 </script>
 </body>
