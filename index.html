@@ -620,46 +620,33 @@ input[type=number]::placeholder { color: #bbb; }
       <div class="chart-wrap"><canvas id="flow-chart"></canvas></div>
     </div>
 
-    <!-- 5. Indexed performance + staked side by side -->
-    <div class="chart-grid-2" style="margin-bottom:14px;">
-      <div class="chart-box" style="margin-bottom:0">
-        <div class="chart-title">
-          ALPHA VS. TAO INDEXED TO 100 — ABOVE 100 = OUTPERFORMED
-          <span style="font-weight:400;color:#bbb;margin-left:6px;" id="indexed-base-label"></span>
-        </div>
-        <div class="chart-wrap chart-wrap-tall"><canvas id="indexed-chart"></canvas></div>
-      </div>
-      <div class="chart-box" style="margin-bottom:0">
-        <div class="chart-title">ALPHA STAKED — TOTAL TOKENS COMMITTED</div>
-        <div class="chart-wrap chart-wrap-tall"><canvas id="staked-chart"></canvas></div>
+    <!-- 5. Alpha Staked (standalone) -->
+    <div class="chart-box" style="margin-bottom:14px;">
+      <div class="chart-title">ALPHA STAKED — TOTAL TOKENS COMMITTED</div>
+      <div class="chart-wrap chart-wrap-tall"><canvas id="staked-chart"></canvas></div>
+    </div>
+
+    <!-- 6. Alpha price + rank — own period toggle controlling both charts below -->
+    <div class="sec-hdr" style="margin-bottom:10px;">
+      <span class="sec-title">Price &amp; Rank</span>
+      <div class="toggles" id="price-period-toggles">
+        <button class="tgl active" data-period="7d">7D</button>
+        <button class="tgl" data-period="30d">30D</button>
+        <button class="tgl" data-period="90d">90D</button>
+        <button class="tgl" data-period="all">All</button>
       </div>
     </div>
 
-    <!-- 6. Alpha price + rank — own period toggle -->
-    <div class="chart-box" style="margin-bottom:22px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px;">
-        <div class="chart-title" style="margin-bottom:0;">ALPHA PRICE (TAO) + EMISSION RANK
-          <span id="rank-hint-inline" style="color:#bbb;font-weight:400;"></span>
-        </div>
-        <div class="toggles" id="price-period-toggles" style="flex-shrink:0;">
-          <button class="tgl active" data-period="7d">7D</button>
-          <button class="tgl" data-period="30d">30D</button>
-          <button class="tgl" data-period="90d">90D</button>
-          <button class="tgl" data-period="all">All</button>
-        </div>
-      </div>
+    <div class="chart-box" style="margin-bottom:14px;">
+      <div class="chart-title">ALPHA PRICE (TAO)</div>
       <div class="chart-wrap chart-wrap-tall"><canvas id="main-chart"></canvas></div>
     </div>
 
-    <!-- 7. Rank table — context layer, after primary charts -->
-    <div class="sec-hdr" style="margin-top:6px;">
-      <span class="sec-title">All Subnets by Emission Rank</span>
-      <span class="grey" style="font-size:10px;" id="rank-table-ts"></span>
+    <div class="chart-box" style="margin-bottom:14px;">
+      <div class="chart-title">EMISSION RANK — lower is better</div>
+      <div class="chart-wrap chart-wrap-tall"><canvas id="rank-chart"></canvas></div>
     </div>
-    <div class="table-wrap" style="margin-bottom:10px;">
-      <table class="rank-table" id="rank-table"></table>
-    </div>
-    <div id="rank-expand-row" style="margin-bottom:8px;"></div>
+
     <div style="font-size:10px;color:#ccc;margin-bottom:4px;">
       Net TAO flow = daily delta in pool reserves. Positive = net buying pressure; negative = net selling. Alpha staked in alpha token units (not TAO).
     </div>
@@ -1063,20 +1050,15 @@ function renderDashboard(data, fromCache) {
     </div>
   `).join('');
 
-  // --- Indexed performance chart ---
-  drawIndexedChart(data);
-
-  // --- Price + rank chart (own toggle) ---
-  drawPriceRankChart(data, PRICE_PERIOD);
+  // --- Price chart + rank chart (own toggle) ---
+  drawPriceChart(data, PRICE_PERIOD);
+  drawRankChart(data, PRICE_PERIOD);
 
   // --- Net flow + staked (global toggle) ---
   drawCharts(data, PERIOD);
 
   // --- Synthesis signal card ---
   drawSignalCard(data);
-
-  // --- Rank table ---
-  drawRankTable(allSorted, netuid);
 }
 
 // ============================================================
@@ -1441,23 +1423,67 @@ function drawIndexedChart(data) {
 }
 
 // Price + rank chart — driven by its own #price-period-toggles
-function drawPriceRankChart(data, period) {
+// Alpha price — standalone line chart
+function drawPriceChart(data, period) {
   const s = chartSeries(data, period);
-  const hint       = document.getElementById('rank-legend-hint');
-  const inlineHint = document.getElementById('rank-hint-inline');
-
   if (!s.prices || !s.prices.filter(Boolean).length) {
     clearCanvas('main-chart', 'No data for this period');
-    if (hint)       hint.textContent = '';
-    if (inlineHint) inlineHint.textContent = '';
     return;
   }
+  // Reuse drawDualChart with no rank overlay
+  drawDualChart('main-chart', s.labels, s.prices, [], false);
+}
 
-  const hasRank = s.ranks && s.ranks.some(r => r !== null);
-  const rankNote = hasRank ? ' (right axis: lower = better)' : '';
-  if (hint)       hint.textContent = rankNote;
-  if (inlineHint) inlineHint.textContent = rankNote;
-  drawDualChart('main-chart', s.labels, s.prices, hasRank ? s.ranks : [], hasRank);
+// Emission rank — standalone line chart (y-axis reversed: rank 1 at top)
+function drawRankChart(data, period) {
+  const canvas = document.getElementById('rank-chart');
+  if (!canvas) return;
+  const s = chartSeries(data, period);
+  const validRanks = (s.ranks || []).filter(r => r !== null);
+  if (!validRanks.length) {
+    canvasMsg('rank-chart', period === '7d' ? 'Rank not available in 7D view — use 30D or longer' : 'No rank data for this period');
+    return;
+  }
+  if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
+
+  const maxR = Math.max(...validRanks);
+  const o = JSON.parse(JSON.stringify(BASE_OPTS));
+  o.scales.y = {
+    ...o.scales.y,
+    reverse: true,
+    min: 1,
+    max: maxR + 2,
+    ticks: {
+      font: { family: 'Arial', size: 9 }, color: '#888',
+      callback: v => `#${Math.round(v)}`,
+      stepSize: 1,
+    },
+    grid:   { color: '#f5f5f5' },
+    border: { color: '#eee' },
+  };
+  o.plugins.tooltip.callbacks = {
+    label: ctx => `Rank: #${Math.round(ctx.parsed.y)}`,
+  };
+
+  canvas._c = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: s.labels,
+      datasets: [{
+        label: 'Emission Rank',
+        data: s.ranks,
+        borderColor: '#888',
+        backgroundColor: '#88888814',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        fill: true,
+        tension: 0.25,
+        spanGaps: true,
+      }]
+    },
+    options: o,
+  });
 }
 
 // Net flow + staked — driven by the global #period-toggles
@@ -2424,7 +2450,10 @@ document.getElementById('price-period-toggles').addEventListener('click', e => {
   document.querySelectorAll('#price-period-toggles .tgl').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
   PRICE_PERIOD = b.dataset.period;
-  if (STATE) drawPriceRankChart(STATE, PRICE_PERIOD);
+  if (STATE) {
+    drawPriceChart(STATE, PRICE_PERIOD);
+    drawRankChart(STATE, PRICE_PERIOD);
+  }
 });
 
 document.getElementById('clear-hist-btn').addEventListener('click', clearHistory);
