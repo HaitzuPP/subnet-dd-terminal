@@ -748,6 +748,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // CACHE HELPERS
 // ============================================================
 const CACHE_VER = 'sn_v5_';
+const HK = 'sn_hist_v2';
 
 function cacheKey(netuid) { return CACHE_VER + netuid; }
 
