@@ -2534,29 +2534,22 @@ function renderMinerSection(data) {
   const { meta, metagraph, subnetHistory, pool, taoPriceUSD, netuid } = data;
 
   // Current snapshot from subnet metadata
-  const activeMiners    = meta.active_miners    ?? null;
-  const activeValidators= meta.active_validators ?? meta.validators ?? null;
-  const activeKeys      = meta.active_keys      ?? null;
-  const maxNeurons      = meta.max_neurons      ?? null;
+  const activeMiners     = meta.active_miners     != null ? meta.active_miners     : null;
+  const activeValidators = meta.active_validators != null ? meta.active_validators : (meta.validators != null ? meta.validators : null);
+  const activeKeys       = meta.active_keys       != null ? meta.active_keys       : null;
+  const maxNeurons       = meta.max_neurons       != null ? meta.max_neurons       : null;
 
   // Metagraph reward analysis
   let rewardedMiners = 0, totalMiners = 0, avgMinerRewardTAO = 0, topMinerRewardTAO = 0;
   const minerRewards = [];
   if (metagraph && metagraph.length) {
-    const miners = metagraph.filter(n => {
-      const mining = parseFloat(n.daily_mining_alpha_as_tao || 0);
-      const validating = parseFloat(n.daily_validating_alpha_as_tao || 0);
-      // Miner if it has incentive > 0 or mining_alpha > 0
-      return parseFloat(n.incentive || 0) > 0 || mining > 0;
-    });
+    const miners = metagraph.filter(n =>
+      parseFloat(n.incentive || 0) > 0 || parseFloat(n.daily_mining_alpha_as_tao || 0) > 0
+    );
     totalMiners = miners.length;
-
     for (const m of miners) {
       const r = parseFloat(m.daily_mining_alpha_as_tao || 0) / 1e9;
-      if (r > 0) {
-        rewardedMiners++;
-        minerRewards.push(r);
-      }
+      if (r > 0) { rewardedMiners++; minerRewards.push(r); }
     }
     if (minerRewards.length) {
       avgMinerRewardTAO = minerRewards.reduce((a, b) => a + b, 0) / minerRewards.length;
@@ -2568,66 +2561,74 @@ function renderMinerSection(data) {
   const history = [...(subnetHistory || [])].reverse();
   const hasHistory = history.length >= 2;
 
-  // Trend: compare active_miners now vs 30 days ago
-  let trendStr = null, trendClass = 'grey';
+  // Trend string — compute before template literal
+  let trendHTML = '';
   if (hasHistory && history.length >= 10) {
-    const old = history[0]?.active_miners ?? null;
-    const cur = history[history.length - 1]?.active_miners ?? activeMiners;
-    if (old !== null && cur !== null) {
+    const old = history[0] != null ? history[0].active_miners : null;
+    const cur = history[history.length - 1] != null ? history[history.length - 1].active_miners : activeMiners;
+    if (old != null && cur != null) {
       const delta = cur - old;
-      if (delta > 0) { trendStr = `+${delta} miners since ${fmtDate(history[0]?.timestamp)}`; trendClass = 'green'; }
-      else if (delta < 0) { trendStr = `${delta} miners since ${fmtDate(history[0]?.timestamp)}`; trendClass = 'red'; }
-      else { trendStr = 'Stable miner count'; trendClass = 'grey'; }
+      const cls   = delta > 0 ? 'green' : delta < 0 ? 'red' : 'grey';
+      const label = delta > 0
+        ? '+' + delta + ' miners since ' + fmtDate(history[0].timestamp)
+        : delta < 0
+          ? delta + ' miners since ' + fmtDate(history[0].timestamp)
+          : 'Stable miner count';
+      trendHTML = '<span class="' + cls + '" style="font-size:10px;font-weight:700;">' + label + '</span>';
     }
   }
+
+  // Stat cards — build as strings before template
+  const cardMiners     = activeMiners     != null ? String(activeMiners)     : '—';
+  const cardValidators = activeValidators != null ? String(activeValidators) : '—';
+  const cardKeys       = activeKeys != null
+    ? activeKeys + '<span style="font-size:11px;font-weight:400;color:#aaa;"> / ' + (maxNeurons != null ? maxNeurons : '—') + '</span>'
+    : '—';
+
+  const rewardedCard = rewardedMiners > 0
+    ? '<div class="stat-card"><div class="stat-val green">' + rewardedMiners + '</div><div class="stat-lbl">Rewarded Miners</div><div class="stat-sub">receiving daily alpha</div></div>'
+    : '';
+
+  const avgCard = avgMinerRewardTAO > 0
+    ? '<div class="stat-card"><div class="stat-val">' + fmtAlpha(avgMinerRewardTAO) + ' <span style="font-size:11px;font-weight:400;color:#aaa;">TAO/d</span></div><div class="stat-lbl">Avg Miner Reward</div><div class="stat-sub">daily, top: ' + fmtAlpha(topMinerRewardTAO) + ' TAO</div></div>'
+    : '';
+
+  const chartSection = hasHistory
+    ? '<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">ACTIVE MINER COUNT — HISTORICAL</div><div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div></div><div style="font-size:10px;color:#ccc;margin-bottom:20px;">Daily snapshots. Miner count reflects UIDs with non-zero incentive weight at each block.</div>'
+    : '';
 
   el.innerHTML = `
     <div class="sec-hdr" style="margin-bottom:12px;">
       <span class="sec-title">Miner Activity</span>
-      ${trendStr ? \`<span class="\${trendClass}" style="font-size:10px;font-weight:700;">\${trendStr}</span>\` : ''}
+      ${trendHTML}
     </div>
     <div class="stats-grid" style="margin-bottom:14px;">
       <div class="stat-card">
-        <div class="stat-val">\${activeMiners !== null ? activeMiners : '—'}</div>
+        <div class="stat-val">${cardMiners}</div>
         <div class="stat-lbl">Active Miners</div>
         <div class="stat-sub">earning incentive now</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val">\${activeValidators !== null ? activeValidators : '—'}</div>
+        <div class="stat-val">${cardValidators}</div>
         <div class="stat-lbl">Active Validators</div>
         <div class="stat-sub">with valid permits</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val">\${activeKeys !== null ? activeKeys : '—'}<span style="font-size:11px;font-weight:400;color:#aaa;"> / \${maxNeurons ?? '—'}</span></div>
+        <div class="stat-val">${cardKeys}</div>
         <div class="stat-lbl">Registered UIDs</div>
         <div class="stat-sub">of max capacity</div>
       </div>
-      \${rewardedMiners > 0 ? \`<div class="stat-card">
-        <div class="stat-val green">\${rewardedMiners}</div>
-        <div class="stat-lbl">Rewarded Miners</div>
-        <div class="stat-sub">receiving daily alpha</div>
-      </div>\` : ''}
-      \${avgMinerRewardTAO > 0 ? \`<div class="stat-card">
-        <div class="stat-val">\${fmtAlpha(avgMinerRewardTAO)} <span style="font-size:11px;font-weight:400;color:#aaa;">TAO/d</span></div>
-        <div class="stat-lbl">Avg Miner Reward</div>
-        <div class="stat-sub">daily, top: \${fmtAlpha(topMinerRewardTAO)} TAO</div>
-      </div>\` : ''}
+      ${rewardedCard}
+      ${avgCard}
     </div>
-    \${hasHistory ? \`
-    <div class="chart-box" style="margin-bottom:14px;">
-      <div class="chart-title">ACTIVE MINER COUNT — HISTORICAL</div>
-      <div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div>
-    </div>
-    <div style="font-size:10px;color:#ccc;margin-bottom:20px;">
-      Daily snapshots. Miner count reflects UIDs with non-zero incentive weight at each block.
-    </div>\` : ''}
+    ${chartSection}
   `;
 
   // Draw miner trend chart
   if (hasHistory) {
-    const labels = history.map(h => fmtChartTs(h.timestamp, '90d'));
-    const minerData = history.map(h => h.active_miners ?? null);
-    const validatorData = history.map(h => h.active_validators ?? h.validators ?? null);
+    const labels      = history.map(h => fmtChartTs(h.timestamp, '90d'));
+    const minerData   = history.map(h => h.active_miners     != null ? h.active_miners     : null);
+    const validData   = history.map(h => h.active_validators != null ? h.active_validators : (h.validators != null ? h.validators : null));
 
     const ctx = document.getElementById('miner-trend-chart');
     if (ctx) {
@@ -2649,7 +2650,7 @@ function renderMinerSection(data) {
             },
             {
               label: 'Active Validators',
-              data: validatorData,
+              data: validData,
               borderColor: '#aaa',
               backgroundColor: 'transparent',
               borderWidth: 1.5,
@@ -2666,7 +2667,7 @@ function renderMinerSection(data) {
           interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { display: true, position: 'top', labels: { font: { family: 'Arial', size: 10 }, color: '#888', boxWidth: 12 } },
-            tooltip: { callbacks: { label: ctx => \`\${ctx.dataset.label}: \${ctx.parsed.y ?? '—'}\` } }
+            tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + (c.parsed.y != null ? c.parsed.y : '—'); } } }
           },
           scales: {
             x: { ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb', maxTicksLimit: 8 }, grid: { display: false } },
