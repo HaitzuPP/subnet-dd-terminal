@@ -2578,7 +2578,7 @@ function renderValidatorSection(data) {
   const holdCount=signals.filter(s=>s.signal==='holding').length;
   const sellCount=signals.filter(s=>s.signal==='distributing').length;
   const totalDailyTAO=validators.reduce((s,v)=>s+parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9,0);
-  const noHistLoaded = !Object.keys(validatorHistories || {}).length;
+  const noHistLoaded = !Object.values(validatorHistories || {}).some(h=>Array.isArray(h)&&h.length>0);
   const aggLabel = noHistLoaded ? 'history not loaded'
     : holdCount >= sellCount ? holdCount+' of '+validators.length+' holding'
     : sellCount+' of '+validators.length+' distributing';
@@ -2620,7 +2620,7 @@ function renderValidatorSection(data) {
       +'</div>';
   }).join('');
 
-  const hasHistData=Object.keys(validatorHistories||{}).length>0;
+  const hasHistData=Object.values(validatorHistories||{}).some(h=>Array.isArray(h)&&h.length>0);
   el.innerHTML = `
     <div style="margin-bottom:12px;">
       <div class="sec-hdr" style="margin-bottom:4px;">
@@ -2676,8 +2676,9 @@ function renderValidatorSection(data) {
       datasets.push({label:'Expected (emit rate)',data:expPts,borderColor:col,backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0.15});
     });
     const ctx=document.getElementById('validator-ts-chart');
-    if(ctx&&datasets.length){
+    if(ctx){
       if(ctx._chartInst) ctx._chartInst.destroy();
+      if(!datasets.length){ canvasMsg('validator-ts-chart','No stake history data available'); return; }
       ctx._chartInst=new Chart(ctx,{type:'line',data:{datasets},options:{responsive:true,maintainAspectRatio:false,parsing:{xAxisKey:'x',yAxisKey:'y'},interaction:{mode:'index',intersect:false},
         plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Arial',size:9},color:'#888',boxWidth:12,padding:10,filter:i=>!i.text.includes('Expected')}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtVal(c.parsed.y,taoPriceUSD)}}},
         scales:{x:{type:'category',ticks:{font:{family:'Arial',size:9},color:'#bbb',maxTicksLimit:10},grid:{display:false}},y:{ticks:{font:{family:'Arial',size:9},color:'#bbb',callback:v=>USD_MODE&&taoPriceUSD?'$'+(v*taoPriceUSD).toFixed(0):fmtAlpha(v)},grid:{color:'#f5f5f5'},beginAtZero:false}}
