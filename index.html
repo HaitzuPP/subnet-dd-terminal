@@ -652,7 +652,7 @@ input[type=number]::placeholder { color: #bbb; }
     </div>
 
     <div class="chart-box" style="margin-bottom:14px;">
-      <div class="chart-title">EMISSION RANK — lower is better</div>
+      <div class="chart-title">EMISSION RANK</div>
       <div class="chart-wrap chart-wrap-tall"><canvas id="rank-chart"></canvas></div>
     </div>
 
@@ -1666,15 +1666,16 @@ function drawRankChart(data, period) {
 
   const maxR = Math.max(...validRanks);
   const o = JSON.parse(JSON.stringify(BASE_OPTS));
+  const minR = Math.max(1, Math.min(...validRanks) - 1);
   o.scales.y = {
     ...o.scales.y,
+    type: 'logarithmic',
     reverse: true,
-    min: 1,
-    max: maxR + 2,
+    min: minR,
+    max: maxR + Math.ceil(maxR * 0.1),
     ticks: {
       font: { family: 'Arial', size: 9 }, color: '#888',
-      callback: v => `#${Math.round(v)}`,
-      stepSize: 1,
+      callback: v => Number.isInteger(v) ? `#${v}` : null,
     },
     grid:   { color: '#f5f5f5' },
     border: { color: '#eee' },
@@ -2197,7 +2198,16 @@ function drawOwnerStackedChart(data) {
     if (h.timestamp) { const key = h.timestamp.slice(0,7); thisMonthMap[key] = parseFloat(h.balance||0)/1e9; }
   }
   const monthKeys = Object.keys(thisMonthMap).sort().slice(-7);
-  if (!monthKeys.length) { canvasMsg('owner-flow-chart','No balance history for owner on this subnet'); return; }
+  if (!monthKeys.length) {
+    // No history for this subnet — show current cross-subnet snapshot instead
+    const snap = (ownerAllPositions||[]).sort((a,b)=>parseFloat(b.balance_as_tao||0)-parseFloat(a.balance_as_tao||0));
+    if (!snap.length) { canvasMsg('owner-flow-chart','No balance data available for owner'); return; }
+    const PAL2=['rgba(26,122,58,0.82)','rgba(41,128,185,0.75)','rgba(142,68,173,0.65)','rgba(136,136,128,0.55)'];
+    const snapDS=snap.slice(0,5).map((p,i)=>({ label:(p.symbol&&/[a-zA-Z]/.test(p.symbol))?p.symbol:('SN'+p.netuid), data:[+(parseFloat(p.balance||0)/1e9).toFixed(4)], backgroundColor:PAL2[i%4], borderRadius:2, stack:'stk' }));
+    if (canvas._chartInst) { canvas._chartInst.destroy(); canvas._chartInst=null; }
+    canvas._chartInst=new Chart(canvas.getContext('2d'),{ type:'bar', data:{labels:['Current holdings'],datasets:snapDS}, options:{ responsive:true,maintainAspectRatio:false, plugins:{ legend:{display:true,position:'bottom',labels:{font:{family:'Arial',size:9},color:'#888',boxWidth:12,padding:14}}, tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmtAlpha(c.parsed.y)+' α'}} }, scales:{ x:{stacked:true,ticks:{font:{family:'Arial',size:9},color:'#bbb'},grid:{display:false}}, y:{stacked:true,ticks:{font:{family:'Arial',size:9},color:'#bbb',callback:v=>fmtAlpha(v)},grid:{color:'#f5f5f5'},beginAtZero:true} } } });
+    return;
+  }
   const labels = monthKeys.map(k => { const [y,m]=k.split('-'); return MONTHS[+m-1]+" '"+y.slice(2); });
   const thisSym = (pool&&pool.symbol&&/[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : ('SN'+(pool?pool.netuid:netuid));
   const datasets = [{ label: thisSym+' (hotkey)', data: monthKeys.map(k=>+(thisMonthMap[k]||0).toFixed(4)), backgroundColor:'rgba(26,122,58,0.82)', borderRadius:2, stack:'stk' }];
@@ -2703,8 +2713,14 @@ function renderValidatorSection(data) {
   const holdCount=signals.filter(s=>s.signal==='holding').length;
   const sellCount=signals.filter(s=>s.signal==='distributing').length;
   const totalDailyTAO=validators.reduce((s,v)=>s+parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9,0);
-  const aggLabel=holdCount>=sellCount?holdCount+' of '+validators.length+' holding':sellCount+' of '+validators.length+' distributing';
-  const aggBg=holdCount>sellCount?'background:#e8f5e9;color:#1a7a3a;':sellCount>holdCount?'background:#fdecea;color:#c0392b;':'background:#fff3cd;color:#856404;';
+  const noHistLoaded = !Object.keys(validatorHistories || {}).length;
+  const aggLabel = noHistLoaded ? 'history not loaded'
+    : holdCount >= sellCount ? holdCount+' of '+validators.length+' holding'
+    : sellCount+' of '+validators.length+' distributing';
+  const aggBg = noHistLoaded ? 'background:#f5f5f5;color:#888;'
+    : holdCount > sellCount ? 'background:#e8f5e9;color:#1a7a3a;'
+    : sellCount > holdCount ? 'background:#fdecea;color:#c0392b;'
+    : 'background:#fff3cd;color:#856404;';
 
   const flowBarsHTML=validators.map((v,i)=>{
     const reward=parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9;
