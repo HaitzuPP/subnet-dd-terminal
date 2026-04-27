@@ -1202,75 +1202,59 @@ function renderOwnerDash(data) {
   const el = document.getElementById('owner-dash');
   if (!el) return;
 
-  const ownerObj   = (meta || {}).owner       || null;
-  const hotkeyObj  = (meta || {}).owner_hotkey || null;
+  const ownerObj   = (meta || {}).owner        || null;
+  const hotkeyObj  = (meta || {}).owner_hotkey  || null;
   const ownerSS58  = ownerObj  && (ownerObj.ss58  || (typeof ownerObj  === 'string' ? ownerObj  : null));
   const hotkeySS58 = hotkeyObj && (hotkeyObj.ss58 || (typeof hotkeyObj === 'string' ? hotkeyObj : null));
   const separateHotkey = ownerSS58 && hotkeySS58 && ownerSS58 !== hotkeySS58;
 
   if (!ownerBalance && (!ownerBalHistory || !ownerBalHistory.length) && (!ownerAllPositions || !ownerAllPositions.length)) {
-    const ownerSS58check = (meta.owner && (meta.owner.ss58 || meta.owner)) || null;
-    if (ownerSS58check) {
-      el.innerHTML = '<div style="padding:12px 0;font-size:11px;color:#bbb;border-top:1.5px solid #f0f0f0;margin-top:8px;">'
+    const ck = (meta.owner && (meta.owner.ss58 || meta.owner)) || null;
+    if (ck) {
+      el.innerHTML = '<div style="padding:10px 0;font-size:11px;color:#bbb;border-top:1.5px solid #f0f0f0;margin-top:8px;">'
         + '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#ccc;">Owner Portfolio</span>'
-        + '<div style="margin-top:6px;">Owner key found (<span style="font-family:monospace;font-size:10px;">' + (ownerSS58check.slice(0,8) + '...' + ownerSS58check.slice(-6)) + '</span>) but no alpha stake returned from API. Owner may not have staked on this subnet.</div></div>';
-    } else {
-      el.innerHTML = '';
-    }
+        + '<div style="margin-top:6px;">Owner key found but no alpha stake returned from API. Owner may not have staked on this subnet.</div></div>';
+    } else { el.innerHTML = ''; }
     return;
   }
 
-  // ── Portfolio summary across all positions ──────────────────
   const allPos = ownerAllPositions || [];
-  const totalAlphaPositions = allPos.length;
   let totalPortfolioTAO = 0;
-  allPos.forEach(p => { totalPortfolioTAO += (parseFloat(p.balance_as_tao || 0) / 1e9); });
-  if (ownerBalance && !allPos.length) totalPortfolioTAO = (parseFloat(ownerBalance.balance_as_tao || 0) / 1e9);
+  allPos.forEach(p => { totalPortfolioTAO += parseFloat(p.balance_as_tao || 0) / 1e9; });
+  if (ownerBalance && !allPos.length) totalPortfolioTAO = parseFloat(ownerBalance.balance_as_tao || 0) / 1e9;
   const portfolioUSD = taoPriceUSD ? totalPortfolioTAO * taoPriceUSD : null;
 
-  // ── Transfer signal ──────────────────────────────────────────
-  const recentTx = (data.ownerTransfers || []).slice(0, 5);
-  const outCount = recentTx.filter(t => (t.from?.ss58 || t.source?.ss58 || '') === ownerSS58).length;
-  const txSignalHTML = recentTx.length
-    ? (outCount >= recentTx.length * 0.6
-        ? '<span style="font-size:10px;font-weight:700;color:#c0392b;">⚠ Recent outflows (' + outCount + '/' + recentTx.length + ' txns)</span>'
-        : '<span style="font-size:10px;font-weight:700;color:#1a7a3a;">✓ Mostly inflows (' + (recentTx.length - outCount) + '/' + recentTx.length + ' txns)</span>')
-    : '';
-
-  // ── Holdings cards ───────────────────────────────────────────
-  let holdingsHTML = '';
-  if (ownerBalance) {
-    const alphaAmt = (parseFloat(ownerBalance.balance || 0) / 1e9);
-    const taoAmt   = (parseFloat(ownerBalance.balance_as_tao || 0) / 1e9);
-    const sym = (pool.symbol && /[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : 'tokens';
-    holdingsHTML = `
-      <div class="holdings-grid" style="margin-bottom:14px;">
-        <div class="stat-card">
-          <div class="stat-val">${fmtAlpha(alphaAmt)}</div>
-          <div class="stat-lbl">Owner Alpha</div>
-          <div class="stat-sub">${sym}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val">${fmtVal(taoAmt, taoPriceUSD)}</div>
-          <div class="stat-lbl">Owner Value</div>
-          <div class="stat-sub">at current alpha price</div>
-        </div>
-        ${portfolioUSD !== null ? `<div class="stat-card">
-          <div class="stat-val">$${fmtUSD(portfolioUSD)}</div>
-          <div class="stat-lbl">Portfolio USD</div>
-          <div class="stat-sub">${totalAlphaPositions > 1 ? totalAlphaPositions + ' subnets' : 'this subnet'}</div>
-        </div>` : ''}
-        ${totalAlphaPositions > 1 ? `<div class="stat-card">
-          <div class="stat-val">${totalAlphaPositions}</div>
-          <div class="stat-lbl">Subnets Held</div>
-          <div class="stat-sub">coldkey positions</div>
-        </div>` : ''}
-      </div>`;
+  // Token Δ 90d
+  let tokenDelta90 = null;
+  if (ownerBalHistory && ownerBalHistory.length >= 2) {
+    const srt = [...ownerBalHistory].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const cutoff = Date.now() - 90 * 86400000;
+    const old90  = srt.find(h => new Date(h.timestamp).getTime() >= cutoff);
+    const latest = srt[srt.length - 1];
+    if (old90 && latest) {
+      const oA = parseFloat(old90.balance || 0) / 1e9;
+      const nA = parseFloat(latest.balance || 0) / 1e9;
+      tokenDelta90 = oA > 0.001 ? ((nA - oA) / oA * 100) : null;
+    }
   }
 
-  // ── Key addresses ─────────────────────────────────────────────
+  // Accumulation signal
+  let accumSignal = null, accumColor = '#aaa';
+  if (ownerBalHistory && ownerBalHistory.length >= 2) {
+    const srt = [...ownerBalHistory].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const earliest = parseFloat(srt[0].balance || 0) / 1e9;
+    const latest2  = parseFloat(srt[srt.length-1].balance || 0) / 1e9;
+    const days     = Math.max(1, (new Date(srt[srt.length-1].timestamp) - new Date(srt[0].timestamp)) / 86400000);
+    const dailyEmit = ownerBalance ? parseFloat(ownerBalance.daily_reward || ownerBalance.emission || 0) / 1e9 : 0;
+    const expected  = earliest + dailyEmit * days;
+    if (latest2 >= expected * 1.05)     { accumSignal = 'Accumulating'; accumColor = '#1a7a3a'; }
+    else if (latest2 >= expected * 0.9) { accumSignal = 'Holding';      accumColor = '#1a7a3a'; }
+    else if (latest2 >= expected * 0.5) { accumSignal = 'Partial sell'; accumColor = '#e67e22'; }
+    else                                { accumSignal = 'Distributing'; accumColor = '#c0392b'; }
+  }
+
   const keysHTML = (ownerSS58 || hotkeySS58) ? `
-    <div class="owner-card" style="margin-bottom:14px;">
+    <div class="owner-card" style="margin-bottom:10px;">
       ${ownerSS58 ? `<div class="owner-row">
         <span class="owner-field-lbl">Coldkey</span>
         <span class="key-pill" onclick="copyKey(this,'${ownerSS58}')" title="${ownerSS58}">${truncKey(ownerSS58)}</span>
@@ -1281,1057 +1265,111 @@ function renderOwnerDash(data) {
         <span class="key-pill" onclick="copyKey(this,'${hotkeySS58}')" title="${hotkeySS58}">${truncKey(hotkeySS58)}</span>
         <span style="font-size:9px;color:${separateHotkey ? '#1a7a3a' : '#aaa'};margin-left:4px;">${separateHotkey ? '✓ separate emissions wallet' : 'same as coldkey'}</span>
       </div>` : ''}
-      ${txSignalHTML ? `<div style="margin-top:8px;">${txSignalHTML}</div>` : ''}
     </div>` : '';
 
-  // ── Cross-subnet positions table ──────────────────────────────
-  let posTableHTML = '';
-  if (allPos.length > 1) {
-    const rows = allPos.slice(0, 8).map(p => {
-      const sym2 = p.symbol || ('SN' + p.netuid);
-      const alpha = (parseFloat(p.balance || 0) / 1e9);
-      const tao   = (parseFloat(p.balance_as_tao || 0) / 1e9);
-      const isCurrent = p.netuid === netuid;
-      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
-        + '<span style="min-width:40px;font-weight:700;' + (isCurrent ? 'color:#1a7a3a;' : '') + '">' + sym2 + '</span>'
-        + '<span style="flex:1;color:#888;font-size:10px;">' + (isCurrent ? '← this subnet' : '') + '</span>'
-        + '<span style="min-width:80px;text-align:right;font-weight:700;">' + fmtAlpha(alpha) + '</span>'
-        + '<span style="min-width:70px;text-align:right;color:#aaa;">' + fmtAlpha(tao) + ' TAO</span>'
-        + '</div>';
-    }).join('');
-    posTableHTML = `
-      <div class="sec-hdr" style="margin-bottom:8px;">
-        <span class="sec-title">Cross-Subnet Positions</span>
-        <span style="font-size:9px;color:#aaa;">all coldkey holdings</span>
-      </div>
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;gap:8px;padding:3px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#bbb;border-bottom:0.5px solid #eee;">
-          <span style="min-width:40px;">Token</span><span style="flex:1;"></span>
-          <span style="min-width:80px;text-align:right;">Alpha</span>
-          <span style="min-width:70px;text-align:right;">TAO Value</span>
-        </div>
-        ${rows}
-      </div>`;
-  }
-
   el.innerHTML = `
-    <div class="sec-hdr" style="margin-bottom:12px;">
-      <span class="sec-title">Owner Portfolio</span>
-      ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank"
-        style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats ↗</a>` : ''}
+    <div style="margin-bottom:12px;">
+      <div class="sec-hdr" style="margin-bottom:4px;">
+        <span class="sec-title">Owner Portfolio — ${pool.name || ('SN' + pool.netuid)}</span>
+        ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank" style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats ↗</a>` : ''}
+      </div>
     </div>
     ${keysHTML}
-    ${holdingsHTML}
-    ${posTableHTML}
-    <div class="sec-hdr" style="margin-bottom:10px;">
-      <span class="sec-title">Monthly Alpha Token Balance (this subnet)</span>
-      <div class="toggles" id="owner-period-toggles">
-        <button class="tgl ${OWNER_PERIOD === '3m'   ? 'active' : ''}" data-period="3m">3M</button>
-        <button class="tgl ${OWNER_PERIOD === '6m'   ? 'active' : ''}" data-period="6m">6M</button>
-        <button class="tgl ${OWNER_PERIOD === 'dtao' ? 'active' : ''}" data-period="dtao">dTAO</button>
-      </div>
+    <div class="stats-grid" style="margin-bottom:14px;">
+      ${portfolioUSD !== null ? `<div class="stat-card"><div class="stat-val">$${fmtUSD(portfolioUSD)}</div><div class="stat-lbl">Portfolio (USD)</div><div class="stat-sub">at live alpha prices</div></div>` : ''}
+      ${tokenDelta90 !== null ? `<div class="stat-card"><div class="stat-val ${tokenDelta90 >= 0 ? 'green' : 'red'}">${tokenDelta90 >= 0 ? '+' : ''}${tokenDelta90.toFixed(1)}%</div><div class="stat-lbl">Token Δ (90d)</div><div class="stat-sub">alpha count, not price</div></div>` : ''}
+      ${allPos.length > 0 ? `<div class="stat-card"><div class="stat-val">${allPos.length}</div><div class="stat-lbl">Subnets Held</div><div class="stat-sub">coldkey + hotkey</div></div>` : ''}
+      ${accumSignal ? `<div class="stat-card"><div class="stat-val" style="font-size:15px;color:${accumColor};">${accumSignal}</div><div class="stat-lbl">Behaviour</div><div class="stat-sub">vs emission rate</div></div>` : ''}
     </div>
     <div class="chart-box" style="margin-bottom:6px;">
-      <div class="chart-title">NET MONTHLY CHANGE — ALPHA TOKEN COUNT (not TAO value)</div>
-      <div class="chart-wrap"><canvas id="owner-flow-chart"></canvas></div>
+      <div class="chart-title">MONTH-ON-MONTH ALPHA TOKEN HOLDINGS (COUNT, NOT PRICE)</div>
+      <div class="chart-wrap chart-wrap-tall"><canvas id="owner-flow-chart"></canvas></div>
     </div>
-    <div style="font-size:10px;color:#ccc;margin-bottom:20px;">
-      Token count strips price noise. Growth above emission rate = genuine accumulation. Decline = selling faster than earning.
-    </div>
-  `;
-
-  document.getElementById('owner-period-toggles').addEventListener('click', e => {
-    const b = e.target.closest('.tgl');
-    if (!b || !STATE) return;
-    document.querySelectorAll('#owner-period-toggles .tgl').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    OWNER_PERIOD = b.dataset.period;
-    drawOwnerFlowChart(STATE.ownerBalHistory || [], OWNER_PERIOD);
-  });
-
-  drawOwnerFlowChart(ownerBalHistory || [], OWNER_PERIOD);
-}
-
-// ============================================================
-// SYNTHESIS SIGNAL CARD (kept for reference, no longer rendered)
-// ============================================================
-function drawSignalCard(data) {
-  const el = document.getElementById('signal-card');
-  if (!el) return;
-
-  const { pool, history, taoPriceHistory, netuid } = data;
-
-  // --- Alpha vs TAO performance since dTAO launch ---
-  let perfStr = null, perfClass = 'grey';
-  if (history && history.length && taoPriceHistory && taoPriceHistory.length) {
-    function tsKey(ts) {
-      const n = Number(ts);
-      let d = !isNaN(n) && n > 0 ? new Date(n < 2e9 ? n * 1000 : n) : new Date(ts);
-      return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
-    }
-    const taoMap = {};
-    for (const t of taoPriceHistory) {
-      const k = tsKey(t.timestamp);
-      const p = toF(t.price) || toF(t.usd_price) || toF(t.close);
-      if (k && p) taoMap[k] = p;
-    }
-    const sorted = [...history]
-      .filter(h => h.timestamp && toF(h.price))
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-    const dtao = new Date('2025-02-10');
-    let bi = sorted.findIndex(h => new Date(h.timestamp) >= dtao);
-    if (bi < 0) bi = 0;
-    let baseAlpha = null, baseTao = null;
-    for (let i = bi; i < Math.min(bi + 14, sorted.length); i++) {
-      const k = tsKey(sorted[i].timestamp);
-      if (k && taoMap[k] && toF(sorted[i].price)) {
-        baseAlpha = toF(sorted[i].price);
-        baseTao   = taoMap[k];
-        break;
-      }
-    }
-    if (baseAlpha && baseTao) {
-      const curAlpha = toF(sorted[sorted.length - 1].price);
-      const curTaoKey = tsKey(sorted[sorted.length - 1].timestamp);
-      const curTao = taoMap[curTaoKey] || baseTao;
-      const alphaRet = ((curAlpha - baseAlpha) / baseAlpha) * 100;
-      const taoRet   = ((curTao   - baseTao)   / baseTao)   * 100;
-      const rel = alphaRet - taoRet;
-      if (rel >= 0) {
-        perfStr  = `outperforming TAO by ${Math.abs(rel).toFixed(1)}pp since dTAO launch`;
-        perfClass = 'green';
-      } else {
-        perfStr  = `underperforming TAO by ${Math.abs(rel).toFixed(1)}pp since dTAO launch`;
-        perfClass = 'red';
-      }
-    }
-  }
-
-  // --- 30-day net flow direction ---
-  let flowStr = null, flowClass = 'grey';
-  if (history && history.length) {
-    const cut = Date.now() - 30 * 86400000;
-    const recent = history
-      .filter(h => h.timestamp && new Date(h.timestamp).getTime() >= cut && toF(h.total_tao) !== null)
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    if (recent.length >= 2) {
-      const netFlow = (toF(recent[recent.length - 1].total_tao) - toF(recent[0].total_tao)) / 1e9;
-      if (netFlow > 0.5) {
-        flowStr = `+${fmtAlpha(netFlow)} TAO net inflow (30d)`;
-        flowClass = 'green';
-      } else if (netFlow < -0.5) {
-        flowStr = `${fmtAlpha(netFlow)} TAO net outflow (30d)`;
-        flowClass = 'red';
-      } else {
-        flowStr = 'neutral flow (30d)';
-        flowClass = 'grey';
-      }
-    }
-  }
-
-  // --- Rank context ---
-  const rank = pool.rank;
-  const rootPct = (toF(pool.root_prop) * 100 || 0).toFixed(2);
-  const rankStr = rank ? `#${rank} by emission, ${rootPct}% root prop` : null;
-
-  // Build signal card — primary signal dominant, secondary data smaller
-  if (!perfStr && !flowStr && !rankStr) { el.innerHTML = ''; return; }
-
-  // Primary: performance vs TAO (most investable signal)
-  const primaryHTML = perfStr
-    ? `<div style="font-size:15px;font-weight:700;line-height:1.3;" class="${perfClass}">SN${netuid} is ${perfStr}</div>`
-    : `<div style="font-size:15px;font-weight:700;color:#888;">SN${netuid} — insufficient history for comparison</div>`;
-
-  // Secondary row: flow + rank on one small line
-  const secondaryParts = [
-    flowStr ? `<span class="${flowClass}" style="font-weight:700;">${flowStr}</span>` : null,
-    rankStr ? `<span style="color:#888;">${rankStr}</span>` : null,
-  ].filter(Boolean);
-
-  el.innerHTML = `
-    <div style="background:#fafafa;border:1.5px solid ${perfClass === 'green' ? '#b8dfc4' : perfClass === 'red' ? '#f0c8c3' : '#e8e8e8'};border-radius:6px;padding:14px 18px;">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:#aaa;margin-bottom:7px;">Investment Signal</div>
-      ${primaryHTML}
-      ${secondaryParts.length ? `<div style="font-size:11px;margin-top:6px;">${secondaryParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
-      <div style="font-size:10px;color:#ccc;margin-top:5px;">Baseline = dTAO launch (Feb 2025). Past performance is not indicative of future results.</div>
-    </div>
-  `;
-}
-
-// ============================================================
-// CHARTS
-// ============================================================
-function chartSeries(data, period) {
-  const { pool, history } = data;
-
-  if (period === '7d') {
-    // Use embedded seven_day_prices (4-hourly)
-    const sdp = pool.seven_day_prices || [];
-    return {
-      labels: sdp.map(p => fmtChartTs(p.timestamp, '7d')),
-      prices: sdp.map(p => toF(p.price)),
-      ranks:  null,  // no rank in seven_day_prices
-    };
-  }
-
-  // All time: full sorted history
-  if (period === 'all') {
-    const slice = [...history]
-      .filter(h => h.timestamp && toF(h.price) !== null)
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    return {
-      labels: slice.map(h => fmtChartTs(h.timestamp, '12m')),
-      prices: slice.map(h => toF(h.price)),
-      ranks:  slice.map(h => h.rank || null),
-    };
-  }
-
-  // 30d / 90d / 12m: use daily history (newest first, reverse for chart)
-  const limits = { '30d': 30, '90d': 90, '12m': 200 };
-  const slice  = [...history].slice(0, limits[period] || 30).reverse();
-
-  return {
-    labels: slice.map(h => fmtChartTs(h.timestamp, period)),
-    prices: slice.map(h => toF(h.price)),
-    ranks:  slice.map(h => h.rank || null),
-  };
-}
-
-// ============================================================
-// INDEXED PERFORMANCE CHART — ALPHA vs. TAO
-// ============================================================
-function drawIndexedChart(data) {
-  const canvas = document.getElementById('indexed-chart');
-  const baseLabel = document.getElementById('indexed-base-label');
-  if (!canvas) return;
-
-  const { history, taoPriceHistory, pool } = data;
-  if (!history || !history.length || !taoPriceHistory || !taoPriceHistory.length) {
-    noDataMsg('indexed-chart', 'Insufficient history to compute indexed performance');
-    if (baseLabel) baseLabel.textContent = '';
-    return;
-  }
-
-  // Normalise any timestamp (ISO string, unix seconds, unix ms) to YYYY-MM-DD key
-  function tsKey(ts) {
-    if (!ts && ts !== 0) return null;
-    const n = Number(ts);
-    let d;
-    if (!isNaN(n) && n > 0) {
-      d = new Date(n < 2e9 ? n * 1000 : n); // seconds vs ms heuristic
-    } else {
-      d = new Date(ts);
-    }
-    return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
-  }
-
-  // Build TAO price lookup keyed by YYYY-MM-DD
-  const taoMap = {};
-  for (const t of taoPriceHistory) {
-    const key = tsKey(t.timestamp);
-    if (!key) continue;
-    const p = toF(t.price) || toF(t.usd_price) || toF(t.current_price) || toF(t.close);
-    if (p) taoMap[key] = p;
-  }
-
-  // Sort pool history ascending
-  const sorted = [...history]
-    .filter(h => h.timestamp && toF(h.price) !== null)
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-  if (!sorted.length) {
-    noDataMsg('indexed-chart', 'No price history available');
-    return;
-  }
-
-  // Find base: dTAO launch Feb 10 2025, or first available entry if subnet is newer
-  const dtaoLaunch = new Date('2025-02-10');
-  let baseIdx = sorted.findIndex(h => new Date(h.timestamp) >= dtaoLaunch);
-  if (baseIdx < 0) baseIdx = 0;
-
-  // Scan up to 14 days forward from base until we find a date present in both series
-  let baseDateKey = null, baseTaoPrice = null, baseAlphaPrice = null;
-  for (let i = baseIdx; i < Math.min(baseIdx + 14, sorted.length); i++) {
-    const key = tsKey(sorted[i].timestamp);
-    const tp = taoMap[key];
-    const ap = toF(sorted[i].price);
-    if (key && tp && ap) {
-      baseDateKey = key;
-      baseTaoPrice = tp;
-      baseAlphaPrice = ap;
-      baseIdx = i;
-      break;
-    }
-  }
-
-  // Last fallback: find ANY overlapping date across the full history
-  if (!baseTaoPrice) {
-    for (let i = 0; i < sorted.length; i++) {
-      const key = tsKey(sorted[i].timestamp);
-      const tp = taoMap[key];
-      const ap = toF(sorted[i].price);
-      if (key && tp && ap) {
-        baseDateKey = key;
-        baseTaoPrice = tp;
-        baseAlphaPrice = ap;
-        baseIdx = i;
-        break;
-      }
-    }
-  }
-
-  if (!baseTaoPrice || !baseAlphaPrice) {
-    const taoKeys = Object.keys(taoMap).slice(0, 3).join(', ');
-    const alphaKeys = sorted.slice(0, 3).map(h => tsKey(h.timestamp)).join(', ');
-    noDataMsg('indexed-chart', `Date ranges don't overlap. TAO history: ${taoKeys || 'empty'}. Alpha history: ${alphaKeys || 'empty'}.`);
-    if (baseLabel) baseLabel.textContent = '';
-    return;
-  }
-
-  // Build indexed series
-  const labels = [], alphaIdx = [], taoIdx = [], refLine = [];
-  for (const h of sorted.slice(baseIdx)) {
-    const key = tsKey(h.timestamp);
-    const ap = toF(h.price);
-    const tp = taoMap[key];
-    if (!key || !ap || !tp) continue;
-    labels.push(fmtChartTs(h.timestamp, '12m'));
-    alphaIdx.push(parseFloat(((ap / baseAlphaPrice) * 100).toFixed(2)));
-    taoIdx.push(parseFloat(((tp / baseTaoPrice) * 100).toFixed(2)));
-    refLine.push(100);
-  }
-
-  if (labels.length < 2) {
-    noDataMsg('indexed-chart', 'Not enough overlapping dates to render chart');
-    return;
-  }
-
-  // Label showing base date
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const [by, bm, bd] = baseDateKey.split('-');
-  const baseFmt = `${MONTHS[+bm - 1]} ${bd}, ${by}`;
-  const isDtao = baseIdx === sorted.findIndex(h => new Date(h.timestamp) >= dtaoLaunch) || baseIdx === 0;
-  if (baseLabel) baseLabel.textContent = `Base = 100 at ${baseFmt}${isDtao && baseDateKey >= '2025-02-09' ? ' (dTAO launch)' : ''}`;
-
-  const lastAlpha = alphaIdx[alphaIdx.length - 1];
-  const lastTao   = taoIdx[taoIdx.length - 1];
-  const outperformed = lastAlpha >= lastTao;
-
-  if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
-
-  const allVals = [...alphaIdx, ...taoIdx];
-  const yMin = Math.max(0, Math.min(...allVals) * 0.95);
-  const yMax = Math.max(...allVals) * 1.05;
-
-  canvas._c = new Chart(canvas.getContext('2d'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: `${pool.symbol && /[a-zA-Z]/.test(pool.symbol) ? pool.symbol : 'Alpha'} (SN${data.netuid})`,
-          data: alphaIdx,
-          borderColor: outperformed ? '#1a7a3a' : '#c0392b',
-          backgroundColor: outperformed ? '#1a7a3a0d' : '#c0392b0d',
-          borderWidth: 2,
-          pointRadius: 0,
-          pointHoverRadius: 3,
-          fill: true,
-          tension: 0.2,
-          spanGaps: true,
-        },
-        {
-          label: 'TAO',
-          data: taoIdx,
-          borderColor: '#555',
-          backgroundColor: 'transparent',
-          borderWidth: 1.5,
-          borderDash: [5, 3],
-          pointRadius: 0,
-          pointHoverRadius: 3,
-          fill: false,
-          tension: 0.2,
-          spanGaps: true,
-        },
-        {
-          label: '_baseline',
-          data: refLine,
-          borderColor: '#e0e0e0',
-          borderWidth: 1,
-          borderDash: [3, 3],
-          pointRadius: 0,
-          fill: false,
-        },
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 250 },
-      plugins: {
-        legend: {
-          display: true,
-          labels: {
-            font: { family: 'Arial', size: 10 },
-            color: '#555',
-            boxWidth: 14,
-            padding: 16,
-            filter: item => item.text !== '_baseline',
-          }
-        },
-        tooltip: {
-          mode: 'index', intersect: false,
-          backgroundColor: '#111',
-          titleColor: '#fff', bodyColor: '#bbb',
-          titleFont: { family: 'Arial', size: 11, weight: 'bold' },
-          bodyFont: { family: 'Arial', size: 11 },
-          padding: 10, cornerRadius: 3,
-          filter: item => item.dataset.label !== '_baseline',
-          callbacks: {
-            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}`,
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb', maxTicksLimit: 12, maxRotation: 0 },
-          grid:   { color: '#f5f5f5' },
-          border: { color: '#eee' },
-        },
-        y: {
-          min: yMin, max: yMax,
-          ticks: {
-            font: { family: 'Arial', size: 9 }, color: '#bbb',
-            callback: v => v.toFixed(0),
-          },
-          grid:   { color: '#f5f5f5' },
-          border: { color: '#eee' },
-        }
-      }
-    }
-  });
-}
-
-// Price + rank chart — driven by its own #price-period-toggles
-// Alpha price — standalone line chart
-function drawPriceChart(data, period) {
-  const s = chartSeries(data, period);
-  if (!s.prices || !s.prices.filter(Boolean).length) {
-    clearCanvas('main-chart', 'No data for this period');
-    return;
-  }
-  // Reuse drawDualChart with no rank overlay
-  drawDualChart('main-chart', s.labels, s.prices, [], false);
-}
-
-// Emission rank — standalone line chart (y-axis reversed: rank 1 at top)
-function drawRankChart(data, period) {
-  const canvas = document.getElementById('rank-chart');
-  if (!canvas) return;
-  const s = chartSeries(data, period);
-  const validRanks = (s.ranks || []).filter(r => r !== null);
-  if (!validRanks.length) {
-    canvasMsg('rank-chart', period === '7d' ? 'Rank not available in 7D view — use 30D or longer' : 'No rank data for this period');
-    return;
-  }
-  if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
-
-  const maxR = Math.max(...validRanks);
-  const o = JSON.parse(JSON.stringify(BASE_OPTS));
-  o.scales.y = {
-    ...o.scales.y,
-    reverse: true,
-    min: 1,
-    max: maxR + 2,
-    ticks: {
-      font: { family: 'Arial', size: 9 }, color: '#888',
-      callback: v => `#${Math.round(v)}`,
-      stepSize: 1,
-    },
-    grid:   { color: '#f5f5f5' },
-    border: { color: '#eee' },
-  };
-  o.plugins.tooltip.callbacks = {
-    label: ctx => `Rank: #${Math.round(ctx.parsed.y)}`,
-  };
-
-  canvas._c = new Chart(canvas.getContext('2d'), {
-    type: 'line',
-    data: {
-      labels: s.labels,
-      datasets: [{
-        label: 'Emission Rank',
-        data: s.ranks,
-        borderColor: '#888',
-        backgroundColor: '#88888814',
-        borderWidth: 1.5,
-        pointRadius: 0,
-        pointHoverRadius: 3,
-        fill: true,
-        tension: 0.25,
-        spanGaps: true,
-      }]
-    },
-    options: o,
-  });
-}
-
-// Net flow — driven by the global #period-toggles
-function drawCharts(data, period) {
-  drawNetFlowChart(data, period);
-}
-
-function drawDualChart(id, labels, prices, ranks, hasRank) {
-  const canvas = document.getElementById(id);
-  if (!canvas) return;
-  if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
-
-  const validPrices = prices.filter(v => v !== null);
-  const priceMin = Math.min(...validPrices) * 0.99;
-  const priceMax = Math.max(...validPrices) * 1.01;
-  const validRanks = (ranks || []).filter(r => r !== null);
-  const maxRank = validRanks.length ? Math.max(...validRanks) : 10;
-
-  const o = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: 250 },
-    plugins: {
-      legend: {
-        display: hasRank,
-        labels: { font: { family: 'Arial', size: 10 }, color: '#666', boxWidth: 14, padding: 16 }
-      },
-      tooltip: {
-        mode: 'index', intersect: false,
-        backgroundColor: '#111',
-        titleColor: '#fff', bodyColor: '#bbb',
-        titleFont: { family: 'Arial', size: 11, weight: 'bold' },
-        bodyFont:  { family: 'Arial', size: 11 },
-        padding: 10, cornerRadius: 3,
-        callbacks: {
-          label: ctx => ctx.datasetIndex === 0
-            ? `Price: ${fmtPrice6(ctx.parsed.y)} TAO`
-            : `Rank: #${Math.round(ctx.parsed.y)}`,
-        }
-      }
-    },
-    scales: {
-      x: {
-        ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb', maxTicksLimit: 10, maxRotation: 0 },
-        grid:   { color: '#f5f5f5' },
-        border: { color: '#eee' },
-      },
-      y: {
-        position: 'left',
-        min: priceMin, max: priceMax,
-        ticks: { font: { family: 'Arial', size: 9 }, color: '#1a7a3a', callback: v => fmtPrice6(v) },
-        grid:   { color: '#f5f5f5' },
-        border: { color: '#eee' },
-      },
-      ...(hasRank ? {
-        y1: {
-          position: 'right',
-          min: 1, max: maxRank + 2,
-          reverse: true,
-          title: { display: true, text: 'lower = better', font: { family: 'Arial', size: 8 }, color: '#bbb' },
-          ticks: { font: { family: 'Arial', size: 9 }, color: '#888', callback: v => `#${Math.round(v)}` },
-          grid:   { drawOnChartArea: false },
-          border: { color: '#eee' },
-        }
-      } : {})
-    }
-  };
-
-  const datasets = [{
-    label: 'Alpha Price (TAO)',
-    data: prices,
-    borderColor: '#1a7a3a',
-    backgroundColor: '#1a7a3a14',
-    borderWidth: 1.5,
-    pointRadius: 0,
-    pointHoverRadius: 3,
-    fill: true,
-    tension: 0.25,
-    spanGaps: true,
-    yAxisID: 'y',
-  }];
-
-  if (hasRank) {
-    datasets.push({
-      label: 'Emission Rank',
-      data: ranks,
-      borderColor: '#aaa',
-      backgroundColor: 'transparent',
-      borderWidth: 1.5,
-      borderDash: [4, 3],
-      pointRadius: 0,
-      pointHoverRadius: 3,
-      fill: false,
-      tension: 0.2,
-      spanGaps: true,
-      yAxisID: 'y1',
-    });
-  }
-
-  canvas._c = new Chart(canvas.getContext('2d'), {
-    type: 'line',
-    data: { labels, datasets },
-    options: o,
-  });
-}
-
-// Canvas-safe "no data" — keeps the canvas element so period-switching works
-function canvasMsg(id, msg) {
-  const c = document.getElementById(id);
-  if (!c) return;
-  if (c._c) { c._c.destroy(); c._c = null; }
-  const wrap = c.parentElement;
-  const w = wrap?.offsetWidth || 320;
-  c.width = w; c.height = 200;
-  const ctx = c.getContext('2d');
-  ctx.clearRect(0, 0, w, 200);
-  ctx.font = '11px Arial';
-  ctx.fillStyle = '#ccc';
-  ctx.textAlign = 'center';
-  ctx.fillText(msg, w / 2, 100);
-}
-
-// ============================================================
-// NET TAO FLOW CHART (daily delta in pool TAO — buy vs sell pressure)
-// ============================================================
-function drawNetFlowChart(data, period) {
-  if (!document.getElementById('flow-chart')) return;
-  const { history } = data;
-  if (!history || !history.length) {
-    canvasMsg('flow-chart', 'No history data available');
-    return;
-  }
-
-  const limits = { '7d': 7, '30d': 30, '90d': 90, '12m': 200 };
-  const slice = [...history]
-    .filter(h => h.timestamp && toF(h.total_tao) !== null)
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-    .slice(-(limits[period] || 30) - 1); // +1 so we can compute deltas
-
-  if (slice.length < 2) {
-    canvasMsg('flow-chart', 'Insufficient history for this period');
-    return;
-  }
-
-  const labels = [], deltas = [], bgColors = [], borderColors = [];
-  for (let i = 1; i < slice.length; i++) {
-    const prev = toF(slice[i - 1].total_tao) / 1e9;
-    const curr = toF(slice[i].total_tao) / 1e9;
-    const delta = curr - prev;
-    labels.push(fmtChartTs(slice[i].timestamp, period));
-    deltas.push(parseFloat(delta.toFixed(4)));
-    bgColors.push(delta >= 0 ? '#1a7a3a28' : '#c0392b28');
-    borderColors.push(delta >= 0 ? '#1a7a3a' : '#c0392b');
-  }
-
-  const canvas = document.getElementById('flow-chart');
-  if (!canvas) return;
-  if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
-
-  const o = JSON.parse(JSON.stringify(BASE_OPTS));
-  o.scales.y.ticks.callback = v => (v >= 0 ? '+' : '') + fmtAlpha(v);
-  o.plugins.tooltip.callbacks = {
-    label: ctx => `Net flow: ${ctx.parsed.y >= 0 ? '+' : ''}${fmtAlpha(ctx.parsed.y)} TAO`,
-  };
-
-  canvas._c = new Chart(canvas.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Net TAO Flow',
-        data: deltas,
-        backgroundColor: bgColors,
-        borderColor: borderColors,
-        borderWidth: 1.5,
-        borderRadius: 2,
-      }]
-    },
-    options: o,
-  });
-}
-
-// ============================================================
-// ALPHA STAKED TREND CHART
-// ============================================================
-function drawStakedChart(data, period) {
-  if (!document.getElementById('staked-chart')) return;
-  const { history } = data;
-  if (!history || !history.length) {
-    canvasMsg('staked-chart', 'No history data available');
-    return;
-  }
-
-  const limits = { '7d': 7, '30d': 30, '90d': 90, '12m': 200 };
-  const slice = [...history]
-    .filter(h => h.timestamp && toF(h.alpha_staked) !== null)
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-    .slice(-(limits[period] || 30));
-
-  if (!slice.length) {
-    canvasMsg('staked-chart', 'No staking data for this period');
-    return;
-  }
-
-  const labels = slice.map(h => fmtChartTs(h.timestamp, period));
-  const staked = slice.map(h => parseFloat((toF(h.alpha_staked) / 1e9).toFixed(2)));
-
-  const minV = Math.min(...staked) * 0.97;
-  const maxV = Math.max(...staked) * 1.03;
-
-  buildLineChart('staked-chart', labels, staked, {
-    color: '#555',
-    fill: true,
-    label: 'Alpha Staked',
-    yMin: Math.max(0, minV),
-    yMax: maxV,
-    fmt: v => fmtAlpha(v),
-  });
-
-  // Override tooltip
-  const canvas = document.getElementById('staked-chart');
-  if (canvas && canvas._c) {
-    canvas._c.options.plugins.tooltip.callbacks = {
-      label: ctx => `Staked: ${fmtAlpha(ctx.parsed.y)} alpha`,
-    };
-    canvas._c.update('none');
-  }
-}
-
-// ============================================================
-// RANK TABLE
-// ============================================================
-function drawRankTable(allSorted, currentNetuid) {
-  document.getElementById('rank-table-ts').textContent = 'Live';
-
-  const limit = RANK_EXPANDED ? 50 : 10;
-  const rows = allSorted.slice(0, limit).map(s => {
-    const isCurrent = Number(s.netuid) === Number(currentNetuid);
-    const rPct = (toF(s.root_prop) * 100 || 0).toFixed(3);
-    return `
-      <tr class="${isCurrent ? 'highlight' : ''}">
-        <td><span class="rank-badge ${rankClass(s.rank)}">#${s.rank}</span></td>
-        <td class="bold">SN${s.netuid}</td>
-        <td>${s.name || ''}</td>
-        <td>${fmtPrice(s.price)}</td>
-        <td>${rPct}%</td>
-        <td class="${(toF(s.price_change_1_day)||0) >= 0 ? 'green' : 'red'}">${pct(toF(s.price_change_1_day)||0)}</td>
-      </tr>`;
-  }).join('');
-
-  document.getElementById('rank-table').innerHTML = `
-    <thead>
-      <tr>
-        <th>Rank</th><th>SN</th><th>Name</th>
-        <th>Price</th><th>Root Prop</th><th>24h</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  `;
-
-  const expandRow = document.getElementById('rank-expand-row');
-  if (expandRow) {
-    if (allSorted.length > 10) {
-      expandRow.innerHTML = RANK_EXPANDED
-        ? `<button class="btn btn-ghost" style="font-size:10px;padding:4px 14px;" onclick="RANK_EXPANDED=false;if(STATE)drawRankTable(STATE.allSorted||[],STATE.netuid);">Collapse ↑</button>`
-        : `<button class="btn btn-ghost" style="font-size:10px;padding:4px 14px;" onclick="RANK_EXPANDED=true;if(STATE)drawRankTable(STATE.allSorted||[],STATE.netuid);">Show all ${allSorted.length} subnets ↓</button>`;
-    } else {
-      expandRow.innerHTML = '';
-    }
-  }
-}
-
-// ============================================================
-// OWNER WALLET
-// ============================================================
-function renderOwner(data) {
-  const { pool, meta, netuid, ownerBalance, ownerBalHistory, ownerTransfers, taoPriceUSD } = data;
-
-  const ownerObj  = meta.owner       || null;
-  const hotkeyObj = meta.owner_hotkey || null;
-  const ownerSS58  = ownerObj  && (ownerObj.ss58  || ownerObj);
-  const hotkeySS58 = hotkeyObj && (hotkeyObj.ss58 || hotkeyObj);
-
-  if (!ownerSS58) {
-    document.getElementById('ow-empty').classList.remove('hidden');
-    document.getElementById('ow-content').classList.add('hidden');
-    document.getElementById('ow-empty').querySelector('.state-title').textContent = 'Owner key not available';
-    document.getElementById('ow-empty').querySelector('div:last-child').textContent =
-      'Taostats did not return an owner key for this subnet.';
-    return;
-  }
-
-  document.getElementById('ow-empty').classList.add('hidden');
-  document.getElementById('ow-content').classList.remove('hidden');
-
-  // Identity card — tags and links only; keys moved to bottom of page
-  document.getElementById('owner-id-card').innerHTML = `
-    <div class="owner-tags">
-      <span class="tag tag-green">Registered Owner</span>
-      <span class="tag tag-grey">SN${netuid}</span>
-    </div>
-    <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;">
-      <a href="https://taostats.io/address/${ownerSS58}" target="_blank"
-        style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">
-        View on Taostats &#8599;
-      </a>
-      <a href="https://taostats.io/subnets/${netuid}/alphanomics" target="_blank"
-        style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">
-        Alphanomics &#8599;
-      </a>
+    <div style="font-size:10px;color:#888;padding:8px 10px;background:#f9f9f9;border-radius:4px;margin-bottom:20px;line-height:1.5;">
+      Token count, not TAO value — strips out price noise. Growth above monthly emission rate = genuine accumulation. Flat = passing through. Decline = selling faster than earning.
     </div>
   `;
 
-  // Holdings section: owner-specific stake data
-  let holdingsHTML;
-  if (ownerBalance) {
-    const alphaAmt  = (toF(ownerBalance.balance)        || 0) / 1e9;
-    const taoAmt    = (toF(ownerBalance.balance_as_tao) || 0) / 1e9;
-    const alphaPrice = toF(pool.price) || 0;
-    const usdVal     = taoPriceUSD ? taoAmt * taoPriceUSD : null;
-    const priceRef   = taoPriceUSD
-      ? `TAO/USD: $${taoPriceUSD.toFixed(2)} | Alpha: ${fmtPrice6(alphaPrice)} TAO`
-      : `Alpha: ${fmtPrice6(alphaPrice)} TAO`;
-
-    holdingsHTML = `
-      <div class="sec-hdr">
-        <span class="sec-title">Owner Holdings (Current Value)</span>
-        <span class="grey" style="font-size:10px;">${priceRef}</span>
-      </div>
-      <div class="holdings-grid">
-        <div class="stat-card">
-          <div class="stat-val">${fmtAlpha(alphaAmt)}</div>
-          <div class="stat-lbl">Alpha Balance</div>
-          <div class="stat-sub">${(pool.symbol && /[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : 'alpha'} tokens</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val">${fmtAlpha(taoAmt)} <span style="font-size:11px;font-weight:400;color:#aaa;">TAO</span></div>
-          <div class="stat-lbl">TAO Value</div>
-          <div class="stat-sub">at current alpha price</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val">${usdVal !== null ? '$' + fmtUSD(usdVal) : 'N/A'}</div>
-          <div class="stat-lbl">USD Value</div>
-          <div class="stat-sub">${taoPriceUSD ? 'live TAO/USD' : 'price unavailable'}</div>
-        </div>
-      </div>
-    `;
-  } else {
-    // Stake balance not available from API — fall back to subnet-level net flows from metadata
-    // Values are in rao units — divide by 1e9 to get TAO
-    const f1d  = (toF(meta.net_flow_1_day)   || 0) / 1e9;
-    const f7d  = (toF(meta.net_flow_7_days)  || 0) / 1e9;
-    const f30d = (toF(meta.net_flow_30_days) || 0) / 1e9;
-    const hasFlow = f1d || f7d || f30d;
-
-    function netFlowRow(label, val) {
-      const cls  = val >= 0 ? 'green' : 'red';
-      const sign = val >= 0 ? '+' : '';
-      return `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f5f5f5;">
-        <span style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.4px;">${label}</span>
-        <span style="font-size:12px;font-weight:700;" class="${cls}">${sign}${fmtAlpha(val)} TAO</span>
-      </div>`;
-    }
-
-    holdingsHTML = `
-      <div class="sec-hdr">
-        <span class="sec-title">Owner Holdings</span>
-        <span class="grey" style="font-size:10px;">Stake balance not available via API</span>
-      </div>
-      <div class="stat-card" style="margin-bottom:22px;padding:14px 18px;">
-        <div style="font-size:10px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
-          Subnet Net Staking Flows
-        </div>
-        ${hasFlow ? netFlowRow('1 Day', f1d) + netFlowRow('7 Days', f7d) + netFlowRow('30 Days', f30d) : '<div style="font-size:11px;color:#ccc;padding:12px 0;">No flow data available</div>'}
-        <div style="font-size:10px;color:#ccc;margin-top:8px;">Subnet-wide net inflow/outflow. Owner-specific stake data not returned by Taostats for this coldkey.</div>
-      </div>
-    `;
-  }
-
-  const flowHTML = `
-    <div class="sec-hdr" style="margin-top:4px;">
-      <span class="sec-title">Monthly Stake Balance Change</span>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:9px;color:#ccc;font-style:italic;">Owner wallet period</span>
-        <div class="toggles" id="owner-period-toggles">
-          <button class="tgl ${OWNER_PERIOD === '3m'   ? 'active' : ''}" data-period="3m">3M</button>
-          <button class="tgl ${OWNER_PERIOD === '6m'   ? 'active' : ''}" data-period="6m">6M</button>
-          <button class="tgl ${OWNER_PERIOD === 'dtao' ? 'active' : ''}" data-period="dtao">dTAO</button>
-        </div>
-      </div>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">NET MONTHLY CHANGE IN OWNER TAO-DENOMINATED STAKE BALANCE</div>
-      <div class="chart-wrap"><canvas id="owner-flow-chart"></canvas></div>
-    </div>
-    <div style="font-size:10px;color:#ccc;margin-top:6px;margin-bottom:22px;">
-      Derived from daily balance snapshots. Green bars = month-over-month accumulation. Red bars = drawdown or disposal.
-    </div>
-  `;
-
-  // Transfer history section
-  const transferHTML = buildTransferHTML(ownerTransfers || [], ownerSS58);
-
-  // Registration keys at bottom — investment signals (holdings, flow, transfers) lead
-  const keysHTML = `
-    <div class="sec-hdr" style="margin-top:8px;">
-      <span class="sec-title">Registration Keys</span>
-      <span class="tag tag-amber" style="margin-left:8px;">May not be active team wallet</span>
-    </div>
-    <div class="owner-card" style="margin-bottom:22px;">
-      <div class="owner-row">
-        <span class="owner-field-lbl">Coldkey</span>
-        <span class="key-pill" onclick="copyKey(this,'${ownerSS58}')" title="${ownerSS58} — click to copy">${truncKey(ownerSS58)}</span>
-      </div>
-      ${hotkeySS58 ? `
-      <div class="owner-row">
-        <span class="owner-field-lbl">Hotkey</span>
-        <span class="key-pill" onclick="copyKey(this,'${hotkeySS58}')" title="${hotkeySS58} — click to copy">${truncKey(hotkeySS58)}</span>
-      </div>` : ''}
-      <div style="font-size:10px;color:#aaa;margin-top:6px;">
-        The coldkey is the address used to register this subnet. Teams often operate from a separate wallet.
-        The balance charts above are a better signal for actual team activity.
-      </div>
-    </div>
-  `;
-
-  document.getElementById('owner-body').innerHTML = holdingsHTML + flowHTML + transferHTML + keysHTML;
-
-  // Attach period toggle listener to the newly created element
-  document.getElementById('owner-period-toggles').addEventListener('click', e => {
-    const b = e.target.closest('.tgl');
-    if (!b || !STATE) return;
-    document.querySelectorAll('#owner-period-toggles .tgl').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    OWNER_PERIOD = b.dataset.period;
-    drawOwnerFlowChart(STATE.ownerBalHistory || [], OWNER_PERIOD);
-  });
-
-  drawOwnerFlowChart(ownerBalHistory || [], OWNER_PERIOD);
+  drawOwnerStackedChart(data);
 }
 
-// ============================================================
-// CHART BUILDERS (BASE_OPTS used by dashboard and owner flow)
-// ============================================================
-const BASE_OPTS = {
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: { duration: 250 },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      mode: 'index', intersect: false,
-      backgroundColor: '#111',
-      titleColor: '#fff', bodyColor: '#bbb',
-      titleFont: { family: 'Arial', size: 11, weight: 'bold' },
-      bodyFont:  { family: 'Arial', size: 11 },
-      padding: 10, cornerRadius: 3,
-    }
-  },
-  scales: {
-    x: {
-      ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb', maxTicksLimit: 10, maxRotation: 0 },
-      grid:  { color: '#f5f5f5' },
-      border:{ color: '#eee' },
-    },
-    y: {
-      ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb' },
-      grid:  { color: '#f5f5f5' },
-      border:{ color: '#eee' },
-    }
-  },
-};
 
-// ============================================================
-// OWNER FLOW CHART
-// ============================================================
-function noDataMsg(id, msg) {
-  const c = document.getElementById(id);
-  if (!c) return;
-  if (c._c) { c._c.destroy(); c._c = null; }
-  const wrap = c.parentElement;
-  if (wrap) wrap.innerHTML = `<div class="no-data-chart">${msg}</div>`;
-}
-
-function drawOwnerFlowChart(history, period) {
+function drawOwnerStackedChart(data) {
+  const { ownerBalHistory, ownerAllPositions, pool, netuid } = data;
   const canvas = document.getElementById('owner-flow-chart');
   if (!canvas) return;
 
-  if (!history || !history.length) {
-    canvasMsg('owner-flow-chart', 'No balance history returned from API for this owner');
-    return;
-  }
-
-  const now = Date.now();
-  let cutoff;
-  if (period === '3m')      cutoff = now - 90  * 86400000;
-  else if (period === '6m') cutoff = now - 180 * 86400000;
-  else                      cutoff = new Date('2025-02-01').getTime(); // dTAO launch
-
-  const sorted = [...history]
-    .filter(h => h.timestamp && new Date(h.timestamp).getTime() >= cutoff)
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-  if (!sorted.length) {
-    canvasMsg('owner-flow-chart', 'No data for selected period');
-    return;
-  }
-
-  // Last snapshot per calendar month
-  const buckets = {};
-  for (const h of sorted) {
-    const key = h.timestamp.slice(0, 7); // YYYY-MM
-    buckets[key] = (toF(h.balance_as_tao) || 0) / 1e9;
-  }
-
-  const keys = Object.keys(buckets).sort();
-  if (keys.length < 2) {
-    canvasMsg('owner-flow-chart', 'Need at least 2 months of balance snapshots to compute changes');
-    return;
-  }
-
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const labels = [], deltas = [], bgColors = [], borderColors = [];
+  const histSorted = [...(ownerBalHistory || [])].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-  for (let i = 1; i < keys.length; i++) {
-    const delta = buckets[keys[i]] - buckets[keys[i - 1]];
-    const [y, m] = keys[i].split('-');
-    labels.push(`${MONTHS[+m - 1]} ${y.slice(2)}`);
-    deltas.push(delta);
-    bgColors.push(delta >= 0 ? '#1a7a3a28' : '#c0392b28');
-    borderColors.push(delta >= 0 ? '#1a7a3a' : '#c0392b');
+  const thisMonthMap = {};
+  for (const h of histSorted) {
+    if (h.timestamp) {
+      const key = h.timestamp.slice(0, 7);
+      thisMonthMap[key] = parseFloat(h.balance || 0) / 1e9;
+    }
+  }
+  const monthKeys = Object.keys(thisMonthMap).sort().slice(-7);
+  if (!monthKeys.length) {
+    canvasMsg('owner-flow-chart', 'No balance history for owner on this subnet');
+    return;
+  }
+  const labels = monthKeys.map(k => { const [y, m] = k.split('-'); return MONTHS[+m-1] + " '" + y.slice(2); });
+
+  const thisSym = (pool && pool.symbol && /[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : ('SN' + (pool ? pool.netuid : netuid));
+  const datasets = [{
+    label: thisSym + ' (hotkey)',
+    data: monthKeys.map(k => +(thisMonthMap[k] || 0).toFixed(4)),
+    backgroundColor: 'rgba(26,122,58,0.82)',
+    borderRadius: 2, stack: 'stk',
+  }];
+
+  const others = (ownerAllPositions || [])
+    .filter(p => String(p.netuid) !== String(netuid))
+    .sort((a,b) => parseFloat(b.balance_as_tao||0) - parseFloat(a.balance_as_tao||0));
+
+  if (others.length >= 1) {
+    const top  = others[0];
+    const sym2 = (top.symbol && /[a-zA-Z]/.test(top.symbol)) ? top.symbol : ('SN' + top.netuid);
+    datasets.push({
+      label: sym2 + ' (coldkey)',
+      data: monthKeys.map(() => +(parseFloat(top.balance || 0) / 1e9).toFixed(4)),
+      backgroundColor: 'rgba(41,128,185,0.75)', borderRadius: 2, stack: 'stk',
+    });
+  }
+  if (others.length >= 2) {
+    const rest = others.slice(1).reduce((s, p) => s + parseFloat(p.balance || 0) / 1e9, 0);
+    datasets.push({
+      label: 'Other (' + (others.length - 1) + ')',
+      data: monthKeys.map(() => +rest.toFixed(4)),
+      backgroundColor: 'rgba(136,136,128,0.55)', borderRadius: 2, stack: 'stk',
+    });
   }
 
-  if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
-
-  const o = JSON.parse(JSON.stringify(BASE_OPTS));
-  o.scales.y.ticks.callback = v => fmtAlpha(v) + ' TAO';
-  o.plugins.tooltip.callbacks = {
-    label: ctx => `${ctx.parsed.y >= 0 ? '+' : ''}${fmtAlpha(ctx.parsed.y)} TAO`,
-  };
-
-  canvas._c = new Chart(canvas.getContext('2d'), {
+  if (canvas._chartInst) { canvas._chartInst.destroy(); canvas._chartInst = null; }
+  canvas._chartInst = new Chart(canvas.getContext('2d'), {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Monthly Balance Change (TAO)',
-        data: deltas,
-        backgroundColor: bgColors,
-        borderColor: borderColors,
-        borderWidth: 1.5,
-        borderRadius: 2,
-      }]
-    },
-    options: o,
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom',
+          labels: { font: { family: 'Arial', size: 9 }, color: '#888', boxWidth: 12, padding: 14 }
+        },
+        tooltip: { mode: 'index', intersect: false,
+          callbacks: { label: c => ' ' + c.dataset.label + ': ' + fmtAlpha(c.parsed.y) + ' α' }
+        }
+      },
+      scales: {
+        x: { stacked: true, ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb' }, grid: { display: false } },
+        y: { stacked: true, ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb',
+          callback: v => fmtAlpha(v) }, grid: { color: '#f5f5f5' }, beginAtZero: true }
+      }
+    }
   });
 }
+
+function drawOwnerFlowChart() { /* superseded by drawOwnerStackedChart */ }
 
 // ============================================================
 // OWNER TRANSFER HISTORY
@@ -2823,7 +1861,7 @@ function renderMinerSection(data) {
   const el = document.getElementById('miner-section');
   if (!el) return;
 
-  const { meta, metagraph, subnetHistory, taoPriceUSD } = data;
+  const { meta, metagraph, subnetHistory, taoPriceUSD, pool } = data;
 
   const activeMiners     = meta.active_miners     != null ? meta.active_miners     : null;
   const activeValidators = meta.active_validators != null ? meta.active_validators : (meta.validators != null ? meta.validators : null);
@@ -2923,10 +1961,13 @@ function renderMinerSection(data) {
   }).join('');
 
   el.innerHTML = `
-    <div class="sec-hdr" style="margin-bottom:12px;">
-      <span class="sec-title">Miner Rewards & Selling Behaviour</span>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div style="margin-bottom:12px;">
+      <div class="sec-hdr" style="margin-bottom:4px;">
+        <span class="sec-title">Miner Activity — ${pool ? (pool.name || ('SN' + pool.netuid)) : ''}</span>
         ${activeMiners !== null ? `<span style="font-size:9px;font-weight:700;padding:2px 10px;border-radius:10px;background:#e8f5e9;color:#1a7a3a;">${activeMiners} active this epoch</span>` : ''}
+      </div>
+      <div style="font-size:10px;color:#aaa;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        ${maxNeurons !== null ? `<span>${maxNeurons} slots</span>` : ''}
         ${trendHTML}
       </div>
     </div>
@@ -2998,7 +2039,17 @@ function renderMinerSection(data) {
           scales: {
             x: { ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb' }, grid: { display: false } },
             y: { ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb', precision: 0 }, grid: { color: '#f5f5f5' }, beginAtZero: true }
-          }
+          },
+          animation: { onComplete: function(ev) {
+            const ch = ev.chart, cx2 = ch.ctx;
+            cx2.save(); cx2.font = 'bold 9px Arial'; cx2.fillStyle = '#666';
+            cx2.textAlign = 'center'; cx2.textBaseline = 'bottom';
+            (ch.data.datasets[0].data || []).forEach((val, i) => {
+              const mt = ch.getDatasetMeta(0), bar = mt && mt.data[i];
+              if (bar) cx2.fillText(val, bar.x, bar.y - 2);
+            });
+            cx2.restore();
+          }}
         }
       });
     }
@@ -3134,9 +2185,12 @@ function renderValidatorSection(data) {
     : '<div style="font-size:11px;color:#bbb;padding:10px 14px;border:1.5px dashed #eee;border-radius:5px;margin-bottom:14px;">Validator stake history not yet loaded — click <strong>Refresh</strong> to populate.</div>';
 
   el.innerHTML = `
-    <div class="sec-hdr" style="margin-bottom:12px;">
-      <span class="sec-title">Validator Reward Distribution</span>
-      <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;${aggBg}">${aggLabel}</span>
+    <div style="margin-bottom:12px;">
+      <div class="sec-hdr" style="margin-bottom:4px;">
+        <span class="sec-title">Validator Rewards — ${pool ? (pool.name || ('SN' + pool.netuid)) : ''}</span>
+        <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;${aggBg}">${aggLabel}</span>
+      </div>
+      <div style="font-size:10px;color:#aaa;">${fmtVal(totalDailyTAO, taoPriceUSD)} distributed daily · ${validators.length} validator${validators.length !== 1 ? 's' : ''}</div>
     </div>
 
     <div class="stats-grid" style="margin-bottom:14px;">
