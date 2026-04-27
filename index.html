@@ -2516,7 +2516,7 @@ function renderMinerSection(data) {
       <div class="stat-card"><div class="stat-val">${activeKeys !== null ? activeKeys : '—'}<span style="font-size:11px;font-weight:400;color:#aaa;"> / ${maxNeurons !== null ? maxNeurons : '—'}</span></div><div class="stat-lbl">Registered UIDs</div><div class="stat-sub">of max capacity</div></div>
       ${totalMinerRewardTAO > 0 ? `<div class="stat-card"><div class="stat-val">${fmtVal(totalMinerRewardTAO, taoPriceUSD)}</div><div class="stat-lbl">Top 10 Daily</div><div class="stat-sub">combined mining rewards</div></div>` : ''}
     </div>
-    ${hasHistory && monthLabels.length >= 2 ? `<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">ACTIVE MINERS — MONTHLY COUNT</div><div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div></div>` : ''}
+    <div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">ACTIVE MINERS — MONTHLY COUNT</div><div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div></div>
     ${!noMiners ? `
     <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:6px;">Miner Selling Behaviour — Current Epoch <span style="font-weight:400;color:#bbb;margin-left:8px;">top rewarded UIDs</span></div>
     <div class="mob-scroll" style="margin-bottom:4px;"><div style="min-width:340px;">
@@ -2532,11 +2532,15 @@ function renderMinerSection(data) {
     : '<div style="font-size:11px;color:#bbb;padding:12px 0;">No active miners found in metagraph.</div>'}
   `;
 
-  if (hasHistory && monthLabels.length >= 2) {
-    const colors=monthCounts.map((v,i)=>{ if(i===0) return 'rgba(26,122,58,0.7)'; const prev=monthCounts[i-1]; return v>prev?'rgba(26,122,58,0.85)':v<prev?'rgba(192,57,43,0.8)':'rgba(136,135,128,0.6)'; });
-    const ctx=document.getElementById('miner-trend-chart');
-    if (ctx) {
-      if(ctx._chartInst) ctx._chartInst.destroy();
+  const ctx = document.getElementById('miner-trend-chart');
+  if (ctx) {
+    if (ctx._chartInst) ctx._chartInst.destroy();
+    if (!hasHistory) {
+      canvasMsg('miner-trend-chart', 'No subnet history loaded — click Refresh');
+    } else if (monthLabels.length < 2) {
+      canvasMsg('miner-trend-chart', 'Insufficient history (' + monthLabels.length + ' data point' + (monthLabels.length===1?'':'s') + ' — need 2+)');
+    } else {
+      const colors=monthCounts.map((v,i)=>{ if(i===0) return 'rgba(26,122,58,0.7)'; const prev=monthCounts[i-1]; return v>prev?'rgba(26,122,58,0.85)':v<prev?'rgba(192,57,43,0.8)':'rgba(136,135,128,0.6)'; });
       ctx._chartInst=new Chart(ctx,{ type:'bar', data:{labels:monthLabels,datasets:[{data:monthCounts,backgroundColor:colors,borderWidth:0,borderRadius:2}]},
         options:{ responsive:true, maintainAspectRatio:false,
           plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>c.parsed.y+' active miners'}} },
