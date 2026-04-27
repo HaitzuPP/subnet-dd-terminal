@@ -596,6 +596,9 @@ input[type=number]::placeholder { color: #bbb; }
     <!-- 3b. Miner section -->
     <div id="miner-section"></div>
 
+    <!-- 3c. Validator section -->
+    <div id="validator-section"></div>
+
     <!-- Period selector — single global toggle controlling all 4 charts below -->
     <div class="sec-hdr" style="margin-bottom:14px;">
       <span class="sec-title">Charts
@@ -870,6 +873,34 @@ async function loadSubnet(netuid, useCache) {
       metagraph = Array.isArray(mgRaw) ? mgRaw : [];
     } catch(e) { console.warn('metagraph:', e.message); }
 
+    // 11. Owner full portfolio — all alpha positions across subnets
+    let ownerAllPositions = [];
+    if (ownerColdkey) {
+      try {
+        await sleep(300);
+        step('Fetching owner portfolio positions...');
+        const apRaw = await get('/api/dtao/stake_balance/latest/v1', { coldkey: ownerColdkey, limit: 50 });
+        ownerAllPositions = Array.isArray(apRaw) ? apRaw : [];
+      } catch(e) { console.warn('owner all positions:', e.message); }
+    }
+
+    // 12. Validator balance histories (top validators by reward, max 5)
+    let validatorHistories = {};
+    const topValidators = (metagraph || [])
+      .filter(n => parseFloat(n.validator_trust || 0) > 0.05 && n.hotkey && n.coldkey)
+      .sort((a, b) => parseFloat(b.emission || 0) - parseFloat(a.emission || 0))
+      .slice(0, 5);
+    for (const v of topValidators) {
+      try {
+        await sleep(300);
+        step('Fetching validator ' + v.uid + ' history...');
+        const vh = await get('/api/dtao/stake_balance/history/v1', {
+          coldkey: v.coldkey.ss58, hotkey: v.hotkey.ss58, netuid, limit: 200
+        });
+        validatorHistories[v.uid] = Array.isArray(vh) ? vh : [];
+      } catch(e) { console.warn('validator history uid ' + v.uid + ':', e.message); }
+    }
+
     const data = {
       netuid, pool, allSorted,
       history: Array.isArray(history) ? history : [],
@@ -877,8 +908,10 @@ async function loadSubnet(netuid, useCache) {
       ownerBalance,
       ownerBalHistory,
       ownerTransfers,
+      ownerAllPositions,
       subnetHistory,
       metagraph,
+      validatorHistories,
       stakerCount,
       taoPriceUSD,
       taoPriceHistory,
@@ -893,8 +926,10 @@ async function loadSubnet(netuid, useCache) {
       ownerBalHistory: (data.ownerBalHistory || []).slice(0, 150),
       ownerTransfers:  (data.ownerTransfers  || []).slice(0, 100),
       subnetHistory:   (data.subnetHistory   || []).slice(0, 180),
-      metagraph:       (data.metagraph       || []).slice(0, 256),
-      taoPriceHistory: (data.taoPriceHistory || []).slice(0, 450),
+      metagraph:           (data.metagraph           || []).slice(0, 256),
+      ownerAllPositions:   (data.ownerAllPositions   || []).slice(0, 50),
+      validatorHistories:  data.validatorHistories || {},
+      taoPriceHistory:     (data.taoPriceHistory     || []).slice(0, 450),
     });
     saveHistory(data);
     renderAll(data, false);
@@ -1049,104 +1084,146 @@ function renderDashboard(data, fromCache) {
 
   // --- Miner section ---
   renderMinerSection(data);
+
+  // --- Validator section ---
+  renderValidatorSection(data);
 }
 
 // ============================================================
-// OWNER WALLET — INLINE DASHBOARD SECTION
+// OWNER PORTFOLIO
 // ============================================================
 function renderOwnerDash(data) {
-  const { pool, meta, ownerBalance, ownerBalHistory, taoPriceUSD, netuid } = data;
+  const { pool, meta, ownerBalance, ownerBalHistory, ownerAllPositions, taoPriceUSD, netuid } = data;
   const el = document.getElementById('owner-dash');
   if (!el) return;
 
-  const ownerObj = (meta || {}).owner || null;
-  const ownerSS58 = ownerObj && (ownerObj.ss58 || (typeof ownerObj === 'string' ? ownerObj : null));
+  const ownerObj   = (meta || {}).owner       || null;
+  const hotkeyObj  = (meta || {}).owner_hotkey || null;
+  const ownerSS58  = ownerObj  && (ownerObj.ss58  || (typeof ownerObj  === 'string' ? ownerObj  : null));
+  const hotkeySS58 = hotkeyObj && (hotkeyObj.ss58 || (typeof hotkeyObj === 'string' ? hotkeyObj : null));
+  const separateHotkey = ownerSS58 && hotkeySS58 && ownerSS58 !== hotkeySS58;
 
-  // Only render if we have something to show
-  if (!ownerBalance && (!ownerBalHistory || !ownerBalHistory.length)) {
-    el.innerHTML = '';
-    return;
+  if (!ownerBalance && (!ownerBalHistory || !ownerBalHistory.length) && (!ownerAllPositions || !ownerAllPositions.length)) {
+    el.innerHTML = ''; return;
   }
 
-  // Holdings cards
+  // ── Portfolio summary across all positions ──────────────────
+  const allPos = ownerAllPositions || [];
+  const totalAlphaPositions = allPos.length;
+  let totalPortfolioTAO = 0;
+  allPos.forEach(p => { totalPortfolioTAO += (parseFloat(p.balance_as_tao || 0) / 1e9); });
+  if (ownerBalance && !allPos.length) totalPortfolioTAO = (parseFloat(ownerBalance.balance_as_tao || 0) / 1e9);
+  const portfolioUSD = taoPriceUSD ? totalPortfolioTAO * taoPriceUSD : null;
+
+  // ── Transfer signal ──────────────────────────────────────────
+  const recentTx = (data.ownerTransfers || []).slice(0, 5);
+  const outCount = recentTx.filter(t => (t.from?.ss58 || t.source?.ss58 || '') === ownerSS58).length;
+  const txSignalHTML = recentTx.length
+    ? (outCount >= recentTx.length * 0.6
+        ? '<span style="font-size:10px;font-weight:700;color:#c0392b;">⚠ Recent outflows (' + outCount + '/' + recentTx.length + ' txns)</span>'
+        : '<span style="font-size:10px;font-weight:700;color:#1a7a3a;">✓ Mostly inflows (' + (recentTx.length - outCount) + '/' + recentTx.length + ' txns)</span>')
+    : '';
+
+  // ── Holdings cards ───────────────────────────────────────────
   let holdingsHTML = '';
   if (ownerBalance) {
-    const alphaAmt   = (toF(ownerBalance.balance)        || 0) / 1e9;
-    const taoAmt     = (toF(ownerBalance.balance_as_tao) || 0) / 1e9;
-    const usdVal     = taoPriceUSD ? taoAmt * taoPriceUSD : null;
+    const alphaAmt = (parseFloat(ownerBalance.balance || 0) / 1e9);
+    const taoAmt   = (parseFloat(ownerBalance.balance_as_tao || 0) / 1e9);
+    const sym = (pool.symbol && /[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : 'tokens';
     holdingsHTML = `
       <div class="holdings-grid" style="margin-bottom:14px;">
         <div class="stat-card">
           <div class="stat-val">${fmtAlpha(alphaAmt)}</div>
           <div class="stat-lbl">Owner Alpha</div>
-          <div class="stat-sub">${(pool.symbol && /[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : 'tokens'}</div>
+          <div class="stat-sub">${sym}</div>
         </div>
         <div class="stat-card">
           <div class="stat-val">${fmtAlpha(taoAmt)} <span style="font-size:11px;font-weight:400;color:#aaa;">TAO</span></div>
           <div class="stat-lbl">Owner TAO Value</div>
           <div class="stat-sub">at current alpha price</div>
         </div>
-        ${usdVal !== null ? `<div class="stat-card">
-          <div class="stat-val">$${fmtUSD(usdVal)}</div>
-          <div class="stat-lbl">Owner USD Value</div>
-          <div class="stat-sub">${taoPriceUSD ? 'live TAO/USD' : 'est.'}</div>
+        ${portfolioUSD !== null ? `<div class="stat-card">
+          <div class="stat-val">$${fmtUSD(portfolioUSD)}</div>
+          <div class="stat-lbl">Portfolio USD</div>
+          <div class="stat-sub">${totalAlphaPositions > 1 ? totalAlphaPositions + ' subnets' : 'this subnet'}</div>
         </div>` : ''}
-      </div>
-    `;
+        ${totalAlphaPositions > 1 ? `<div class="stat-card">
+          <div class="stat-val">${totalAlphaPositions}</div>
+          <div class="stat-lbl">Subnets Held</div>
+          <div class="stat-sub">coldkey positions</div>
+        </div>` : ''}
+      </div>`;
   }
 
-  // Key addresses
-  const hotkeyObj = (meta || {}).owner_hotkey || null;
-  const hotkeySS58 = hotkeyObj && (hotkeyObj.ss58 || (typeof hotkeyObj === 'string' ? hotkeyObj : null));
-  const coldkeyDiffersFromHotkey = ownerSS58 && hotkeySS58 && ownerSS58 !== hotkeySS58;
-
-  // Transfer signal
-  const recentTransfers = (data.ownerTransfers || []).slice(0, 5);
-  const hasTransfers = recentTransfers.length > 0;
-  const outboundCount = recentTransfers.filter(t => {
-    const from = t.from?.ss58 || t.source?.ss58 || t.from_address || '';
-    return from === ownerSS58;
-  }).length;
-  const transferSignal = hasTransfers
-    ? (outboundCount >= recentTransfers.length * 0.6 ? '⚠ Recent outflows' : '✓ Mostly inflows')
-    : null;
-  const transferSignalClass = transferSignal && transferSignal.startsWith('⚠') ? 'red' : 'green';
-
-  el.innerHTML = `
-    <div class="sec-hdr" style="margin-bottom:12px;">
-      <span class="sec-title">Owner Wallet</span>
-      ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank"
-        style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats &#8599;</a>` : ''}
-    </div>
-    ${ownerSS58 || hotkeySS58 ? `
+  // ── Key addresses ─────────────────────────────────────────────
+  const keysHTML = (ownerSS58 || hotkeySS58) ? `
     <div class="owner-card" style="margin-bottom:14px;">
       ${ownerSS58 ? `<div class="owner-row">
         <span class="owner-field-lbl">Coldkey</span>
-        <span class="key-pill" onclick="copyKey(this,'${ownerSS58}')" title="${ownerSS58} — click to copy">${truncKey(ownerSS58)}</span>
+        <span class="key-pill" onclick="copyKey(this,'${ownerSS58}')" title="${ownerSS58}">${truncKey(ownerSS58)}</span>
         <span style="font-size:9px;color:#aaa;margin-left:4px;">controlling wallet</span>
       </div>` : ''}
       ${hotkeySS58 ? `<div class="owner-row" style="margin-top:6px;">
         <span class="owner-field-lbl">Hotkey</span>
-        <span class="key-pill" onclick="copyKey(this,'${hotkeySS58}')" title="${hotkeySS58} — click to copy">${truncKey(hotkeySS58)}</span>
-        <span style="font-size:9px;color:${coldkeyDiffersFromHotkey ? '#1a7a3a' : '#aaa'};margin-left:4px;">${coldkeyDiffersFromHotkey ? '✓ separate emissions wallet' : 'same as coldkey'}</span>
+        <span class="key-pill" onclick="copyKey(this,'${hotkeySS58}')" title="${hotkeySS58}">${truncKey(hotkeySS58)}</span>
+        <span style="font-size:9px;color:${separateHotkey ? '#1a7a3a' : '#aaa'};margin-left:4px;">${separateHotkey ? '✓ separate emissions wallet' : 'same as coldkey'}</span>
       </div>` : ''}
-      ${transferSignal ? `<div style="margin-top:8px;font-size:10px;font-weight:700;" class="${transferSignalClass}">${transferSignal} (last ${recentTransfers.length} txns)</div>` : ''}
-    </div>` : ''}
+      ${txSignalHTML ? `<div style="margin-top:8px;">${txSignalHTML}</div>` : ''}
+    </div>` : '';
+
+  // ── Cross-subnet positions table ──────────────────────────────
+  let posTableHTML = '';
+  if (allPos.length > 1) {
+    const rows = allPos.slice(0, 8).map(p => {
+      const sym2 = p.symbol || ('SN' + p.netuid);
+      const alpha = (parseFloat(p.balance || 0) / 1e9);
+      const tao   = (parseFloat(p.balance_as_tao || 0) / 1e9);
+      const isCurrent = p.netuid === netuid;
+      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
+        + '<span style="min-width:40px;font-weight:700;' + (isCurrent ? 'color:#1a7a3a;' : '') + '">' + sym2 + '</span>'
+        + '<span style="flex:1;color:#888;font-size:10px;">' + (isCurrent ? '← this subnet' : '') + '</span>'
+        + '<span style="min-width:80px;text-align:right;font-weight:700;">' + fmtAlpha(alpha) + '</span>'
+        + '<span style="min-width:70px;text-align:right;color:#aaa;">' + fmtAlpha(tao) + ' TAO</span>'
+        + '</div>';
+    }).join('');
+    posTableHTML = `
+      <div class="sec-hdr" style="margin-bottom:8px;">
+        <span class="sec-title">Cross-Subnet Positions</span>
+        <span style="font-size:9px;color:#aaa;">all coldkey holdings</span>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;gap:8px;padding:3px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#bbb;border-bottom:0.5px solid #eee;">
+          <span style="min-width:40px;">Token</span><span style="flex:1;"></span>
+          <span style="min-width:80px;text-align:right;">Alpha</span>
+          <span style="min-width:70px;text-align:right;">TAO Value</span>
+        </div>
+        ${rows}
+      </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="sec-hdr" style="margin-bottom:12px;">
+      <span class="sec-title">Owner Portfolio</span>
+      ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank"
+        style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats ↗</a>` : ''}
+    </div>
+    ${keysHTML}
     ${holdingsHTML}
+    ${posTableHTML}
     <div class="sec-hdr" style="margin-bottom:10px;">
-      <span class="sec-title">Monthly Stake Balance Change</span>
+      <span class="sec-title">Monthly Alpha Token Balance (this subnet)</span>
       <div class="toggles" id="owner-period-toggles">
         <button class="tgl ${OWNER_PERIOD === '3m'   ? 'active' : ''}" data-period="3m">3M</button>
         <button class="tgl ${OWNER_PERIOD === '6m'   ? 'active' : ''}" data-period="6m">6M</button>
         <button class="tgl ${OWNER_PERIOD === 'dtao' ? 'active' : ''}" data-period="dtao">dTAO</button>
       </div>
     </div>
-    <div class="chart-box" style="margin-bottom:14px;">
-      <div class="chart-title">NET MONTHLY CHANGE IN OWNER STAKE BALANCE (TAO)</div>
+    <div class="chart-box" style="margin-bottom:6px;">
+      <div class="chart-title">NET MONTHLY CHANGE — ALPHA TOKEN COUNT (not TAO value)</div>
       <div class="chart-wrap"><canvas id="owner-flow-chart"></canvas></div>
     </div>
     <div style="font-size:10px;color:#ccc;margin-bottom:20px;">
-      Green bars = month-over-month accumulation. Red bars = drawdown or disposal. Derived from daily balance snapshots.
+      Token count strips price noise. Growth above emission rate = genuine accumulation. Decline = selling faster than earning.
     </div>
   `;
 
@@ -2480,6 +2557,7 @@ document.getElementById('run-btn').addEventListener('click', () => {
   PERIOD = '7d';
   PRICE_PERIOD = '7d';
   OWNER_PERIOD = '3m';
+  if (STATE) STATE.validatorHistories = {};
   RANK_EXPANDED = false;
   document.querySelectorAll('#period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
   document.querySelectorAll('#price-period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
@@ -2525,77 +2603,79 @@ renderHistoryPills();
 updateBadge();
 
 // ============================================================
-// MINER SECTION — active miner count, reward distribution, trend
+// MINER SECTION
 // ============================================================
 function renderMinerSection(data) {
   const el = document.getElementById('miner-section');
   if (!el) return;
 
-  const { meta, metagraph, subnetHistory, pool, taoPriceUSD, netuid } = data;
+  const { meta, metagraph, subnetHistory } = data;
 
-  // Current snapshot from subnet metadata
   const activeMiners     = meta.active_miners     != null ? meta.active_miners     : null;
   const activeValidators = meta.active_validators != null ? meta.active_validators : (meta.validators != null ? meta.validators : null);
   const activeKeys       = meta.active_keys       != null ? meta.active_keys       : null;
   const maxNeurons       = meta.max_neurons       != null ? meta.max_neurons       : null;
 
-  // Metagraph reward analysis
-  let rewardedMiners = 0, totalMiners = 0, avgMinerRewardTAO = 0, topMinerRewardTAO = 0;
-  const minerRewards = [];
-  if (metagraph && metagraph.length) {
-    const miners = metagraph.filter(n =>
-      parseFloat(n.incentive || 0) > 0 || parseFloat(n.daily_mining_alpha_as_tao || 0) > 0
-    );
-    totalMiners = miners.length;
-    for (const m of miners) {
-      const r = parseFloat(m.daily_mining_alpha_as_tao || 0) / 1e9;
-      if (r > 0) { rewardedMiners++; minerRewards.push(r); }
-    }
-    if (minerRewards.length) {
-      avgMinerRewardTAO = minerRewards.reduce((a, b) => a + b, 0) / minerRewards.length;
-      topMinerRewardTAO = Math.max(...minerRewards);
+  // ── Monthly rewarded miner chart from subnet history ──────────
+  const histAsc = [...(subnetHistory || [])].reverse();
+  const hasHistory = histAsc.length >= 2;
+
+  // Group by month — take last snapshot per month
+  const monthMap = {};
+  for (const h of histAsc) {
+    if (h.timestamp && h.active_miners != null) {
+      const key = h.timestamp.slice(0, 7); // YYYY-MM
+      monthMap[key] = h.active_miners;
     }
   }
+  const monthKeys = Object.keys(monthMap).sort();
+  const monthLabels = monthKeys.map(k => { const [y, m] = k.split('-'); return ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)] + ' ' + y.slice(2); });
+  const monthCounts = monthKeys.map(k => monthMap[k]);
 
-  // Miner count trend from subnet history (reverse so oldest first)
-  const history = [...(subnetHistory || [])].reverse();
-  const hasHistory = history.length >= 2;
-
-  // Trend string — compute before template literal
+  // Trend label
   let trendHTML = '';
-  if (hasHistory && history.length >= 10) {
-    const old = history[0] != null ? history[0].active_miners : null;
-    const cur = history[history.length - 1] != null ? history[history.length - 1].active_miners : activeMiners;
-    if (old != null && cur != null) {
-      const delta = cur - old;
-      const cls   = delta > 0 ? 'green' : delta < 0 ? 'red' : 'grey';
-      const label = delta > 0
-        ? '+' + delta + ' miners since ' + fmtDate(history[0].timestamp)
-        : delta < 0
-          ? delta + ' miners since ' + fmtDate(history[0].timestamp)
-          : 'Stable miner count';
-      trendHTML = '<span class="' + cls + '" style="font-size:10px;font-weight:700;">' + label + '</span>';
-    }
+  if (monthCounts.length >= 2) {
+    const delta = monthCounts[monthCounts.length - 1] - monthCounts[0];
+    const cls   = delta > 0 ? 'green' : delta < 0 ? 'red' : '';
+    const sign  = delta > 0 ? '+' : '';
+    trendHTML = '<span class="' + cls + '" style="font-size:10px;font-weight:700;">' + sign + delta + ' since ' + monthLabels[0] + '</span>';
   }
 
-  // Stat cards — build as strings before template
-  const cardMiners     = activeMiners     != null ? String(activeMiners)     : '—';
-  const cardValidators = activeValidators != null ? String(activeValidators) : '—';
-  const cardKeys       = activeKeys != null
-    ? activeKeys + '<span style="font-size:11px;font-weight:400;color:#aaa;"> / ' + (maxNeurons != null ? maxNeurons : '—') + '</span>'
-    : '—';
+  // ── Miner selling behaviour from metagraph ────────────────────
+  const miners = (metagraph || [])
+    .filter(n => parseFloat(n.daily_mining_alpha_as_tao || 0) > 0 || parseFloat(n.incentive || 0) > 0)
+    .sort((a, b) => parseFloat(b.daily_mining_alpha_as_tao || 0) - parseFloat(a.daily_mining_alpha_as_tao || 0))
+    .slice(0, 8);
 
-  const rewardedCard = rewardedMiners > 0
-    ? '<div class="stat-card"><div class="stat-val green">' + rewardedMiners + '</div><div class="stat-lbl">Rewarded Miners</div><div class="stat-sub">receiving daily alpha</div></div>'
-    : '';
+  const minerRows = miners.map(m => {
+    const rewardTAO = parseFloat(m.daily_mining_alpha_as_tao || 0) / 1e9;
+    const alphaStake = parseFloat(m.alpha_stake || m.total_alpha_stake || 0) / 1e9;
+    // Holding signal: if alpha_stake > 0 and reasonable relative to reward, holding
+    // Proxy: if daily_mining_alpha > 0 but alpha_stake is very low, likely selling
+    const daysRegistered = m.registered_at_block
+      ? Math.max(1, Math.floor((Date.now()/1000 - m.registered_at_block * 12) / 86400))
+      : 30;
+    const expectedStake = rewardTAO * daysRegistered;
+    let signal, sigClass;
+    if (alphaStake <= 0) { signal = 'no stake'; sigClass = 'grey'; }
+    else if (expectedStake > 0 && alphaStake < expectedStake * 0.2) { signal = 'selling'; sigClass = 'red'; }
+    else if (expectedStake > 0 && alphaStake >= expectedStake * 0.7) { signal = 'holding'; sigClass = 'green'; }
+    else { signal = 'partial'; sigClass = 'amber'; }
 
-  const avgCard = avgMinerRewardTAO > 0
-    ? '<div class="stat-card"><div class="stat-val">' + fmtAlpha(avgMinerRewardTAO) + ' <span style="font-size:11px;font-weight:400;color:#aaa;">TAO/d</span></div><div class="stat-lbl">Avg Miner Reward</div><div class="stat-sub">daily, top: ' + fmtAlpha(topMinerRewardTAO) + ' TAO</div></div>'
-    : '';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
+      + '<span style="min-width:32px;font-size:10px;color:#bbb;">UID ' + m.uid + '</span>'
+      + '<span class="key-pill" style="flex:1;">' + truncKey(m.hotkey.ss58) + '</span>'
+      + '<span style="min-width:76px;text-align:right;font-weight:700;color:#1a7a3a;">' + fmtAlpha(rewardTAO) + ' TAO/d</span>'
+      + '<span style="min-width:52px;text-align:right;color:#888;">' + fmtAlpha(alphaStake) + ' stk</span>'
+      + '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;'
+        + (sigClass === 'green' ? 'background:#e8f5e9;color:#1a7a3a;'
+          : sigClass === 'red' ? 'background:#fdecea;color:#c0392b;'
+          : sigClass === 'amber' ? 'background:#fff3cd;color:#856404;'
+          : 'background:#f5f5f5;color:#888;') + '">' + signal + '</span>'
+      + '</div>';
+  }).join('');
 
-  const chartSection = hasHistory
-    ? '<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">ACTIVE MINER COUNT — HISTORICAL</div><div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div></div><div style="font-size:10px;color:#ccc;margin-bottom:20px;">Daily snapshots. Miner count reflects UIDs with non-zero incentive weight at each block.</div>'
-    : '';
+  const noMiners = miners.length === 0;
 
   el.innerHTML = `
     <div class="sec-hdr" style="margin-bottom:12px;">
@@ -2604,73 +2684,262 @@ function renderMinerSection(data) {
     </div>
     <div class="stats-grid" style="margin-bottom:14px;">
       <div class="stat-card">
-        <div class="stat-val">${cardMiners}</div>
+        <div class="stat-val">${activeMiners !== null ? activeMiners : '—'}</div>
         <div class="stat-lbl">Active Miners</div>
-        <div class="stat-sub">earning incentive now</div>
+        <div class="stat-sub">earning this epoch</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val">${cardValidators}</div>
+        <div class="stat-val">${activeValidators !== null ? activeValidators : '—'}</div>
         <div class="stat-lbl">Active Validators</div>
         <div class="stat-sub">with valid permits</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val">${cardKeys}</div>
+        <div class="stat-val">${activeKeys !== null ? activeKeys : '—'}<span style="font-size:11px;font-weight:400;color:#aaa;"> / ${maxNeurons !== null ? maxNeurons : '—'}</span></div>
         <div class="stat-lbl">Registered UIDs</div>
         <div class="stat-sub">of max capacity</div>
       </div>
-      ${rewardedCard}
-      ${avgCard}
     </div>
-    ${chartSection}
+    ${hasHistory && monthLabels.length >= 2 ? `
+    <div class="chart-box" style="margin-bottom:14px;">
+      <div class="chart-title">REWARDED MINERS — MONTHLY COUNT</div>
+      <div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div>
+    </div>` : ''}
+    ${!noMiners ? `
+    <div class="sec-hdr" style="margin-bottom:8px;">
+      <span class="sec-title">Miner Selling Behaviour</span>
+      <span style="font-size:9px;color:#bbb;">top rewarded UIDs</span>
+    </div>
+    <div style="margin-bottom:6px;">
+      <div style="display:flex;gap:8px;padding:3px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#bbb;border-bottom:0.5px solid #eee;">
+        <span style="min-width:32px;">UID</span>
+        <span style="flex:1;">Hotkey</span>
+        <span style="min-width:76px;text-align:right;">Daily reward</span>
+        <span style="min-width:52px;text-align:right;">Stake</span>
+        <span style="min-width:52px;text-align:right;">Signal</span>
+      </div>
+      ${minerRows}
+    </div>
+    <div style="font-size:10px;color:#ccc;margin-bottom:20px;">
+      Signal derived from alpha stake vs expected accumulation at current daily reward rate. Low stake relative to reward history = distributing.
+    </div>` : ''}
   `;
 
-  // Draw miner trend chart
-  if (hasHistory) {
-    const labels      = history.map(h => fmtChartTs(h.timestamp, '90d'));
-    const minerData   = history.map(h => h.active_miners     != null ? h.active_miners     : null);
-    const validData   = history.map(h => h.active_validators != null ? h.active_validators : (h.validators != null ? h.validators : null));
-
+  if (hasHistory && monthLabels.length >= 2) {
+    const maxCount = Math.max(...monthCounts, 1);
+    const colors = monthCounts.map((v, i) => {
+      if (i === 0) return 'rgba(26,122,58,0.7)';
+      const prev = monthCounts[i - 1];
+      return v > prev ? 'rgba(26,122,58,0.85)' : v < prev ? 'rgba(192,57,43,0.8)' : 'rgba(136,135,128,0.6)';
+    });
     const ctx = document.getElementById('miner-trend-chart');
     if (ctx) {
       if (ctx._chartInst) ctx._chartInst.destroy();
       ctx._chartInst = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'Active Miners',
-              data: minerData,
-              borderColor: '#1a7a3a',
-              backgroundColor: 'rgba(26,122,58,0.08)',
-              borderWidth: 2,
-              pointRadius: 0,
-              fill: true,
-              tension: 0.2,
-            },
-            {
-              label: 'Active Validators',
-              data: validData,
-              borderColor: '#aaa',
-              backgroundColor: 'transparent',
-              borderWidth: 1.5,
-              borderDash: [4, 3],
-              pointRadius: 0,
-              fill: false,
-              tension: 0.2,
-            }
-          ]
-        },
+        type: 'bar',
+        data: { labels: monthLabels, datasets: [{ data: monthCounts, backgroundColor: colors, borderWidth: 0, borderRadius: 2 }] },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
+          responsive: true, maintainAspectRatio: false,
           plugins: {
-            legend: { display: true, position: 'top', labels: { font: { family: 'Arial', size: 10 }, color: '#888', boxWidth: 12 } },
-            tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': ' + (c.parsed.y != null ? c.parsed.y : '—'); } } }
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => c.parsed.y + ' rewarded miners' } }
           },
           scales: {
-            x: { ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb', maxTicksLimit: 8 }, grid: { display: false } },
+            x: { ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb' }, grid: { display: false } },
+            y: { ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb', precision: 0 }, grid: { color: '#f5f5f5' }, beginAtZero: true }
+          }
+        }
+      });
+    }
+  }
+}
+
+// ============================================================
+// VALIDATOR SECTION
+// ============================================================
+function renderValidatorSection(data) {
+  const el = document.getElementById('validator-section');
+  if (!el) return;
+
+  const { metagraph, validatorHistories, pool, taoPriceUSD, netuid } = data;
+  if (!metagraph || !metagraph.length) { el.innerHTML = ''; return; }
+
+  // Identify validators
+  const validators = metagraph
+    .filter(n => parseFloat(n.validator_trust || 0) > 0.05 && n.hotkey && n.coldkey)
+    .sort((a, b) => parseFloat(b.emission || 0) - parseFloat(a.emission || 0));
+
+  if (!validators.length) { el.innerHTML = ''; return; }
+
+  // ── Daily distribution totals ──────────────────────────────────
+  const totalDailyTAO = validators.reduce((s, v) => s + parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9, 0);
+
+  // ── Hold/sell signal per validator ────────────────────────────
+  function valSignal(v) {
+    const hist = (validatorHistories || {})[v.uid] || [];
+    if (!hist.length) return { signal: 'no data', cls: 'grey', sparkData: [] };
+    const sorted = [...hist].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const sparkData = sorted.slice(-6).map(h => parseFloat(h.balance_as_tao || h.balance || 0) / 1e9);
+    const dailyRewardTAO = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
+    if (sorted.length >= 2) {
+      const earliest = parseFloat(sorted[0].balance_as_tao || sorted[0].balance || 0) / 1e9;
+      const latest   = parseFloat(sorted[sorted.length - 1].balance_as_tao || sorted[sorted.length - 1].balance || 0) / 1e9;
+      const days = Math.max(1, (new Date(sorted[sorted.length-1].timestamp) - new Date(sorted[0].timestamp)) / 86400000);
+      const expected = earliest + dailyRewardTAO * days;
+      const ratio = expected > 0.01 ? latest / expected : 1;
+      if (ratio >= 0.85)      return { signal: 'holding',    cls: 'green',  sparkData };
+      else if (ratio >= 0.5)  return { signal: 'partial',    cls: 'amber',  sparkData };
+      else                    return { signal: 'distributing', cls: 'red',   sparkData };
+    }
+    return { signal: 'insufficient', cls: 'grey', sparkData };
+  }
+
+  // ── Aggregate signal ──────────────────────────────────────────
+  const signals = validators.map(v => valSignal(v));
+  const holdCount = signals.filter(s => s.signal === 'holding').length;
+  const sellCount = signals.filter(s => s.signal === 'distributing').length;
+  const aggSignal = holdCount > sellCount
+    ? holdCount + ' of ' + validators.length + ' holding'
+    : sellCount + ' of ' + validators.length + ' distributing';
+  const aggCls = holdCount > sellCount ? 'holding' : sellCount > holdCount ? 'selling' : 'mixed';
+
+  // ── Flow bar (horizontal share) ───────────────────────────────
+  const flowSegments = validators.map((v, i) => {
+    const reward = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
+    const pct = totalDailyTAO > 0 ? (reward / totalDailyTAO * 100) : 0;
+    const sig = signals[i];
+    const bgColor = sig.cls === 'green' ? '#1a7a3a' : sig.cls === 'red' ? '#c0392b' : sig.cls === 'amber' ? '#e67e22' : '#aaa';
+    const label = pct >= 10 ? ('UID ' + v.uid + ' · ' + pct.toFixed(0) + '%') : (pct >= 5 ? ('' + v.uid) : '');
+    return { pct, bgColor, label, sig: sig.signal, uid: v.uid, reward };
+  });
+
+  const flowBarsHTML = flowSegments.map((seg, i) => {
+    const w = Math.max(seg.pct, 0.5).toFixed(1);
+    return '<div style="display:inline-block;height:32px;width:' + w + '%;background:' + seg.bgColor + ';opacity:0.85;'
+      + (i === 0 ? 'border-radius:2px 0 0 2px;' : i === flowSegments.length - 1 ? 'border-radius:0 2px 2px 0;' : '')
+      + 'vertical-align:top;overflow:hidden;font-family:Arial;font-size:9px;color:white;font-weight:700;'
+      + 'display:inline-flex;align-items:center;padding:0 4px;white-space:nowrap;">'
+      + seg.label + '</div>';
+  }).join('');
+
+  // ── Per-validator rows ────────────────────────────────────────
+  function sparkHTML(sparkData) {
+    if (!sparkData.length) return '';
+    const mx = Math.max(...sparkData, 0.001);
+    const bars = sparkData.map(v => {
+      const h = Math.max(2, Math.round((v / mx) * 20));
+      return '<div style="width:5px;height:' + h + 'px;border-radius:1px 1px 0 0;background:currentColor;flex-shrink:0;"></div>';
+    }).join('');
+    return '<div style="display:flex;align-items:flex-end;gap:2px;height:22px;">' + bars + '</div>';
+  }
+
+  const valRows = validators.map((v, i) => {
+    const reward = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
+    const sig = signals[i];
+    const isOwner = v.is_owner_hotkey || (data.meta.owner_hotkey && data.meta.owner_hotkey.ss58 === v.hotkey.ss58);
+    const pillStyle = sig.cls === 'green' ? 'background:#e8f5e9;color:#1a7a3a;'
+      : sig.cls === 'red' ? 'background:#fdecea;color:#c0392b;'
+      : sig.cls === 'amber' ? 'background:#fff3cd;color:#856404;'
+      : 'background:#f5f5f5;color:#888;';
+    const spark = '<span style="color:' + (sig.cls === 'green' ? '#1a7a3a' : sig.cls === 'red' ? '#c0392b' : '#aaa') + ';">'
+      + sparkHTML(sig.sparkData) + '</span>';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
+      + '<span style="min-width:32px;font-size:10px;color:#bbb;">UID ' + v.uid + '</span>'
+      + '<span class="key-pill" style="flex:1;">' + truncKey(v.hotkey.ss58) + (isOwner ? ' <span style="font-size:8px;background:#e8f5e9;color:#1a7a3a;padding:1px 4px;border-radius:2px;margin-left:3px;">owner</span>' : '') + '</span>'
+      + '<span style="min-width:76px;text-align:right;font-weight:700;color:#1a7a3a;">' + fmtAlpha(reward) + ' TAO/d</span>'
+      + '<div style="min-width:52px;">' + spark + '</div>'
+      + '<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;' + pillStyle + '">' + sig.signal + '</span>'
+      + '</div>';
+  }).join('');
+
+  // ── Time series chart ─────────────────────────────────────────
+  const hasHistData = Object.keys(validatorHistories || {}).length > 0;
+  const timeSeriesHTML = hasHistData
+    ? '<div class="chart-box" style="margin-bottom:14px;">'
+      + '<div class="chart-title">VALIDATOR CUMULATIVE STAKE — ACTUAL VS EXPECTED (TAO-denominated)</div>'
+      + '<div class="chart-wrap chart-wrap-tall"><canvas id="validator-ts-chart"></canvas></div>'
+      + '</div>'
+      + '<div style="font-size:10px;color:#ccc;margin-bottom:20px;">Dashed = theoretical stake if all rewards held. Lines above dashed = compounding. Below = distributing. Confirms the per-row signal.</div>'
+    : '';
+
+  el.innerHTML = `
+    <div class="sec-hdr" style="margin-bottom:12px;">
+      <span class="sec-title">Validator Rewards</span>
+      <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;
+        ${aggCls === 'holding' ? 'background:#e8f5e9;color:#1a7a3a;' : aggCls === 'selling' ? 'background:#fdecea;color:#c0392b;' : 'background:#fff3cd;color:#856404;'}"
+      >${aggSignal}</span>
+    </div>
+
+    <div class="sec-hdr" style="margin-bottom:6px;">
+      <span class="sec-title">Daily Alpha Distribution</span>
+      <span style="font-size:9px;color:#bbb;">${fmtAlpha(totalDailyTAO)} TAO / day total</span>
+    </div>
+    <div style="width:100%;height:32px;margin-bottom:6px;line-height:0;font-size:0;">
+      ${flowBarsHTML}
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+      <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#1a7a3a;display:inline-block;"></span>holding</span>
+      <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#c0392b;display:inline-block;"></span>distributing</span>
+      <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#e67e22;display:inline-block;"></span>partial</span>
+      <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#aaa;display:inline-block;"></span>no data</span>
+    </div>
+
+    <div style="margin-bottom:6px;">
+      <div style="display:flex;gap:8px;padding:3px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#bbb;border-bottom:0.5px solid #eee;">
+        <span style="min-width:32px;">UID</span>
+        <span style="flex:1;">Hotkey</span>
+        <span style="min-width:76px;text-align:right;">Daily reward</span>
+        <span style="min-width:52px;">Trend</span>
+        <span style="min-width:72px;text-align:right;">Signal</span>
+      </div>
+      ${valRows}
+    </div>
+
+    ${timeSeriesHTML}
+  `;
+
+  // Draw time-series chart
+  if (hasHistData) {
+    const colors = ['#1a7a3a','#2980b9','#e67e22','#8e44ad','#c0392b'];
+    const datasets = [];
+
+    validators.forEach((v, i) => {
+      const hist = (validatorHistories[v.uid] || [])
+        .slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      if (!hist.length) return;
+
+      // Actual stake line
+      const actualPts = hist.map(h => ({ x: h.timestamp.slice(0, 10), y: parseFloat(h.balance_as_tao || h.balance || 0) / 1e9 }));
+
+      // Expected line: starting balance + daily reward * elapsed days
+      const dailyRew = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
+      const startBal = actualPts[0]?.y || 0;
+      const startTs  = new Date(hist[0]?.timestamp).getTime();
+      const expPts = hist.map(h => {
+        const days = (new Date(h.timestamp).getTime() - startTs) / 86400000;
+        return { x: h.timestamp.slice(0, 10), y: startBal + dailyRew * days };
+      });
+
+      const col = colors[i % colors.length];
+      datasets.push({ label: 'UID ' + v.uid + ' actual', data: actualPts, borderColor: col, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.2 });
+      datasets.push({ label: 'UID ' + v.uid + ' expected', data: expPts, borderColor: col, backgroundColor: 'transparent', borderWidth: 1, borderDash: [4, 3], pointRadius: 0, tension: 0.2 });
+    });
+
+    const ctx = document.getElementById('validator-ts-chart');
+    if (ctx && datasets.length) {
+      if (ctx._chartInst) ctx._chartInst.destroy();
+      ctx._chartInst = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: true, position: 'top', labels: { font: { family: 'Arial', size: 9 }, color: '#888', boxWidth: 12, filter: i => !i.text.includes('expected') } },
+            tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtAlpha(c.parsed.y) + ' TAO' } }
+          },
+          scales: {
+            x: { type: 'category', ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb', maxTicksLimit: 8 }, grid: { display: false } },
             y: { ticks: { font: { family: 'Arial', size: 9 }, color: '#bbb' }, grid: { color: '#f5f5f5' }, beginAtZero: false }
           }
         }
