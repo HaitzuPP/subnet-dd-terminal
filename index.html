@@ -2451,12 +2451,10 @@ function renderMinerSection(data) {
 
   const histAsc = [...(subnetHistory || [])].reverse();
   const hasHistory = histAsc.length >= 2;
-  // Build alpha-staked trend from history (active_miners not available in history endpoint)
+  // Build TAO-in-pool trend from history (total_tao confirmed present in /subnet/history/v1)
+  function _taoVal(h) { const v = h.total_tao ?? h.alpha_staked ?? h.tao_in; const f = parseFloat(v); return (!isNaN(f) && f > 0) ? f / 1e9 : null; }
   const stakeMap = {};
-  for (const h of histAsc) {
-    const v = parseFloat(h.alpha_staked ?? h.tao_in ?? h.total_tao ?? null);
-    if (h.timestamp && !isNaN(v) && v > 0) { const key = h.timestamp.slice(0,7); stakeMap[key] = v / 1e9; }
-  }
+  for (const h of histAsc) { const v = _taoVal(h); if (h.timestamp && v !== null) { stakeMap[h.timestamp.slice(0,7)] = v; } }
   let bucketKeys, bucketLabels, bucketCounts, bucketMode;
   if (Object.keys(stakeMap).length >= 2) {
     bucketMode='monthly'; bucketKeys=Object.keys(stakeMap).sort();
@@ -2464,10 +2462,7 @@ function renderMinerSection(data) {
     bucketCounts=bucketKeys.map(k=>stakeMap[k]);
   } else {
     bucketMode='weekly'; const weekMap={};
-    for (const h of histAsc) {
-      const v = parseFloat(h.alpha_staked ?? h.tao_in ?? h.total_tao ?? null);
-      if (h.timestamp && !isNaN(v) && v > 0) { const d=new Date(h.timestamp); const wday=d.getDay(); const diff=(d.getDate()-wday+(wday===0?-6:1)); const mon=new Date(d); mon.setDate(diff); const key=mon.toISOString().slice(0,10); weekMap[key]=v/1e9; }
-    }
+    for (const h of histAsc) { const v = _taoVal(h); if (h.timestamp && v !== null) { const d=new Date(h.timestamp); const wday=d.getDay(); const diff=(d.getDate()-wday+(wday===0?-6:1)); const mon=new Date(d); mon.setDate(diff); weekMap[mon.toISOString().slice(0,10)]=v; } }
     bucketKeys=Object.keys(weekMap).sort(); bucketLabels=bucketKeys.map(k=>k.slice(5)); bucketCounts=bucketKeys.map(k=>weekMap[k]);
   }
   const monthLabels=bucketLabels, monthCounts=bucketCounts;
@@ -2523,7 +2518,7 @@ function renderMinerSection(data) {
       <div class="stat-card"><div class="stat-val">${activeKeys !== null ? activeKeys : '—'}<span style="font-size:11px;font-weight:400;color:#aaa;"> / ${maxNeurons !== null ? maxNeurons : '—'}</span></div><div class="stat-lbl">Registered UIDs</div><div class="stat-sub">of max capacity</div></div>
       ${totalMinerRewardTAO > 0 ? `<div class="stat-card"><div class="stat-val">${fmtVal(totalMinerRewardTAO, taoPriceUSD)}</div><div class="stat-lbl">Top 10 Daily</div><div class="stat-sub">combined mining rewards</div></div>` : ''}
     </div>
-    ${hasHistory && monthLabels.length >= 2 ? `<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">ALPHA STAKED — MONTHLY TREND (TAO)</div><div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div></div>` : ''}
+    ${hasHistory && monthLabels.length >= 2 ? `<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">TAO IN POOL — MONTHLY TREND</div><div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div></div>` : ''}
     ${!noMiners ? `
     <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:6px;">Miner Selling Behaviour — Current Epoch <span style="font-weight:400;color:#bbb;margin-left:8px;">top rewarded UIDs</span></div>
     <div class="mob-scroll" style="margin-bottom:4px;"><div style="min-width:340px;">
