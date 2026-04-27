@@ -19,7 +19,7 @@ body {
 /* ---- HEADER ---- */
 .hdr {
   padding: 20px 32px 16px;
-  border-bottom: 2px solid #111;
+  border-bottom: 1.5px solid #111;
 }
 .hdr-row {
   display: flex;
@@ -45,7 +45,7 @@ input[type=number] {
 }
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
-input[type=number]:focus  { border-color: #1a7a3a; }
+input[type=number]:focus  { border-color: #1a7a3a; box-shadow: 0 0 0 2px rgba(26,122,58,0.12); }
 input[type=number]::placeholder { color: #bbb; }
 
 .btn {
@@ -67,6 +67,7 @@ input[type=number]::placeholder { color: #bbb; }
 .btn-outline:hover { background: #1a7a3a; color: #fff; }
 .btn-ghost  { background: transparent; color: #666; border: 1.5px solid #ddd; }
 .btn-ghost:hover { border-color: #999; color: #111; }
+.btn:focus-visible { outline: 2px solid #1a7a3a; outline-offset: 2px; }
 
 #status-msg { font-size: 11px; color: #999; font-style: italic; }
 
@@ -142,7 +143,7 @@ input[type=number]::placeholder { color: #bbb; }
   0%,80%,100% { transform: translateY(0); opacity: 0.3; }
   40% { transform: translateY(-9px); opacity: 1; }
 }
-#load-step { font-size: 11px; color: #bbb; margin-top: 14px; }
+#load-step { font-size: 11px; color: #888; margin-top: 14px; font-style: italic; letter-spacing: 0.1px; min-height: 18px; }
 
 .err-box {
   background: #fdf0f0;
@@ -195,7 +196,10 @@ input[type=number]::placeholder { color: #bbb; }
   border: 1.5px solid #eee;
   border-radius: 5px;
   padding: 12px 14px;
+  transition: border-color 0.12s;
 }
+.stat-card[title] { cursor: help; }
+.stat-card[title]:hover { border-color: #ccc; }
 .stat-val { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.2; }
 .stat-lbl { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; }
 .stat-sub { font-size: 11px; color: #888; margin-top: 3px; font-weight: 600; }
@@ -225,6 +229,7 @@ input[type=number]::placeholder { color: #bbb; }
   letter-spacing: 0.3px;
 }
 .tgl:hover { color: #111; border-color: #aaa; }
+.tgl:focus-visible { outline: 2px solid #1a7a3a; outline-offset: 2px; }
 .tgl.active { background: #111; color: #fff; border-color: #111; }
 
 /* ---- CHART ---- */
@@ -237,9 +242,9 @@ input[type=number]::placeholder { color: #bbb; }
 .chart-title {
   font-size: 9px;
   font-weight: 700;
-  color: #aaa;
+  color: #888;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
   margin-bottom: 12px;
 }
 .chart-wrap { position: relative; height: 200px; }
@@ -547,10 +552,10 @@ input[type=number]::placeholder { color: #bbb; }
 <div class="hdr">
   <div class="hdr-row">
     <span class="hdr-title">Subnet DD Terminal</span>
-    <span class="hdr-sub">Pylon Partners / TAO Institute / Taostats</span>
+    <span class="hdr-sub">Pylon Partners · TAO Institute · <a href="https://taostats.io" target="_blank" style="color:#1a7a3a;text-decoration:none;font-weight:700;">Taostats</a> data</span>
   </div>
   <div class="search-row">
-    <input type="number" id="netuid-input" placeholder="Subnet number (e.g. 64)" min="1" max="512" autofocus />
+    <input type="number" id="netuid-input" placeholder="Subnet number (1–128)  e.g. 54, 64, 19" min="1" max="512" autofocus />
     <button class="btn btn-dark" id="run-btn">Run DD</button>
     <button class="btn btn-outline hidden" id="refresh-btn">Refresh</button>
     <span id="status-msg"></span>
@@ -569,9 +574,15 @@ input[type=number]::placeholder { color: #bbb; }
 <div class="panel active" id="panel-dashboard">
 
   <div id="db-empty" class="state-box">
-    <span class="state-icon">&#9741;</span>
+    <span class="state-icon" style="opacity:0.25;font-size:28px;">◎</span>
     <div class="state-title">No subnet loaded</div>
-    <div>Enter a subnet number above and click Run DD</div>
+    <div style="font-size:12px;color:#aaa;margin-top:6px;">Enter a subnet number and press Enter or click Run DD</div>
+    <div style="margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <button onclick="quickLoad(1)"  class="btn btn-ghost" style="font-size:10px;padding:4px 10px;">SN1 Apex</button>
+      <button onclick="quickLoad(19)" class="btn btn-ghost" style="font-size:10px;padding:4px 10px;">SN19 Inference</button>
+      <button onclick="quickLoad(4)"  class="btn btn-ghost" style="font-size:10px;padding:4px 10px;">SN4 Targon</button>
+      <button onclick="quickLoad(64)" class="btn btn-ghost" style="font-size:10px;padding:4px 10px;">SN64 Chutes</button>
+    </div>
   </div>
 
   <div id="db-loading" class="state-box hidden">
@@ -590,20 +601,22 @@ input[type=number]::placeholder { color: #bbb; }
     <!-- 2. Stats grid -->
     <div id="stats-grid" class="stats-grid" style="margin-bottom:20px;"></div>
 
+    <!-- 2b. Analyst signal card -->
+    <div id="analyst-signal" style="display:none;margin-bottom:16px;padding:12px 16px;border:1.5px solid #eee;border-radius:6px;background:#fafafa;"></div>
+
     <!-- 3. Owner wallet inline -->
-    <div id="owner-dash"></div>
+    <div id="owner-dash" style="padding-top:4px;border-top:1.5px solid #f0f0f0;margin-top:8px;"></div>
 
     <!-- 3b. Miner section -->
-    <div id="miner-section"></div>
+    <div id="miner-section" style="border-top:1.5px solid #f0f0f0;margin-top:8px;padding-top:4px;"></div>
 
     <!-- 3c. Validator section -->
-    <div id="validator-section"></div>
+    <div id="validator-section" style="border-top:1.5px solid #f0f0f0;margin-top:8px;padding-top:4px;"></div>
 
     <!-- Period selector — single global toggle controlling all 4 charts below -->
-    <div class="sec-hdr" style="margin-bottom:14px;">
-      <span class="sec-title">Charts
-        <span style="font-weight:700;text-transform:none;letter-spacing:0;font-size:10px;color:#888;margin-left:8px;">ALL CHARTS ↓</span>
-        <span id="rank-legend-hint" style="color:#aaa;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:4px;"></span>
+    <div class="sec-hdr" style="margin-bottom:14px;padding-top:8px;border-top:1.5px solid #f0f0f0;">
+      <span class="sec-title">Market Charts
+        <span id="rank-legend-hint" style="color:#aaa;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:6px;"></span>
       </span>
       <div class="toggles" id="period-toggles">
         <button class="tgl active" data-period="7d">7D</button>
@@ -640,7 +653,7 @@ input[type=number]::placeholder { color: #bbb; }
       <div class="chart-wrap chart-wrap-tall"><canvas id="rank-chart"></canvas></div>
     </div>
 
-    <div style="font-size:10px;color:#ccc;margin-bottom:4px;">
+    <div style="font-size:10px;color:#888;margin-bottom:4px;">
       Net TAO flow = daily delta in pool reserves. Positive = net buying pressure; negative = net selling. Alpha staked in alpha token units (not TAO).
     </div>
 
@@ -758,6 +771,15 @@ async function loadSubnet(netuid, useCache) {
   setMsg('');
   btnState(true);
   showRefreshBtn(false);
+  let _stepN = 0;
+  const _totalSteps = 12;
+  const _stepOrig = step;
+  function step(msg) {
+    _stepN++;
+    const pct = Math.round((_stepN / _totalSteps) * 100);
+    const el = document.getElementById('load-step');
+    if (el) el.innerHTML = '<span style="color:#1a7a3a;font-weight:700;">' + pct + '%</span> — ' + msg;
+  }
 
   try {
     // 1. Current pool data for this subnet
@@ -987,6 +1009,14 @@ function renderDashboard(data, fromCache) {
   const subnetDesc = (data.meta || {}).description || (data.meta || {}).purpose
                   || (data.meta || {}).subnet_description || '';
 
+  // Freshness stamp
+  const freshnessMs = Date.now() - (data.ts || Date.now());
+  const freshnessStr = freshnessMs < 5000 ? 'Live'
+    : freshnessMs < 60000 ? `${Math.round(freshnessMs/1000)}s ago`
+    : freshnessMs < 3600000 ? `${Math.round(freshnessMs/60000)}m ago`
+    : `${Math.round(freshnessMs/3600000)}h ago`;
+  const freshnessColor = freshnessMs < 300000 ? '#1a7a3a' : freshnessMs < 3600000 ? '#c8960c' : '#c0392b';
+
   document.getElementById('meta-card').innerHTML = `
     <div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:2px;">
@@ -1026,8 +1056,8 @@ function renderDashboard(data, fromCache) {
       <div class="meta-lbl">30d</div>
     </div>
     <div class="meta-actions">
-      ${fromCache ? `<span class="tag tag-amber">Cached</span>` : ''}
-      <span class="meta-ts">${fmtDate(data.ts)}</span>
+      <span class="meta-ts" style="color:\${freshnessColor};font-weight:700;">\${freshnessStr}</span>
+      <span class="meta-ts" style="color:#ccc;margin-left:4px;">\${fmtDate(data.ts)}</span>
     </div>
   `;
 
@@ -1066,7 +1096,7 @@ function renderDashboard(data, fromCache) {
     { v: stakers,                      l: 'Stakers',        s: 'unique wallets' },
     { v: `${rootPct}%`,                l: 'Root Prop',      s: 'emission share', c: 'green' },
     { v: netVolStr,                    l: 'Net Vol 24h',    s: 'TAO buy − sell (24h)', c: netVolClass },
-    { v: `${bsRatio}×`,               l: 'Buy/Sell Ratio', s: `${buys24} buys / ${sells24} sells (24h)`, c: bsClass },
+    { v: `${bsRatio}×`,               l: 'Buy/Sell Ratio', s: `${buys24} buys / ${sells24} sells (24h)`, c: bsClass, tt: 'Ratio above 1.0 = more buys than sells. Below 1.0 = net sell pressure.' },
   ].map(s => `
     <div class="stat-card">
       <div class="stat-val ${s.c || ''}">${s.v}</div>
@@ -1085,6 +1115,9 @@ function renderDashboard(data, fromCache) {
   // --- Owner wallet inline ---
   renderOwnerDash(data);
 
+  // --- Analyst signal card ---
+  renderAnalystSignal(data);
+
   // --- Miner section ---
   renderMinerSection(data);
 
@@ -1092,6 +1125,69 @@ function renderDashboard(data, fromCache) {
   renderValidatorSection(data);
 }
 
+
+// ============================================================
+// ANALYST SIGNAL CARD
+// ============================================================
+function renderAnalystSignal(data) {
+  const el = document.getElementById('analyst-signal');
+  if (!el) return;
+  const { pool, meta, metagraph, ownerBalance, taoPriceUSD } = data;
+  const signals = [];
+  const warnings = [];
+
+  // Buy/sell pressure
+  const bsRaw = parseFloat(pool.buy_sell_ratio_24h || pool.buys_sell_ratio || 0);
+  const buys = parseInt(pool.buys_24h || pool.buys || 0);
+  const sells = parseInt(pool.sells_24h || pool.sells || 0);
+  if (buys + sells > 0) {
+    const ratio = buys / (sells || 1);
+    if (ratio < 0.7) warnings.push('heavy sell pressure (' + buys + ' buys vs ' + sells + ' sells)');
+    else if (ratio > 1.5) signals.push('strong buy pressure (' + buys + ' buys vs ' + sells + ' sells)');
+  }
+
+  // Miner utilisation
+  const activeM = meta.active_miners;
+  const maxN = meta.max_neurons;
+  if (activeM != null && maxN) {
+    const pct = (activeM / maxN * 100).toFixed(0);
+    if (activeM / maxN < 0.5) warnings.push('subnet ' + pct + '% full (' + activeM + '/' + maxN + ' slots)');
+    else if (activeM / maxN > 0.9) signals.push('subnet at capacity (' + activeM + '/' + maxN + ' UIDs)');
+  }
+
+  // Validator count
+  const activeV = meta.active_validators;
+  if (activeV != null) {
+    if (activeV <= 1) warnings.push('only ' + activeV + ' active validator — centralisation risk');
+    else if (activeV >= 10) signals.push(activeV + ' active validators — healthy decentralisation');
+  }
+
+  // Owner holding signal
+  if (ownerBalance) {
+    const bal = parseFloat(ownerBalance.balance || 0) / 1e9;
+    if (bal > 1000000) signals.push('owner holding ' + fmtAlpha(bal) + ' alpha tokens');
+  }
+
+  // Emission rank
+  const rank = pool.rank;
+  if (rank != null) {
+    if (rank <= 10) signals.push('top-10 emission rank (#' + rank + ')');
+    else if (rank > 80) warnings.push('low emission rank (#' + rank + ' of ~128 active subnets)');
+  }
+
+  if (!signals.length && !warnings.length) { el.style.display = 'none'; return; }
+
+  const sigHTML = signals.map(s =>
+    '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#1a7a3a;background:#e8f5e9;padding:2px 9px;border-radius:10px;margin:2px;">✓ ' + s + '</span>'
+  ).join('');
+  const warnHTML = warnings.map(w =>
+    '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#c0392b;background:#fdecea;padding:2px 9px;border-radius:10px;margin:2px;">⚠ ' + w + '</span>'
+  ).join('');
+
+  el.style.display = 'block';
+  el.innerHTML = '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#bbb;margin-bottom:7px;">Quick Signals</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + warnHTML + sigHTML + '</div>';
+}
 // ============================================================
 // OWNER PORTFOLIO
 // ============================================================
@@ -1107,7 +1203,15 @@ function renderOwnerDash(data) {
   const separateHotkey = ownerSS58 && hotkeySS58 && ownerSS58 !== hotkeySS58;
 
   if (!ownerBalance && (!ownerBalHistory || !ownerBalHistory.length) && (!ownerAllPositions || !ownerAllPositions.length)) {
-    el.innerHTML = ''; return;
+    const ownerSS58check = (meta.owner && (meta.owner.ss58 || meta.owner)) || null;
+    if (ownerSS58check) {
+      el.innerHTML = '<div style="padding:12px 0;font-size:11px;color:#bbb;border-top:1.5px solid #f0f0f0;margin-top:8px;">'
+        + '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#ccc;">Owner Portfolio</span>'
+        + '<div style="margin-top:6px;">Owner key found (<span style="font-family:monospace;font-size:10px;">' + (ownerSS58check.slice(0,8) + '...' + ownerSS58check.slice(-6)) + '</span>) but no alpha stake returned from API. Owner may not have staked on this subnet.</div></div>';
+    } else {
+      el.innerHTML = '';
+    }
+    return;
   }
 
   // ── Portfolio summary across all positions ──────────────────
@@ -2392,7 +2496,7 @@ function renderHistoryPills() {
 
   el.innerHTML = h.map(x => {
     const isActive = STATE && Number(STATE.netuid) === Number(x.netuid);
-    const label = x.name ? `SN${x.netuid} ${x.name.slice(0, 10)}` : `SN${x.netuid}`;
+    const label = x.name ? `SN${x.netuid} ${x.name.slice(0, 14)}` : `SN${x.netuid}`;
     const rankStr = x.rank ? ` #${x.rank}` : '';
     return `<button class="hist-pill${isActive ? ' pill-active' : ''}"
       onclick="loadFromHistory(${x.netuid})"
@@ -2412,7 +2516,7 @@ function updateBadge() {
 function clearHistory() {
   if (!confirm('Clear all history and cached data?')) return;
   localStorage.removeItem(HK);
-  Object.keys(localStorage).filter(k => k.startsWith('sn_v4_') || k.startsWith('sn_v3_') || k.startsWith('sn_v2_')).forEach(k => localStorage.removeItem(k));
+  Object.keys(localStorage).filter(k => /^sn_v\d+_/.test(k)).forEach(k => localStorage.removeItem(k));
   renderHistoryPills();
 }
 
@@ -2545,14 +2649,27 @@ function truncKey(addr) {
 function copyKey(el, text) {
   navigator.clipboard.writeText(text).then(() => {
     const o = el.textContent;
-    el.textContent = 'Copied!';
-    setTimeout(() => { el.textContent = o; }, 1300);
-  }).catch(() => {});
+    const ob = el.style.background;
+    el.textContent = '✓ Copied';
+    el.style.background = '#d4edda';
+    setTimeout(() => { el.textContent = o; el.style.background = ob; }, 1400);
+  }).catch(() => {
+    const o = el.textContent;
+    el.textContent = 'Copy failed — select manually';
+    el.style.background = '#fdecea';
+    el.title = text;
+    setTimeout(() => { el.textContent = o; el.style.background = ''; }, 2000);
+  });
 }
 
 // ============================================================
 // EVENTS
 // ============================================================
+function quickLoad(netuid) {
+  document.getElementById('netuid-input').value = netuid;
+  document.getElementById('run-btn').click();
+}
+
 document.getElementById('run-btn').addEventListener('click', () => {
   const v = parseInt(document.getElementById('netuid-input').value);
   if (!v || v < 1) { setMsg('Enter a valid subnet number'); return; }
@@ -2573,7 +2690,12 @@ document.getElementById('netuid-input').addEventListener('keydown', e => {
 
 document.getElementById('refresh-btn').addEventListener('click', () => {
   const v = parseInt(document.getElementById('netuid-input').value);
-  if (v) loadSubnet(v, false);
+  if (v) {
+    document.getElementById('refresh-btn').disabled = true;
+    loadSubnet(v, false).finally(() => {
+      document.getElementById('refresh-btn').disabled = false;
+    });
+  }
 });
 
 document.getElementById('period-toggles').addEventListener('click', e => {
@@ -2604,6 +2726,16 @@ document.getElementById('clear-hist-btn').addEventListener('click', clearHistory
 // ============================================================
 renderHistoryPills();
 updateBadge();
+
+// Auto-load from URL param: ?sn=54
+(function() {
+  const params = new URLSearchParams(location.search);
+  const sn = parseInt(params.get('sn') || params.get('netuid') || '');
+  if (sn && sn >= 1 && sn <= 512) {
+    document.getElementById('netuid-input').value = sn;
+    loadSubnet(sn, true);
+  }
+})();
 
 // ============================================================
 // MINER SECTION
@@ -2709,7 +2841,7 @@ function renderMinerSection(data) {
     ${!noMiners ? `
     <div class="sec-hdr" style="margin-bottom:8px;">
       <span class="sec-title">Miner Selling Behaviour</span>
-      <span style="font-size:9px;color:#bbb;">top rewarded UIDs</span>
+      <span style="font-size:9px;color:#bbb;">top 10 by daily reward · stake vs expected = signal</span>
     </div>
     <div style="margin-bottom:6px;">
       <div style="display:flex;gap:8px;padding:3px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#bbb;border-bottom:0.5px solid #eee;">
@@ -2721,8 +2853,8 @@ function renderMinerSection(data) {
       </div>
       ${minerRows}
     </div>
-    <div style="font-size:10px;color:#ccc;margin-bottom:20px;">
-      Signal derived from alpha stake vs expected accumulation at current daily reward rate. Low stake relative to reward history = distributing.
+    <div style="font-size:10px;color:#888;margin-bottom:20px;">
+      Hold/sell signal: compares actual alpha stake vs expected accumulation (daily reward × days registered). Low stake relative to reward history = likely distributing to market.
     </div>` : ''}
   `;
 
@@ -2770,7 +2902,12 @@ function renderValidatorSection(data) {
     .filter(n => n.hotkey && n.coldkey && (n.validator_permit === true || parseFloat(n.validator_trust || 0) > 0.05))
     .sort((a, b) => parseFloat(b.emission || 0) - parseFloat(a.emission || 0));
 
-  if (!validators.length) { el.innerHTML = ''; return; }
+  if (!validators.length) {
+    el.innerHTML = '<div style="padding:10px 0 6px;font-size:11px;color:#bbb;border-top:1.5px solid #f0f0f0;">'
+      + '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#ccc;">Validator Rewards</span>'
+      + '<div style="margin-top:6px;">No validators with active permits found on this subnet.</div></div>';
+    return;
+  }
 
   // ── Daily distribution totals ──────────────────────────────────
   const totalDailyTAO = validators.reduce((s, v) => s + parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9, 0);
@@ -2780,7 +2917,9 @@ function renderValidatorSection(data) {
     const hist = (validatorHistories || {})[v.uid] || [];
     if (!hist.length) return { signal: 'no data', cls: 'grey', sparkData: [] };
     const sorted = [...hist].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const nPts = sorted.length;
     const sparkData = sorted.slice(-6).map(h => parseFloat(h.balance_as_tao || h.balance || 0) / 1e9);
+    const ptLabel = nPts + (nPts === 1 ? ' snapshot' : ' snapshots');
     const dailyRewardTAO = parseFloat(v.daily_validating_alpha_as_tao || v.daily_total_rewards_as_tao || 0) / 1e9;
     if (sorted.length >= 2) {
       const earliest = parseFloat(sorted[0].balance_as_tao || sorted[0].balance || 0) / 1e9;
