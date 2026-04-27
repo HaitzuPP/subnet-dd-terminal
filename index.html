@@ -635,9 +635,19 @@ input[type=number]::placeholder { color: #bbb; }
       </div>
     </div>
 
-    <!-- 6. Alpha price + rank -->
+    <!-- 6. Alpha price + rank — own period toggle -->
     <div class="chart-box" style="margin-bottom:22px;">
-      <div class="chart-title">ALPHA PRICE (TAO) + EMISSION RANK <span id="rank-hint-inline" style="color:#bbb;font-weight:400;"></span></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px;">
+        <div class="chart-title" style="margin-bottom:0;">ALPHA PRICE (TAO) + EMISSION RANK
+          <span id="rank-hint-inline" style="color:#bbb;font-weight:400;"></span>
+        </div>
+        <div class="toggles" id="price-period-toggles" style="flex-shrink:0;">
+          <button class="tgl active" data-period="7d">7D</button>
+          <button class="tgl" data-period="30d">30D</button>
+          <button class="tgl" data-period="90d">90D</button>
+          <button class="tgl" data-period="all">All</button>
+        </div>
+      </div>
       <div class="chart-wrap chart-wrap-tall"><canvas id="main-chart"></canvas></div>
     </div>
 
@@ -700,7 +710,8 @@ const AKEY  = 'tao-8c2e099e-9e07-45c1-9069-727768f8f7a1:3f972bae';
 let STATE = null;         // current loaded subnet data
 let PERIOD = '7d';        // active dashboard chart period
 let OWNER_PERIOD = '3m';  // active owner wallet period
-let RANK_EXPANDED = false; // rank table expand/collapse state
+let RANK_EXPANDED = false;  // rank table expand/collapse state
+let PRICE_PERIOD  = '7d';  // independent period for the price + rank chart
 
 // ============================================================
 // API FETCH
@@ -1055,7 +1066,10 @@ function renderDashboard(data, fromCache) {
   // --- Indexed performance chart ---
   drawIndexedChart(data);
 
-  // --- Price + rank charts ---
+  // --- Price + rank chart (own toggle) ---
+  drawPriceRankChart(data, PRICE_PERIOD);
+
+  // --- Net flow + staked (global toggle) ---
   drawCharts(data, PERIOD);
 
   // --- Synthesis signal card ---
@@ -1185,6 +1199,18 @@ function chartSeries(data, period) {
       labels: sdp.map(p => fmtChartTs(p.timestamp, '7d')),
       prices: sdp.map(p => toF(p.price)),
       ranks:  null,  // no rank in seven_day_prices
+    };
+  }
+
+  // All time: full sorted history
+  if (period === 'all') {
+    const slice = [...history]
+      .filter(h => h.timestamp && toF(h.price) !== null)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    return {
+      labels: slice.map(h => fmtChartTs(h.timestamp, '12m')),
+      prices: slice.map(h => toF(h.price)),
+      ranks:  slice.map(h => h.rank || null),
     };
   }
 
@@ -1414,20 +1440,28 @@ function drawIndexedChart(data) {
   });
 }
 
-function drawCharts(data, period) {
+// Price + rank chart — driven by its own #price-period-toggles
+function drawPriceRankChart(data, period) {
   const s = chartSeries(data, period);
-  const hint = document.getElementById('rank-legend-hint');
+  const hint       = document.getElementById('rank-legend-hint');
+  const inlineHint = document.getElementById('rank-hint-inline');
 
-  if (!s.prices.length) {
+  if (!s.prices || !s.prices.filter(Boolean).length) {
     clearCanvas('main-chart', 'No data for this period');
-    if (hint) hint.textContent = '';
-  } else {
-    const hasRank = s.ranks && s.ranks.some(r => r !== null);
-    if (hint) hint.textContent = hasRank ? '(right axis: lower = better)' : '';
-    drawDualChart('main-chart', s.labels, s.prices, hasRank ? s.ranks : [], hasRank);
+    if (hint)       hint.textContent = '';
+    if (inlineHint) inlineHint.textContent = '';
+    return;
   }
 
-  // All period-dependent charts share the same toggle
+  const hasRank = s.ranks && s.ranks.some(r => r !== null);
+  const rankNote = hasRank ? ' (right axis: lower = better)' : '';
+  if (hint)       hint.textContent = rankNote;
+  if (inlineHint) inlineHint.textContent = rankNote;
+  drawDualChart('main-chart', s.labels, s.prices, hasRank ? s.ranks : [], hasRank);
+}
+
+// Net flow + staked — driven by the global #period-toggles
+function drawCharts(data, period) {
   drawNetFlowChart(data, period);
   drawStakedChart(data, period);
 }
@@ -2354,8 +2388,10 @@ document.getElementById('run-btn').addEventListener('click', () => {
   if (!v || v < 1) { setMsg('Enter a valid subnet number'); return; }
   setMsg('');
   PERIOD = '7d';
+  PRICE_PERIOD = '7d';
   RANK_EXPANDED = false;
-  document.querySelectorAll('.tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
+  document.querySelectorAll('#period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
+  document.querySelectorAll('#price-period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
   loadSubnet(v, true);
   setActiveTab('dashboard');
 });
@@ -2376,10 +2412,19 @@ document.querySelectorAll('.tab').forEach(b => {
 document.getElementById('period-toggles').addEventListener('click', e => {
   const b = e.target.closest('.tgl');
   if (!b) return;
-  document.querySelectorAll('.tgl').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('#period-toggles .tgl').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
   PERIOD = b.dataset.period;
   if (STATE) drawCharts(STATE, PERIOD);
+});
+
+document.getElementById('price-period-toggles').addEventListener('click', e => {
+  const b = e.target.closest('.tgl');
+  if (!b) return;
+  document.querySelectorAll('#price-period-toggles .tgl').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  PRICE_PERIOD = b.dataset.period;
+  if (STATE) drawPriceRankChart(STATE, PRICE_PERIOD);
 });
 
 document.getElementById('clear-hist-btn').addEventListener('click', clearHistory);
