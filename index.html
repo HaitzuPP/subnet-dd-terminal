@@ -710,7 +710,7 @@ let PRICE_PERIOD  = '7d';  // independent period for the price + rank chart
 // ============================================================
 // API FETCH
 // ============================================================
-async function get(path, params = {}, _retry = 2) {
+async function get(path, params = {}, _retry = 3) {
   const url = new URL(API + path);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
@@ -721,7 +721,7 @@ async function get(path, params = {}, _retry = 2) {
   if (r.status === 429 && _retry > 0) {
     // Rate limited — wait 2s and retry automatically
     step('Rate limited, retrying...');
-    await new Promise(res => setTimeout(res, 2000));
+    await new Promise(res => setTimeout(res, 5000));
     return get(path, params, _retry - 1);
   }
   if (!r.ok) {
@@ -819,7 +819,7 @@ async function loadSubnet(netuid, useCache) {
     if (!pool || !pool.netuid) throw new Error(`SN${netuid} not found. Check the subnet number.`);
 
     // 2. TAO price history — fetch full history early for indexed performance chart
-    await sleep(500);
+    await sleep(700);
     step('Fetching TAO price history...');
     let taoPriceUSD = null;
     let taoPriceHistory = [];
@@ -834,7 +834,7 @@ async function loadSubnet(netuid, useCache) {
     } catch(e) { console.warn('tao price history:', e.message); }
 
     // 3. All subnets for live rank table
-    await sleep(500);
+    await sleep(700);
     step('Fetching all subnets for rank table...');
     const allPools = await get('/api/dtao/pool/v1', { limit: 100 });
     const allSorted = [...(Array.isArray(allPools) ? allPools : [])].sort(
@@ -842,12 +842,12 @@ async function loadSubnet(netuid, useCache) {
     );
 
     // 4. Historical pool data (price + rank time series)
-    await sleep(500);
+    await sleep(700);
     step('Fetching price and rank history...');
     const history = await get('/api/dtao/pool/history/v1', { netuid, limit: 450 });
 
     // 5. Subnet metadata (owner coldkey)
-    await sleep(500);
+    await sleep(700);
     step('Fetching subnet metadata...');
     const metaArr = await get('/api/subnet/latest/v1', { netuid });
     const meta = Array.isArray(metaArr) ? metaArr[0] : metaArr;
@@ -857,14 +857,14 @@ async function loadSubnet(netuid, useCache) {
     const ownerColdkey = (meta?.owner?.ss58) || null;
     if (ownerColdkey) {
       try {
-        await sleep(500);
+        await sleep(700);
         step('Fetching owner wallet balance...');
         const balArr = await get('/api/dtao/stake_balance/latest/v1', { coldkey: ownerColdkey, netuid });
         ownerBalance = Array.isArray(balArr) ? (balArr[0] || null) : balArr;
         const ownerHotkey = ownerBalance?.hotkey?.ss58;
         if (ownerHotkey) {
           try {
-            await sleep(500);
+            await sleep(700);
             step('Fetching owner balance history...');
             // Try with netuid first, then without (some subnets return empty with netuid)
             let hist = await get('/api/dtao/stake_balance/history/v1',
@@ -882,7 +882,7 @@ async function loadSubnet(netuid, useCache) {
     // 7. Current staker count (uses pagination.total_items — get() strips it)
     let stakerCount = null;
     try {
-      await sleep(500);
+      await sleep(700);
       step('Fetching staker count...');
       const scUrl = new URL(API + '/api/dtao/stake_balance/latest/v1');
       scUrl.searchParams.set('netuid', String(netuid));
@@ -896,21 +896,13 @@ async function loadSubnet(netuid, useCache) {
       }
     } catch(e) { console.warn('staker count:', e.message); }
 
-    // 8. Owner TAO wallet transfers (shows whether team has moved funds)
-    let ownerTransfers = [];
-    if (ownerColdkey) {
-      try {
-        await sleep(500);
-        step('Fetching owner transfer history...');
-        const tfRaw = await get('/api/transfer/v1', { address: ownerColdkey, limit: 100 });
-        ownerTransfers = Array.isArray(tfRaw) ? tfRaw : [];
-      } catch(e) { console.warn('owner transfers:', e.message); }
-    }
+    // 8. Owner TAO wallet transfers — removed (unused, saves a rate-limited API call)
+    const ownerTransfers = [];
 
     // 9. Subnet history — miner/validator count trend
     let subnetHistory = [];
     try {
-      await sleep(400);
+      await sleep(700);
       step('Fetching subnet history for miner trend...');
       const shRaw = await get('/api/subnet/history/v1', { netuid, limit: 365 });
       subnetHistory = Array.isArray(shRaw) ? shRaw : [];
@@ -919,7 +911,7 @@ async function loadSubnet(netuid, useCache) {
     // 10. Metagraph — per-neuron reward data
     let metagraph = [];
     try {
-      await sleep(400);
+      await sleep(700);
       step('Fetching metagraph...');
       const mgRaw = await get('/api/metagraph/latest/v1', { netuid, limit: 512 });
       metagraph = Array.isArray(mgRaw) ? mgRaw : [];
@@ -929,7 +921,7 @@ async function loadSubnet(netuid, useCache) {
     let ownerAllPositions = [];
     if (ownerColdkey) {
       try {
-        await sleep(300);
+        await sleep(700);
         step('Fetching owner portfolio positions...');
         const apRaw = await get('/api/dtao/stake_balance/latest/v1', { coldkey: ownerColdkey, limit: 50 });
         ownerAllPositions = Array.isArray(apRaw) ? apRaw : [];
@@ -947,7 +939,7 @@ async function loadSubnet(netuid, useCache) {
         const ck = (v.coldkey && v.coldkey.ss58) ? v.coldkey.ss58 : v.coldkey;
         const hk = (v.hotkey  && v.hotkey.ss58)  ? v.hotkey.ss58  : v.hotkey;
         if (!ck || !hk) continue;
-        await sleep(300);
+        await sleep(700);
         step('Fetching validator ' + v.uid + ' history...');
         const vh = await get('/api/dtao/stake_balance/history/v1', {
           coldkey: ck, hotkey: hk, netuid, limit: 200
