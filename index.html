@@ -433,6 +433,18 @@ input[type=number]::placeholder { color: #bbb; }
 .bold  { font-weight: 700; }
 .hidden { display: none !important; }
 
+/* --- Mobile helpers --- */
+.mob-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: hidden;
+}
+.mob-col-hide { /* hidden at ≤480px via @media below */ }
+.taostats-link {
+  display: inline-block;
+  padding: 6px 0;
+}
+
 /* ---- TABLE WRAP — scrollable border box ---- */
 .table-wrap {
   border: 1.5px solid #eee;
@@ -489,7 +501,7 @@ input[type=number]::placeholder { color: #bbb; }
 
   /* --- Section headers --- */
   .sec-hdr   { flex-wrap: wrap; gap: 6px; }
-  .sec-title { font-size: 9px; }
+  .sec-title { font-size: 9px; flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
 
   /* --- Period toggles --- */
   .tgl { padding: 3px 8px; font-size: 9px; }
@@ -497,7 +509,7 @@ input[type=number]::placeholder { color: #bbb; }
 
   /* --- Charts --- */
   .chart-box       { padding: 10px 10px; margin-bottom: 10px; }
-  .chart-title     { font-size: 7px; letter-spacing: 0.3px; margin-bottom: 8px; }
+  .chart-title     { font-size: 9px; letter-spacing: 0.3px; margin-bottom: 8px; }
   .chart-wrap      { height: 170px; }
   .chart-wrap-tall { height: 190px; }
   .chart-grid-2    { gap: 10px; margin-bottom: 10px; }
@@ -516,7 +528,7 @@ input[type=number]::placeholder { color: #bbb; }
   /* --- Owner section --- */
   .owner-card      { padding: 12px 14px; gap: 9px; }
   .owner-field-lbl { font-size: 8px; min-width: 46px; }
-  .key-pill        { font-size: 10px; padding: 3px 8px; }
+  .key-pill        { font-size: 10px; padding: 5px 8px; min-height: 30px; display: inline-flex; align-items: center; }
   .owner-tags      { gap: 5px; }
   .holdings-grid   { grid-template-columns: 1fr 1fr; gap: 7px; }
 
@@ -545,6 +557,18 @@ input[type=number]::placeholder { color: #bbb; }
   .meta-val { font-size: 11px; }
   .chart-wrap { height: 150px; }
   .chart-wrap-tall { height: 170px; }
+  .mob-col-hide { display: none !important; }
+}
+
+/* Mid-range phones (≤ 480px) — column hiding & tighter layout */
+@media (max-width: 480px) {
+  .mob-col-hide { display: none !important; }
+  .sec-hdr { gap: 4px; }
+  .sec-title { font-size: 8px; }
+  .chart-box { padding: 8px 8px; }
+  .chart-wrap { height: 155px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .stat-val { font-size: 13px; }
 }
 </style>
 </head>
@@ -1260,7 +1284,7 @@ function renderOwnerDash(data) {
     <div style="margin-bottom:12px;">
       <div class="sec-hdr" style="margin-bottom:4px;">
         <span class="sec-title">Owner Portfolio — ${pool.name || ('SN' + pool.netuid)}</span>
-        ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank" style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats ↗</a>` : ''}
+        ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank" class="taostats-link" style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats ↗</a>` : ''}
       </div>
     </div>
     ${keysHTML}
@@ -2466,7 +2490,7 @@ function renderMinerSection(data) {
       +'<span style="min-width:36px;font-size:10px;color:#bbb;flex-shrink:0;">UID '+m.uid+'</span>'
       +'<span class="key-pill" style="flex:1;overflow:hidden;min-width:0;">'+truncKey(hotkeySS58)+'</span>'
       +'<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">'+fmtVal(rewardTAO,taoPriceUSD)+'/d</span>'
-      +'<span style="min-width:60px;text-align:right;font-weight:700;color:'+deltaColor+';flex-shrink:0;" title="vs expected accumulation since registration">'+deltaStr+'</span>'
+      +'<span class="mob-col-hide" style="min-width:60px;text-align:right;font-weight:700;color:'+deltaColor+';flex-shrink:0;" title="vs expected accumulation since registration">'+deltaStr+'</span>'
       +'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;'+pillBg+'">'+signal+'</span>'
       +'</div>';
   }).join('');
@@ -2490,15 +2514,15 @@ function renderMinerSection(data) {
     ${hasHistory && monthLabels.length >= 2 ? `<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">MINERS RECEIVING REWARDS — MONTHLY COUNT</div><div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div></div>` : ''}
     ${!noMiners ? `
     <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:6px;">Miner Selling Behaviour — Current Epoch <span style="font-weight:400;color:#bbb;margin-left:8px;">top rewarded UIDs</span></div>
-    <div style="margin-bottom:4px;">
+    <div class="mob-scroll" style="margin-bottom:4px;"><div style="min-width:340px;">
       <div style="display:flex;gap:6px;padding:4px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;border-bottom:1.5px solid #eee;">
         <span style="min-width:36px;flex-shrink:0;">UID</span><span style="flex:1;">Hotkey</span>
         <span style="min-width:74px;text-align:right;flex-shrink:0;">Daily Reward</span>
-        <span style="min-width:60px;text-align:right;flex-shrink:0;">Alpha Stake Δ</span>
+        <span class="mob-col-hide" style="min-width:60px;text-align:right;flex-shrink:0;">Alpha Stake Δ</span>
         <span style="min-width:52px;text-align:right;flex-shrink:0;">Signal</span>
       </div>
       ${minerRows}
-    </div>
+    </div></div>
     <div style="font-size:10px;color:#888;padding:8px 10px;background:#f9f9f9;border-radius:4px;margin-top:6px;line-height:1.5;">Alpha stake Δ = change in miner's alpha stake balance vs expected accumulation since registration. Stake flat or declining despite earning rewards = miner is unstaking and selling.</div>`
     : '<div style="font-size:11px;color:#bbb;padding:12px 0;">No active miners found in metagraph.</div>'}
   `;
@@ -2586,8 +2610,8 @@ function renderValidatorSection(data) {
       +'<span style="min-width:36px;font-size:10px;color:#bbb;flex-shrink:0;">UID '+v.uid+'</span>'
       +'<span class="key-pill" style="flex:1;overflow:hidden;min-width:0;">'+truncKey(hk)+(isOwner?' <span style="font-size:8px;background:#e8f5e9;color:#1a7a3a;padding:1px 4px;border-radius:2px;margin-left:3px;">owner</span>':'')+'</span>'
       +'<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">'+fmtVal(reward,taoPriceUSD)+'/d</span>'
-      +'<span style="min-width:36px;text-align:right;font-size:10px;color:#888;flex-shrink:0;">'+pct+'</span>'
-      +'<div style="min-width:48px;flex-shrink:0;">'+sparkHTML(sig.sparkData,sc)+'</div>'
+      +'<span class="mob-col-hide" style="min-width:36px;text-align:right;font-size:10px;color:#888;flex-shrink:0;">'+pct+'</span>'
+      +'<div class="mob-col-hide" style="min-width:48px;flex-shrink:0;">'+sparkHTML(sig.sparkData,sc)+'</div>'
       +'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;'+pillBg+'">'+sig.signal+'</span>'
       +'</div>';
   }).join('');
@@ -2617,16 +2641,16 @@ function renderValidatorSection(data) {
         <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#aaa;display:inline-block;"></span>no data</span>
       </div>
     </div>
-    <div style="margin-bottom:14px;">
+    <div class="mob-scroll" style="margin-bottom:14px;"><div style="min-width:380px;">
       <div style="display:flex;gap:6px;padding:4px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;border-bottom:1.5px solid #eee;">
         <span style="min-width:36px;flex-shrink:0;">UID</span><span style="flex:1;">Hotkey</span>
         <span style="min-width:74px;text-align:right;flex-shrink:0;">Daily Reward</span>
-        <span style="min-width:36px;text-align:right;flex-shrink:0;">Share</span>
-        <span style="min-width:48px;flex-shrink:0;">Trend</span>
+        <span class="mob-col-hide" style="min-width:36px;text-align:right;flex-shrink:0;">Share</span>
+        <span class="mob-col-hide" style="min-width:48px;flex-shrink:0;">Trend</span>
         <span style="min-width:72px;text-align:right;flex-shrink:0;">Signal</span>
       </div>
       ${valRows}
-    </div>
+    </div></div>
     ${hasHistData
       ? `<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">VALIDATOR CUMULATIVE STAKE — ACTUAL VS EXPECTED ACCUMULATION (6-MONTH)</div><div class="chart-wrap chart-wrap-tall"><canvas id="validator-ts-chart"></canvas></div></div><div style="font-size:10px;color:#888;padding:8px 10px;background:#f9f9f9;border-radius:4px;margin-bottom:6px;line-height:1.5;">Dashed = theoretical stake if all rewards held. Lines above = compounding. Lines below = distributing faster than earning.</div>`
       : '<div style="font-size:11px;color:#bbb;padding:10px 14px;border:1.5px dashed #eee;border-radius:5px;margin-bottom:14px;">Validator stake history not yet loaded — click <strong>Refresh</strong> to populate.</div>'
