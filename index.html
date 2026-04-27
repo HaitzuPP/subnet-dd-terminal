@@ -762,6 +762,7 @@ async function loadSubnet(netuid, useCache) {
     const cached = readCache(cKey);
     if (cached) {
       STATE = cached;
+      localStorage.setItem('sn_last_netuid', String(netuid));
       renderAll(cached, true);
       setMsg(`Cached ${fmtDate(cached.ts)} — click Refresh for live data`);
       showRefreshBtn(true);
@@ -959,6 +960,7 @@ async function loadSubnet(netuid, useCache) {
       taoPriceHistory:     (data.taoPriceHistory     || []).slice(0, 450),
     });
     saveHistory(data);
+    localStorage.setItem('sn_last_netuid', String(netuid));
     renderAll(data, false);
     setMsg('');
     showRefreshBtn(true);
@@ -2518,7 +2520,13 @@ function updateBadge() {
 function clearHistory() {
   if (!confirm('Clear all history and cached data?')) return;
   localStorage.removeItem(HK);
+  localStorage.removeItem('sn_last_netuid');
   Object.keys(localStorage).filter(k => /^sn_v\d+_/.test(k)).forEach(k => localStorage.removeItem(k));
+  STATE = null;
+  showDB('empty');
+  showRefreshBtn(false);
+  setMsg('');
+  document.getElementById('netuid-input').value = '';
   renderHistoryPills();
 }
 
@@ -2753,13 +2761,28 @@ document.getElementById('usd-toggle-btn').addEventListener('click', () => {
 renderHistoryPills();
 updateBadge();
 
-// Auto-load from URL param: ?sn=54
+// Auto-restore last state on page load
 (function() {
+  // URL param takes priority: ?sn=54
   const params = new URLSearchParams(location.search);
-  const sn = parseInt(params.get('sn') || params.get('netuid') || '');
-  if (sn && sn >= 1 && sn <= 512) {
-    document.getElementById('netuid-input').value = sn;
-    loadSubnet(sn, true);
+  const urlSn = parseInt(params.get('sn') || params.get('netuid') || '');
+  if (urlSn && urlSn >= 1 && urlSn <= 512) {
+    document.getElementById('netuid-input').value = urlSn;
+    loadSubnet(urlSn, true);
+    return;
+  }
+
+  // Otherwise restore last viewed subnet from cache (instant, no API call)
+  const lastNetuid = parseInt(localStorage.getItem('sn_last_netuid') || '');
+  if (lastNetuid && lastNetuid >= 1) {
+    const cached = readCache(cacheKey(lastNetuid));
+    if (cached) {
+      document.getElementById('netuid-input').value = lastNetuid;
+      STATE = cached;
+      renderAll(cached, true);
+      setMsg(`Restored SN${lastNetuid} from cache — click Refresh for live data`);
+      showRefreshBtn(true);
+    }
   }
 })();
 
