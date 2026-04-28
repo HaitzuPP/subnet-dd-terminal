@@ -605,17 +605,20 @@ input[type=number]::placeholder { color: #bbb; }
     <div class="state-title">No subnet loaded</div>
     <div style="font-size:12px;color:#aaa;margin-top:6px;">Enter a subnet number and press Enter or click Run DD</div>
     <div style="margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-      <button onclick="quickLoad(1)"  class="btn btn-ghost" style="font-size:10px;padding:4px 10px;">SN1 Apex</button>
-      <button onclick="quickLoad(19)" class="btn btn-ghost" style="font-size:10px;padding:4px 10px;">SN19 Inference</button>
-      <button onclick="quickLoad(4)"  class="btn btn-ghost" style="font-size:10px;padding:4px 10px;">SN4 Targon</button>
-      <button onclick="quickLoad(64)" class="btn btn-ghost" style="font-size:10px;padding:4px 10px;">SN64 Chutes</button>
+      <button onclick="quickLoad(1)"  class="btn btn-ghost" style="font-size:10px;padding:4px 10px;" title="Root network — governs all subnets">SN1 · Root network</button>
+      <button onclick="quickLoad(19)" class="btn btn-ghost" style="font-size:10px;padding:4px 10px;" title="AI inference layer — highest volume subnet">SN19 · Inference</button>
+      <button onclick="quickLoad(4)"  class="btn btn-ghost" style="font-size:10px;padding:4px 10px;" title="Multimodal AI — text, image, video">SN4 · Targon</button>
+      <button onclick="quickLoad(64)" class="btn btn-ghost" style="font-size:10px;padding:4px 10px;" title="Serverless GPU compute marketplace">SN64 · Chutes</button>
     </div>
   </div>
 
   <div id="db-loading" class="state-box hidden">
     <div class="state-title" style="margin-bottom:16px;">Fetching subnet data</div>
     <div class="loading-dots"><span></span><span></span><span></span></div>
-    <div id="load-step"></div>
+    <div style="width:220px;height:4px;background:#eee;border-radius:2px;margin:12px auto 8px;overflow:hidden;">
+      <div id="load-progress-bar" style="height:100%;width:0%;background:#1a7a3a;border-radius:2px;transition:width 0.3s ease;"></div>
+    </div>
+    <div id="load-step" style="font-size:11px;color:#999;margin-top:4px;"></div>
   </div>
 
   <div id="db-error" class="hidden"></div>
@@ -625,11 +628,12 @@ input[type=number]::placeholder { color: #bbb; }
     <!-- 1. Identity + primary callouts -->
     <div id="meta-card" class="meta-card"></div>
 
-    <!-- 2. Stats grid -->
+    <!-- 2. Analyst signal card (leads the dashboard) -->
+    <div id="analyst-signal" style="display:none;margin-bottom:16px;padding:14px 16px;border:1.5px solid #eee;border-radius:6px;background:#fafafa;"></div>
+
+    <!-- 3. Stats grid -->
     <div id="stats-grid" class="stats-grid" style="margin-bottom:20px;"></div>
 
-    <!-- 2b. Analyst signal card -->
-    <div id="analyst-signal" style="display:none;margin-bottom:16px;padding:12px 16px;border:1.5px solid #eee;border-radius:6px;background:#fafafa;"></div>
 
     <!-- 3. Owner wallet inline -->
     <div id="owner-dash" style="padding-top:4px;border-top:1.5px solid #f0f0f0;margin-top:8px;"></div>
@@ -791,7 +795,7 @@ async function loadSubnet(netuid, useCache) {
       STATE = cached;
       localStorage.setItem('sn_last_netuid', String(netuid));
       renderAll(cached, true);
-      setMsg(`Cached ${fmtDateTime(cached.ts)} (${fmtAge(cached.ts)}) — click Refresh for live data`);
+      setMsg(`Cached · ${fmtAge(cached.ts)} ago — click Refresh for live data`);
       showRefreshBtn(true);
       return;
     }
@@ -1139,7 +1143,7 @@ function renderDashboard(data, fromCache) {
   renderOwnerDash(data);
 
   // --- Analyst signal card ---
-  renderAnalystSignal(data);
+  drawSignalCard(data);
 
   // --- Miner section ---
   renderMinerSection(data);
@@ -1278,6 +1282,7 @@ function renderOwnerDash(data) {
       <div class="sec-hdr" style="margin-bottom:4px;">
         <span class="sec-title">Owner Portfolio — ${pool.name || ('SN' + pool.netuid)}</span>
         ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank" class="taostats-link" style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats ↗</a>` : ''}
+      <button onclick="(()=>{const u=new URL(location.href);u.searchParams.set('sn','${netuid}');navigator.clipboard.writeText(u.toString()).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy link',1500)}).catch(()=>{});})()" class="btn btn-ghost" style="font-size:10px;padding:3px 10px;min-height:unset;">Copy link</button>
       </div>
     </div>
     ${keysHTML}
@@ -1380,7 +1385,8 @@ function drawSignalCard(data) {
   const rankStr = rank ? `#${rank} by emission, ${rootPct}% root prop` : null;
 
   // Build signal card — primary signal dominant, secondary data smaller
-  if (!perfStr && !flowStr && !rankStr) { el.innerHTML = ''; return; }
+  if (!perfStr && !flowStr && !rankStr) { el.style.display='none'; return; }
+  el.style.display = 'block';
 
   // Primary: performance vs TAO (most investable signal)
   const primaryHTML = perfStr
@@ -2106,6 +2112,8 @@ function renderHistoryPills() {
   const el = document.getElementById('hist-pills');
   if (!el) return;
 
+  const cb = document.getElementById('clear-hist-btn');
+  if (cb) cb.classList.toggle('hidden', !h.length);
   if (!h.length) {
     el.innerHTML = '<span class="hist-empty-pill">No recent subnets</span>';
     return;
@@ -2165,7 +2173,16 @@ function showDB(state) {
 
 function showDBError(msg) {
   const e = document.getElementById('db-error');
-  e.innerHTML = `<div class="err-box"><strong>Error:</strong> ${msg}</div>`;
+  let friendly = 'Something went wrong loading this subnet.';
+  if (/429|rate.?limit/i.test(msg)) friendly = 'Rate limit hit — wait a few seconds and try again.';
+  else if (/401|403|auth|key/i.test(msg)) friendly = 'API authentication error. Check your connection.';
+  else if (/404|not.?found/i.test(msg)) friendly = 'Subnet not found. Check the subnet number.';
+  else if (/network|fetch|failed/i.test(msg)) friendly = 'Network error — check your connection and retry.';
+  e.innerHTML = `<div class="err-box">
+    <div style="font-size:15px;font-weight:700;color:#c0392b;margin-bottom:6px;">⚠ ${friendly}</div>
+    <button onclick="document.getElementById('run-btn').click()" style="margin-top:8px;padding:6px 16px;background:#1a7a3a;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-family:Arial,sans-serif;">Try Again</button>
+    <details style="margin-top:10px;font-size:10px;color:#999;cursor:pointer;"><summary>Technical details</summary><div style="margin-top:6px;word-break:break-all;">${msg}</div></details>
+  </div>`;
   showDB('error');
 }
 
@@ -2495,7 +2512,7 @@ function renderMinerSection(data) {
   el.innerHTML = `
     <div style="margin-bottom:12px;">
       <div class="sec-hdr" style="margin-bottom:4px;">
-        <span class="sec-title">Miner Activity — ${pool ? (pool.name || ('SN' + pool.netuid)) : ''}</span>
+        <span class="sec-title">Miner Activity</span>
         ${activeMiners !== null ? `<span style="font-size:9px;font-weight:700;padding:2px 10px;border-radius:10px;background:#e8f5e9;color:#1a7a3a;">${activeMiners} active this epoch</span>` : ''}
       </div>
       <div style="font-size:10px;color:#aaa;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
@@ -2520,7 +2537,7 @@ function renderMinerSection(data) {
       </div>
       ${minerRows}
     </div></div>
-    <div style="font-size:10px;color:#888;padding:8px 10px;background:#f9f9f9;border-radius:4px;margin-top:6px;line-height:1.5;">Alpha stake Δ = change in miner's alpha stake balance vs expected accumulation since registration. Stake flat or declining despite earning rewards = miner is unstaking and selling.</div>`
+    <div style="font-size:10px;color:#bbb;margin-top:6px;">Δ = stake vs expected accumulation. Decline = miner is selling.</div>`
     : '<div style="font-size:11px;color:#bbb;padding:12px 0;">No active miners found in metagraph.</div>'}
   `;
 
@@ -2621,7 +2638,7 @@ function renderValidatorSection(data) {
   el.innerHTML = `
     <div style="margin-bottom:12px;">
       <div class="sec-hdr" style="margin-bottom:4px;">
-        <span class="sec-title">Validator Rewards — ${pool ? (pool.name || ('SN' + pool.netuid)) : ''}</span>
+        <span class="sec-title">Validator Rewards</span>
         <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;${aggBg}">${aggLabel}</span>
       </div>
       <div style="font-size:10px;color:#aaa;">${fmtVal(totalDailyTAO, taoPriceUSD)} distributed daily · ${validators.length} validator${validators.length !== 1 ? 's' : ''}</div>
@@ -2653,7 +2670,7 @@ function renderValidatorSection(data) {
       ${valRows}
     </div></div>
     ${hasHistData
-      ? `<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">VALIDATOR CUMULATIVE STAKE — ACTUAL VS EXPECTED ACCUMULATION (6-MONTH)</div><div class="chart-wrap chart-wrap-tall"><canvas id="validator-ts-chart"></canvas></div></div><div style="font-size:10px;color:#888;padding:8px 10px;background:#f9f9f9;border-radius:4px;margin-bottom:6px;line-height:1.5;">Dashed = theoretical stake if all rewards held. Lines above = compounding. Lines below = distributing faster than earning.</div>`
+      ? `<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">VALIDATOR STAKE — ACTUAL VS EXPECTED (6M)</div><div class="chart-wrap chart-wrap-tall"><canvas id="validator-ts-chart"></canvas></div></div><div style="font-size:10px;color:#bbb;margin-bottom:6px;">Dashed line = expected stake if all rewards held.</div>`
       : '<div style="font-size:11px;color:#bbb;padding:10px 14px;border:1.5px dashed #eee;border-radius:5px;margin-bottom:14px;">Validator stake history not yet loaded — click <strong>Refresh</strong> to populate.</div>'
     }
   `;
