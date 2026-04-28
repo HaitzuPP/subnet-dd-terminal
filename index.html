@@ -908,10 +908,10 @@ async function loadSubnet(netuid, useCache) {
             step('Fetching owner balance history...');
             // Try with netuid first, then without (some subnets return empty with netuid)
             let hist = await get('/api/dtao/stake_balance/history/v1',
-              { coldkey: ownerColdkey, hotkey: ownerHotkey, netuid, limit: 400 });
+              { coldkey: ownerColdkey, hotkey: ownerHotkey, netuid, limit: 500 });
             if (!hist || (Array.isArray(hist) && !hist.length)) {
               hist = await get('/api/dtao/stake_balance/history/v1',
-                { coldkey: ownerColdkey, hotkey: ownerHotkey, limit: 400 });
+                { coldkey: ownerColdkey, hotkey: ownerHotkey, limit: 500 });
             }
             ownerBalHistory = Array.isArray(hist) ? hist : [];
           } catch(e) { console.warn('balance history:', e.message); }
@@ -1010,7 +1010,7 @@ async function loadSubnet(netuid, useCache) {
     writeCache(cKey, {
       ...data,
       allSorted:       [],
-      ownerBalHistory: (data.ownerBalHistory || []).slice(0, 150),
+      ownerBalHistory: (data.ownerBalHistory || []).slice(0, 500),
       ownerTransfers:  (data.ownerTransfers  || []).slice(0, 100),
       subnetHistory:   (data.subnetHistory   || []).slice(0, 180),
       metagraph:           (data.metagraph           || []).slice(0, 256),
@@ -2223,7 +2223,7 @@ function drawOwnerStackedChart(data) {
   for (const h of histSorted) {
     if (h.timestamp) { const key = h.timestamp.slice(0,7); thisMonthMap[key] = parseFloat(h.balance||0)/1e9; }
   }
-  const monthKeys = Object.keys(thisMonthMap).sort().slice(-7);
+  const monthKeys = Object.keys(thisMonthMap).sort().filter(k => k >= '2025-02');
   if (!monthKeys.length) {
     // No history for this subnet — show current cross-subnet snapshot instead
     const snap = (ownerAllPositions||[]).sort((a,b)=>parseFloat(b.balance_as_tao||0)-parseFloat(a.balance_as_tao||0));
