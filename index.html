@@ -434,6 +434,40 @@ input[type=number]::placeholder { color: #bbb; }
 .bold  { font-weight: 700; }
 .hidden { display: none !important; }
 
+/* ---- SUB-NAV TABS ---- */
+.sub-tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1.5px solid #e8e8e8;
+  margin: 16px 0 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.sub-tab-bar::-webkit-scrollbar { display: none; }
+.sub-tab {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 18px;
+  border: none;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1.5px;
+  transition: color 0.12s, border-color 0.12s;
+  letter-spacing: 0.1px;
+}
+.sub-tab:hover { color: #444; }
+.sub-tab.active { color: #111; border-bottom-color: #1a7a3a; }
+.sub-tab-panel { display: none; }
+.sub-tab-panel.active { display: block; }
+@media (max-width: 640px) {
+  .sub-tab { font-size: 11px; padding: 8px 13px; }
+}
+
 /* --- Mobile helpers --- */
 .mob-scroll {
   overflow-x: auto;
@@ -626,65 +660,71 @@ input[type=number]::placeholder { color: #bbb; }
 
   <div id="db-content" class="hidden">
 
-    <!-- 1. VERDICT -->
+    <!-- Persistent header: verdict + risk + identity -->
     <div id="analyst-signal" style="display:none;margin-bottom:10px;"></div>
-
-    <!-- 2. Risk register -->
     <div id="risk-section" style="display:none;margin-bottom:14px;"></div>
-
-    <!-- 3. Identity card -->
     <div id="meta-card" class="meta-card"></div>
 
-    <!-- 4. Price & Rank charts -->
-    <div class="sec-hdr" style="margin-bottom:10px;padding-top:4px;">
-      <span class="sec-title">Price &amp; Rank
-        <span id="rank-legend-hint" style="color:#aaa;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:6px;"></span>
-      </span>
-      <div class="toggles" id="price-period-toggles">
-        <button class="tgl active" data-period="7d">7D</button>
-        <button class="tgl" data-period="30d">30D</button>
-        <button class="tgl" data-period="90d">90D</button>
-        <button class="tgl" data-period="all">All</button>
+    <!-- Sub-section navigation -->
+    <div class="sub-tab-bar" id="sub-tab-bar">
+      <button class="sub-tab active" data-subtab="price">Price &amp; Ranking</button>
+      <button class="sub-tab" data-subtab="owner">Owner Wallet</button>
+      <button class="sub-tab" data-subtab="miners">Miners</button>
+      <button class="sub-tab" data-subtab="validators">Validators</button>
+    </div>
+
+    <!-- Tab: Price & Ranking -->
+    <div class="sub-tab-panel active" id="subtab-price">
+      <div class="sec-hdr" style="margin-bottom:10px;">
+        <span class="sec-title">Price &amp; Rank
+          <span id="rank-legend-hint" style="color:#aaa;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:6px;"></span>
+        </span>
+        <div class="toggles" id="price-period-toggles">
+          <button class="tgl active" data-period="7d">7D</button>
+          <button class="tgl" data-period="30d">30D</button>
+          <button class="tgl" data-period="90d">90D</button>
+          <button class="tgl" data-period="all">All</button>
+        </div>
       </div>
-    </div>
-    <div class="chart-box" style="margin-bottom:14px;">
-      <div class="chart-title">ALPHA PRICE (TAO)</div>
-      <div class="chart-wrap chart-wrap-tall"><canvas id="main-chart"></canvas></div>
-    </div>
-    <div class="chart-box" style="margin-bottom:14px;">
-      <div class="chart-title">EMISSION RANK</div>
-      <div class="chart-wrap chart-wrap-tall"><canvas id="rank-chart"></canvas></div>
-    </div>
-
-    <!-- 4b. Net TAO Flow -->
-    <div class="sec-hdr" style="margin-bottom:10px;padding-top:4px;">
-      <span class="sec-title">Net TAO Flow</span>
-      <div class="toggles" id="period-toggles">
-        <button class="tgl active" data-period="7d">7D</button>
-        <button class="tgl" data-period="30d">30D</button>
-        <button class="tgl" data-period="90d">90D</button>
-        <button class="tgl" data-period="12m">12M</button>
+      <div class="chart-box" style="margin-bottom:14px;">
+        <div class="chart-title">ALPHA PRICE (TAO)</div>
+        <div class="chart-wrap chart-wrap-tall"><canvas id="main-chart"></canvas></div>
       </div>
+      <div class="chart-box" style="margin-bottom:14px;">
+        <div class="chart-title">EMISSION RANK</div>
+        <div class="chart-wrap chart-wrap-tall"><canvas id="rank-chart"></canvas></div>
+      </div>
+      <div class="sec-hdr" style="margin-bottom:10px;padding-top:4px;">
+        <span class="sec-title">Net TAO Flow</span>
+        <div class="toggles" id="period-toggles">
+          <button class="tgl active" data-period="7d">7D</button>
+          <button class="tgl" data-period="30d">30D</button>
+          <button class="tgl" data-period="90d">90D</button>
+          <button class="tgl" data-period="12m">12M</button>
+        </div>
+      </div>
+      <div class="chart-box" style="margin-bottom:20px;">
+        <div class="chart-title">DAILY BUY / SELL PRESSURE IN POOL (TAO)</div>
+        <div class="chart-wrap"><canvas id="flow-chart"></canvas></div>
+      </div>
+      <div id="stats-grid" class="stats-grid" style="margin-bottom:16px;"></div>
+      <div id="peer-comp" style="display:none;margin-bottom:16px;border-top:1.5px solid #f0f0f0;padding-top:12px;"></div>
     </div>
-    <div class="chart-box" style="margin-bottom:20px;">
-      <div class="chart-title">DAILY BUY / SELL PRESSURE IN POOL (TAO)</div>
-      <div class="chart-wrap"><canvas id="flow-chart"></canvas></div>
+
+    <!-- Tab: Owner Wallet -->
+    <div class="sub-tab-panel" id="subtab-owner">
+      <div id="owner-dash"></div>
     </div>
 
-    <!-- 5. Stats grid -->
-    <div id="stats-grid" class="stats-grid" style="margin-bottom:16px;"></div>
+    <!-- Tab: Miners -->
+    <div class="sub-tab-panel" id="subtab-miners">
+      <div id="miner-section"></div>
+    </div>
 
-    <!-- 6. Peer comparison -->
-    <div id="peer-comp" style="display:none;margin-bottom:16px;border-top:1.5px solid #f0f0f0;padding-top:12px;"></div>
-
-    <!-- 7. Owner wallet -->
-    <div id="owner-dash" style="padding-top:4px;border-top:1.5px solid #f0f0f0;margin-top:4px;"></div>
-
-    <!-- 8. Miner section -->
-    <div id="miner-section" style="border-top:1.5px solid #f0f0f0;margin-top:8px;padding-top:4px;"></div>
-
-    <!-- 9. Validator section -->
-    <div id="validator-section" style="border-top:1.5px solid #f0f0f0;margin-top:8px;padding-top:4px;"></div>
+    <!-- Tab: Validators -->
+    <div class="sub-tab-panel" id="subtab-validators">
+      <div id="validator-section"></div>
+    </div>
 
   </div>
 </div>
@@ -2268,6 +2308,8 @@ function loadFromHistory(netuid) {
   PERIOD = '7d'; PRICE_PERIOD = '7d';
   document.querySelectorAll('#period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
   document.querySelectorAll('#price-period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.subtab === 'price'));
+  document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'subtab-price'));
   loadSubnet(netuid, true);
 }
 
@@ -2479,6 +2521,21 @@ function quickLoad(netuid) {
   document.getElementById('run-btn').click();
 }
 
+// Sub-tab navigation
+document.getElementById('sub-tab-bar').addEventListener('click', e => {
+  const btn = e.target.closest('.sub-tab');
+  if (!btn) return;
+  const tab = btn.dataset.subtab;
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.subtab === tab));
+  document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'subtab-' + tab));
+  // Re-render charts on tab switch (Chart.js needs visible canvas to size correctly)
+  if (tab === 'price' && STATE) {
+    drawPriceChart(STATE, PRICE_PERIOD);
+    drawRankChart(STATE, PRICE_PERIOD);
+    drawCharts(STATE, PERIOD);
+  }
+});
+
 document.getElementById('run-btn').addEventListener('click', () => {
   const v = parseInt(document.getElementById('netuid-input').value);
   if (!v || v < 1) { setMsg('Enter a valid subnet number'); return; }
@@ -2490,6 +2547,9 @@ document.getElementById('run-btn').addEventListener('click', () => {
   RANK_EXPANDED = false;
   document.querySelectorAll('#period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
   document.querySelectorAll('#price-period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
+  // Reset to price tab
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.subtab === 'price'));
+  document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'subtab-price'));
   loadSubnet(v, true);
 });
 
