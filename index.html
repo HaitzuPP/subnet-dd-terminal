@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subnet DD Terminal - Pylon Partners</title>
+<title>Subnet DD Terminal — TAO Institute</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -204,6 +204,7 @@ input[type=number]::placeholder { color: #bbb; }
 .stat-card[title]:hover { border-color: #ccc; }
 .stat-val { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.2; }
 .stat-lbl { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; }
+.stat-card[title] .stat-lbl { border-bottom: 1px dotted #ddd; display: inline-block; cursor: help; }
 .stat-sub { font-size: 11px; color: #888; margin-top: 3px; font-weight: 600; }
 
 /* ---- SECTION HEADER ---- */
@@ -604,11 +605,11 @@ input[type=number]::placeholder { color: #bbb; }
     <span class="state-icon" style="opacity:0.25;font-size:28px;">◎</span>
     <div class="state-title">No subnet loaded</div>
     <div style="font-size:12px;color:#aaa;margin-top:6px;">Enter a subnet number and press Enter or click Run DD</div>
-    <div style="margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-      <button onclick="quickLoad(1)"  class="btn btn-ghost" style="font-size:10px;padding:4px 10px;" title="Root network — governs all subnets">SN1 · Root network</button>
-      <button onclick="quickLoad(19)" class="btn btn-ghost" style="font-size:10px;padding:4px 10px;" title="AI inference layer — highest volume subnet">SN19 · Inference</button>
-      <button onclick="quickLoad(4)"  class="btn btn-ghost" style="font-size:10px;padding:4px 10px;" title="Multimodal AI — text, image, video">SN4 · Targon</button>
-      <button onclick="quickLoad(64)" class="btn btn-ghost" style="font-size:10px;padding:4px 10px;" title="Serverless GPU compute marketplace">SN64 · Chutes</button>
+    <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button onclick="quickLoad(1)"  class="btn btn-ghost" style="font-size:13px;padding:8px 18px;" title="Root network — governs emission weights">SN1 · Root</button>
+      <button onclick="quickLoad(19)" class="btn btn-ghost" style="font-size:13px;padding:8px 18px;" title="AI inference — highest volume subnet">SN19 · Inference</button>
+      <button onclick="quickLoad(4)"  class="btn btn-ghost" style="font-size:13px;padding:8px 18px;" title="Multimodal AI — text, image, video">SN4 · Targon</button>
+      <button onclick="quickLoad(64)" class="btn btn-ghost" style="font-size:13px;padding:8px 18px;" title="Serverless GPU compute marketplace">SN64 · Chutes</button>
     </div>
   </div>
 
@@ -625,49 +626,20 @@ input[type=number]::placeholder { color: #bbb; }
 
   <div id="db-content" class="hidden">
 
-    <!-- 1. VERDICT — signal leads (JS sets display:block when data available) -->
-    <div id="analyst-signal" style="display:none;margin-bottom:14px;"></div>
+    <!-- 1. VERDICT -->
+    <div id="analyst-signal" style="display:none;margin-bottom:10px;"></div>
 
-    <!-- 2. Identity + primary callouts -->
+    <!-- 2. Risk register -->
+    <div id="risk-section" style="display:none;margin-bottom:14px;"></div>
+
+    <!-- 3. Identity card -->
     <div id="meta-card" class="meta-card"></div>
 
-    <!-- 3. Stats grid -->
-    <div id="stats-grid" class="stats-grid" style="margin-bottom:16px;"></div>
-
-    <!-- 4. Risk register -->
-    <div id="risk-section" style="display:none;margin-bottom:14px;border-top:1.5px solid #f0f0f0;padding-top:12px;"></div>
-
-    <!-- 5. Owner wallet inline -->
-    <div id="owner-dash" style="padding-top:4px;border-top:1.5px solid #f0f0f0;margin-top:8px;"></div>
-
-    <!-- 3b. Miner section -->
-    <div id="miner-section" style="border-top:1.5px solid #f0f0f0;margin-top:8px;padding-top:4px;"></div>
-
-    <!-- 3c. Validator section -->
-    <div id="validator-section" style="border-top:1.5px solid #f0f0f0;margin-top:8px;padding-top:4px;"></div>
-
-    <!-- Period selector — single global toggle controlling all 4 charts below -->
-    <div class="sec-hdr" style="margin-bottom:14px;padding-top:8px;border-top:1.5px solid #f0f0f0;">
-      <span class="sec-title">Market Charts
+    <!-- 4. Price & Rank charts -->
+    <div class="sec-hdr" style="margin-bottom:10px;padding-top:4px;">
+      <span class="sec-title">Price &amp; Rank
         <span id="rank-legend-hint" style="color:#aaa;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:6px;"></span>
       </span>
-      <div class="toggles" id="period-toggles">
-        <button class="tgl active" data-period="7d">7D</button>
-        <button class="tgl" data-period="30d">30D</button>
-        <button class="tgl" data-period="90d">90D</button>
-        <button class="tgl" data-period="12m">12M</button>
-      </div>
-    </div>
-
-    <!-- 4. Net TAO Flow — most actionable chart, leads the chart section -->
-    <div class="chart-box" style="margin-bottom:14px;">
-      <div class="chart-title">NET TAO FLOW — DAILY BUY/SELL PRESSURE IN POOL (TAO)</div>
-      <div class="chart-wrap"><canvas id="flow-chart"></canvas></div>
-    </div>
-
-    <!-- 5. Alpha price + rank — own period toggle controlling both charts below -->
-    <div class="sec-hdr" style="margin-bottom:10px;">
-      <span class="sec-title">Price &amp; Rank</span>
       <div class="toggles" id="price-period-toggles">
         <button class="tgl active" data-period="7d">7D</button>
         <button class="tgl" data-period="30d">30D</button>
@@ -675,20 +647,44 @@ input[type=number]::placeholder { color: #bbb; }
         <button class="tgl" data-period="all">All</button>
       </div>
     </div>
-
     <div class="chart-box" style="margin-bottom:14px;">
       <div class="chart-title">ALPHA PRICE (TAO)</div>
       <div class="chart-wrap chart-wrap-tall"><canvas id="main-chart"></canvas></div>
     </div>
-
     <div class="chart-box" style="margin-bottom:14px;">
       <div class="chart-title">EMISSION RANK</div>
       <div class="chart-wrap chart-wrap-tall"><canvas id="rank-chart"></canvas></div>
     </div>
 
-    <div style="font-size:10px;color:#888;margin-bottom:4px;">
-      Net TAO flow = daily delta in pool reserves. Positive = net buying pressure; negative = net selling. Alpha staked in alpha token units (not TAO).
+    <!-- 4b. Net TAO Flow -->
+    <div class="sec-hdr" style="margin-bottom:10px;padding-top:4px;">
+      <span class="sec-title">Net TAO Flow</span>
+      <div class="toggles" id="period-toggles">
+        <button class="tgl active" data-period="7d">7D</button>
+        <button class="tgl" data-period="30d">30D</button>
+        <button class="tgl" data-period="90d">90D</button>
+        <button class="tgl" data-period="12m">12M</button>
+      </div>
     </div>
+    <div class="chart-box" style="margin-bottom:20px;">
+      <div class="chart-title">DAILY BUY / SELL PRESSURE IN POOL (TAO)</div>
+      <div class="chart-wrap"><canvas id="flow-chart"></canvas></div>
+    </div>
+
+    <!-- 5. Stats grid -->
+    <div id="stats-grid" class="stats-grid" style="margin-bottom:16px;"></div>
+
+    <!-- 6. Peer comparison -->
+    <div id="peer-comp" style="display:none;margin-bottom:16px;border-top:1.5px solid #f0f0f0;padding-top:12px;"></div>
+
+    <!-- 7. Owner wallet -->
+    <div id="owner-dash" style="padding-top:4px;border-top:1.5px solid #f0f0f0;margin-top:4px;"></div>
+
+    <!-- 8. Miner section -->
+    <div id="miner-section" style="border-top:1.5px solid #f0f0f0;margin-top:8px;padding-top:4px;"></div>
+
+    <!-- 9. Validator section -->
+    <div id="validator-section" style="border-top:1.5px solid #f0f0f0;margin-top:8px;padding-top:4px;"></div>
 
   </div>
 </div>
@@ -1086,7 +1082,7 @@ function renderDashboard(data, fromCache) {
     </div>
     <div class="meta-actions">
       <span class="meta-ts" style="color:${freshnessColor};font-weight:700;" title="Fetched ${fmtDateTime(data.ts)}">${freshnessStr}</span>
-      <span class="meta-ts" style="color:#bbb;margin-left:4px;">${fmtDateTime(data.ts)}</span>
+      <button onclick="(()=>{const u=new URL(location.href);u.searchParams.set('sn','${netuid}');navigator.clipboard.writeText(u.toString()).then(()=>{this.textContent='Copied!';setTimeout(()=>{this.textContent='Share'},1500)}).catch(()=>{this.textContent='Copy failed'});})()" class="btn btn-ghost" style="font-size:10px;padding:3px 12px;min-height:unset;margin-left:6px;">Share</button>
     </div>
   `;
 
@@ -1117,43 +1113,48 @@ function renderDashboard(data, fromCache) {
   const yieldStr   = impliedYieldPct ? `${impliedYieldPct}%` : 'N/A';
   const yieldClass = impliedYieldPct && parseFloat(impliedYieldPct) >= 10 ? 'green' : '';
 
+  const TILE_TIPS = {
+    'Liquidity':       'Total TAO in the AMM pool — proxy for depth. Larger pool = less slippage.',
+    'Market Cap':      'Alpha tokens in circulation × current alpha price (in TAO).',
+    'Est. Ann. Yield': 'Annualised emission ÷ market cap. Above 10% = competitive for validators.',
+    'Validator Stake': 'Total alpha staked by validators — proxy for validator conviction.',
+    'Stakers':         'Unique wallets with alpha staked on this subnet.',
+    'Root Prop':       'Share of emission via root network (SN1). Higher = more governance exposure.',
+    '24h Net Volume':  'Buy TAO minus sell TAO (24h). Positive = net buying pressure.',
+    'Order Ratio':     'Buy orders ÷ sell orders (24h). Above 1× = more buys than sells.',
+  };
   document.getElementById('stats-grid').innerHTML = [
-    { v: fmtAlpha(poolTAO) + ' TAO',   l: 'Pool TAO',       s: 'AMM liquidity' },
+    { v: fmtAlpha(poolTAO) + ' TAO',   l: 'Liquidity',       s: 'pool depth (TAO)' },
     { v: fmtVal(mcapTAO, taoPriceUSD), l: 'Market Cap',     s: 'alpha × price' },
-    { v: yieldStr,                     l: 'Implied Yield',  s: 'ann. emission / mcap', c: yieldClass },
-    { v: fmtAlpha(alphaStkd),          l: 'Alpha Staked',   s: 'alpha tokens' },
+    { v: yieldStr,                     l: 'Est. Ann. Yield', s: 'emission ÷ market cap', c: yieldClass },
+    { v: fmtAlpha(alphaStkd),          l: 'Validator Stake', s: 'alpha staked' },
     { v: stakers,                      l: 'Stakers',        s: 'unique wallets' },
     { v: `${rootPct}%`,                l: 'Root Prop',      s: 'emission share', c: 'green' },
-    { v: netVolStr,                    l: 'Net Vol 24h',    s: 'TAO buy − sell (24h)', c: netVolClass },
-    { v: `${bsRatio}×`,               l: 'Buy/Sell Ratio', s: `${buys24} buys / ${sells24} sells (24h)`, c: bsClass, tt: 'Ratio above 1.0 = more buys than sells. Below 1.0 = net sell pressure.' },
+    { v: netVolStr,                    l: '24h Net Volume',  s: 'buy − sell (TAO)', c: netVolClass },
+    { v: `${bsRatio}×`,               l: 'Order Ratio',     s: `${buys24} buys / ${sells24} sells`, c: bsClass },
   ].map(s => `
-    <div class="stat-card">
+    <div class="stat-card"${TILE_TIPS[s.l] ? ` title="${TILE_TIPS[s.l]}"` : ''}>
       <div class="stat-val ${s.c || ''}">${s.v}</div>
       <div class="stat-lbl">${s.l}</div>
       ${s.s ? `<div class="stat-sub">${s.s}</div>` : ''}
     </div>
   `).join('');
 
-  // --- Price chart + rank chart (own toggle) ---
-  drawPriceChart(data, PRICE_PERIOD);
-  drawRankChart(data, PRICE_PERIOD);
-
-  // --- Net flow (global toggle) ---
-  drawCharts(data, PERIOD);
-
-  // --- Owner wallet inline ---
-  renderOwnerDash(data);
-
-  // --- Analyst signal card ---
+  // --- Signal + risk lead ---
   drawSignalCard(data);
-
-  // --- Risk register ---
   renderRiskSection(data);
 
-  // --- Miner section ---
-  renderMinerSection(data);
+  // --- Charts ---
+  drawPriceChart(data, PRICE_PERIOD);
+  drawRankChart(data, PRICE_PERIOD);
+  drawCharts(data, PERIOD);
 
-  // --- Validator section ---
+  // --- Peer comp ---
+  renderPeerComp(data);
+
+  // --- Owner + detail sections ---
+  renderOwnerDash(data);
+  renderMinerSection(data);
   renderValidatorSection(data);
 }
 
@@ -1312,6 +1313,58 @@ function renderOwnerDash(data) {
 // ============================================================
 // RISK REGISTER (auto-derived from live data)
 // ============================================================
+// ============================================================
+// PEER COMPARISON (static reference)
+// ============================================================
+const PEER_REF = [
+  { netuid:1,  name:'Apex',      emLabel:'~18%', trend:'→', trendCls:'grey',  note:'Root governance' },
+  { netuid:4,  name:'Targon',    emLabel:'~6%',  trend:'↑', trendCls:'green', note:'Multimodal AI' },
+  { netuid:9,  name:'Pretrain',  emLabel:'~5%',  trend:'↓', trendCls:'red',   note:'Model pretraining' },
+  { netuid:19, name:'Inference', emLabel:'~8%',  trend:'→', trendCls:'grey',  note:'AI inference' },
+  { netuid:64, name:'Chutes',    emLabel:'~3%',  trend:'↑', trendCls:'green', note:'GPU compute' },
+];
+function renderPeerComp(data) {
+  const el = document.getElementById('peer-comp');
+  if (!el) return;
+  const cur = data.netuid;
+  const liveRank = data.pool && data.pool.rank ? data.pool.rank : null;
+  const liveEm   = data.pool && data.pool.root_prop ? (parseFloat(data.pool.root_prop)*100).toFixed(1)+'%' : null;
+  const tc = { green:'#1a7a3a', red:'#c0392b', grey:'#888' };
+  const rows = PEER_REF.map(p => {
+    const isCur = p.netuid === cur;
+    return `<tr style="${isCur?'background:#f4faf6;':''}">
+      <td style="padding:6px 10px;font-size:11px;${isCur?'font-weight:700;':''}">
+        <span style="font-size:9px;color:#ccc;margin-right:3px;">SN${p.netuid}</span>${p.name}
+        ${isCur?'<span style="font-size:8px;font-weight:700;background:#1a7a3a;color:#fff;padding:1px 5px;border-radius:2px;margin-left:4px;">active</span>':''}
+      </td>
+      <td style="padding:6px 10px;font-size:11px;color:#888;">${p.note}</td>
+      <td style="padding:6px 10px;font-size:11px;text-align:right;font-weight:700;">${isCur&&liveEm?liveEm:p.emLabel}</td>
+      <td style="padding:6px 10px;font-size:11px;text-align:right;color:#666;">${isCur&&liveRank?'#'+liveRank:'—'}</td>
+      <td style="padding:6px 10px;font-size:14px;text-align:center;color:${tc[p.trendCls]};">${p.trend}</td>
+    </tr>`;
+  }).join('');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="sec-hdr" style="margin-bottom:8px;">
+      <span class="sec-title">Peer Comparison</span>
+      <span style="font-size:9px;color:#ccc;">Reference data · verify live</span>
+    </div>
+    <div class="table-wrap">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#fafafa;">
+          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:left;">Subnet</th>
+          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:left;">Focus</th>
+          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:right;">Emission</th>
+          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:right;">Rank</th>
+          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:center;">Trend</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+
 function renderRiskSection(data) {
   const el = document.getElementById('risk-section');
   if (!el) return;
@@ -1474,9 +1527,10 @@ function drawSignalCard(data) {
         <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:${verdictColor};opacity:0.8;margin-bottom:2px;">Signal</div>
         <div style="font-size:22px;font-weight:700;color:${verdictColor};line-height:1;">${verdict}</div>
       </div>
-      <div style="flex:1;min-width:160px;border-left:1px solid rgba(0,0,0,0.08);padding-left:14px;">
-        <div style="font-size:12px;color:#333;line-height:1.6;">${rationaleStr}</div>
-        <div style="font-size:10px;color:#aaa;margin-top:3px;">Baseline: dTAO launch Feb 2025 · Not investment advice</div>
+      <div style="flex:1;min-width:160px;border-left:1px solid rgba(0,0,0,0.1);padding-left:14px;">
+        ${perfStr ? `<div style="font-size:13px;font-weight:700;color:#222;margin-bottom:5px;line-height:1.35;">${perfStr}</div>` : ''}
+        ${flowStr ? `<div style="font-size:11px;color:#555;margin-bottom:2px;">${flowStr}</div>` : ''}
+        ${rankStr ? `<div style="font-size:11px;color:#999;">${rankStr}</div>` : ''}
       </div>
     </div>
   `;
@@ -2513,7 +2567,7 @@ updateBadge();
       document.getElementById('netuid-input').value = lastNetuid;
       STATE = cached;
       renderAll(cached, true);
-      setMsg(`Restored SN${lastNetuid} · cached ${fmtDateTime(cached.ts)} (${fmtAge(cached.ts)}) — click Refresh for live data`);
+      setMsg(`Cached · ${fmtAge(cached.ts)} ago`);
       showRefreshBtn(true);
     }
   }
@@ -2716,12 +2770,17 @@ function renderValidatorSection(data) {
       </div>
       <div style="font-size:10px;color:#aaa;">${fmtVal(totalDailyTAO, taoPriceUSD)} distributed daily · ${validators.length} validator${validators.length !== 1 ? 's' : ''}</div>
     </div>
-    <div class="stats-grid" style="margin-bottom:14px;">
-      <div class="stat-card"><div class="stat-val">${validators.length}</div><div class="stat-lbl">Active Validators</div><div class="stat-sub">with permits or trust</div></div>
-      <div class="stat-card"><div class="stat-val">${fmtVal(totalDailyTAO, taoPriceUSD)}</div><div class="stat-lbl">Total Daily Reward</div><div class="stat-sub">combined validator alpha</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:${holdCount > sellCount ? '#1a7a3a' : '#c0392b'};">${holdCount}</div><div class="stat-lbl">Holding</div><div class="stat-sub">of ${validators.length} validators</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:${sellCount > 0 ? '#c0392b' : '#aaa'};">${sellCount}</div><div class="stat-lbl">Distributing</div><div class="stat-sub">selling into market</div></div>
-    </div>
+    ${(()=>{
+      const top3Reward=validators.slice(0,3).reduce((s,v)=>s+parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9,0);
+      const top3Pct=totalDailyTAO>0?(top3Reward/totalDailyTAO*100).toFixed(1):null;
+      const concCls=top3Pct&&parseFloat(top3Pct)>80?'red':top3Pct&&parseFloat(top3Pct)>60?'':'green';
+      return `<div class="stats-grid" style="margin-bottom:14px;">
+        <div class="stat-card"><div class="stat-val">${validators.length}</div><div class="stat-lbl">Validators</div><div class="stat-sub">active permits</div></div>
+        <div class="stat-card"><div class="stat-val">${fmtVal(totalDailyTAO,taoPriceUSD)}</div><div class="stat-lbl">Daily Reward</div><div class="stat-sub">total distributed</div></div>
+        ${top3Pct?`<div class="stat-card" title="Top-3 validators' share of daily rewards. Above 80% = high concentration."><div class="stat-val ${concCls}">${top3Pct}%</div><div class="stat-lbl">Top-3 Share</div><div class="stat-sub">concentration</div></div>`:''}
+        <div class="stat-card"><div class="stat-val" style="color:${holdCount>sellCount?'#1a7a3a':'#c0392b'};">${holdCount} / ${validators.length}</div><div class="stat-lbl">Holding</div><div class="stat-sub">vs distributing</div></div>
+      </div>`;
+    })()}
     <div style="margin-bottom:14px;">
       <div class="chart-title" style="margin-bottom:6px;">DAILY ALPHA DISTRIBUTION — SHARE PER VALIDATOR</div>
       <div style="width:100%;height:40px;line-height:0;font-size:0;margin-bottom:8px;">${flowBarsHTML}</div>
@@ -2775,5 +2834,9 @@ function renderValidatorSection(data) {
 }
 
 </script>
+<div style="padding:16px 32px;border-top:1.5px solid #eee;font-size:10px;color:#ccc;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-top:24px;">
+  <span>TAO Institute · Pylon Partners · Data: <a href="https://taostats.io" target="_blank" style="color:#aaa;text-decoration:none;font-weight:700;">Taostats</a></span>
+  <span>For institutional research only. Not investment advice. Past performance does not predict future results.</span>
+</div>
 </body>
 </html>
