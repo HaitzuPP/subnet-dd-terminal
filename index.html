@@ -625,17 +625,19 @@ input[type=number]::placeholder { color: #bbb; }
 
   <div id="db-content" class="hidden">
 
-    <!-- 1. Identity + primary callouts -->
+    <!-- 1. VERDICT — signal leads (JS sets display:block when data available) -->
+    <div id="analyst-signal" style="display:none;margin-bottom:14px;"></div>
+
+    <!-- 2. Identity + primary callouts -->
     <div id="meta-card" class="meta-card"></div>
 
-    <!-- 2. Analyst signal card (leads the dashboard) -->
-    <div id="analyst-signal" style="display:none;margin-bottom:16px;padding:14px 16px;border:1.5px solid #eee;border-radius:6px;background:#fafafa;"></div>
-
     <!-- 3. Stats grid -->
-    <div id="stats-grid" class="stats-grid" style="margin-bottom:20px;"></div>
+    <div id="stats-grid" class="stats-grid" style="margin-bottom:16px;"></div>
 
+    <!-- 4. Risk register -->
+    <div id="risk-section" style="display:none;margin-bottom:14px;border-top:1.5px solid #f0f0f0;padding-top:12px;"></div>
 
-    <!-- 3. Owner wallet inline -->
+    <!-- 5. Owner wallet inline -->
     <div id="owner-dash" style="padding-top:4px;border-top:1.5px solid #f0f0f0;margin-top:8px;"></div>
 
     <!-- 3b. Miner section -->
@@ -1145,6 +1147,9 @@ function renderDashboard(data, fromCache) {
   // --- Analyst signal card ---
   drawSignalCard(data);
 
+  // --- Risk register ---
+  renderRiskSection(data);
+
   // --- Miner section ---
   renderMinerSection(data);
 
@@ -1304,6 +1309,71 @@ function renderOwnerDash(data) {
 }
 
 
+// ============================================================
+// RISK REGISTER (auto-derived from live data)
+// ============================================================
+function renderRiskSection(data) {
+  const el = document.getElementById('risk-section');
+  if (!el) return;
+  const { pool, history, subnetHistory, netuid } = data;
+  const risks = [];
+
+  // Risk 1: Rank / deregistration
+  const rank = toF(pool.rank);
+  if (rank !== null && rank > 50) {
+    risks.push({ sev:'HIGH', label:'Deregistration risk', detail:`Rank #${rank} — subnets outside top 32 by emission face deregistration pressure.` });
+  } else if (rank !== null && rank > 25) {
+    risks.push({ sev:'MED', label:'Rank deterioration', detail:`Rank #${rank} — approaching the deregistration zone (>32). Monitor emission share weekly.` });
+  }
+
+  // Risk 2: Low emission share
+  const emPct = toF(pool.tao_in_emission) || toF(pool.emission_percentage) || null;
+  if (emPct !== null && emPct < 1.0) {
+    risks.push({ sev:'HIGH', label:'Low emission share', detail:`${emPct.toFixed(2)}% of network emission — reduces validator incentive to stay.` });
+  }
+
+  // Risk 3: Alpha price trend (30d)
+  if (history && history.length >= 2) {
+    const sorted = [...history].filter(h => toF(h.price)).sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp));
+    const cut = Date.now() - 30*86400000;
+    const recent = sorted.filter(h => new Date(h.timestamp).getTime() >= cut);
+    if (recent.length >= 2) {
+      const chg = (toF(recent[recent.length-1].price) - toF(recent[0].price)) / toF(recent[0].price) * 100;
+      if (chg < -20) risks.push({ sev:'HIGH', label:'Alpha drawdown', detail:`${chg.toFixed(1)}% price decline in 30d — miner and validator incentives at risk.` });
+      else if (chg < -10) risks.push({ sev:'MED', label:'Alpha underperformance', detail:`${chg.toFixed(1)}% in 30d. Monitor for continued selling pressure.` });
+    }
+  }
+
+  // Risk 4: Miner count declining
+  if (subnetHistory && subnetHistory.length >= 4) {
+    const sh = [...subnetHistory].filter(h => toF(h.active_miners) !== null).sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp));
+    if (sh.length >= 4) {
+      const earlyAvg = (toF(sh[0].active_miners)+toF(sh[1].active_miners))/2;
+      const lateAvg  = (toF(sh[sh.length-1].active_miners)+toF(sh[sh.length-2].active_miners))/2;
+      if (earlyAvg > 0 && lateAvg < earlyAvg * 0.8) {
+        risks.push({ sev:'MED', label:'Miner attrition', detail:`Active miners down ~${((1-lateAvg/earlyAvg)*100).toFixed(0)}% — shrinking miner set signals weakening incentive.` });
+      }
+    }
+  }
+
+  if (risks.length === 0) { el.style.display='none'; return; }
+
+  const sevColor = { HIGH:'#c0392b', MED:'#d68000', LOW:'#1a7a3a' };
+  const sevBg    = { HIGH:'#fdf2f2', MED:'#fffaf0', LOW:'#f0faf4' };
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:#aaa;margin-bottom:8px;">Risk Register</div>
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      ${risks.map(r => `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:7px 11px;background:${sevBg[r.sev]};border-left:3px solid ${sevColor[r.sev]};border-radius:0 4px 4px 0;">
+          <div style="flex-shrink:0;font-size:9px;font-weight:700;color:${sevColor[r.sev]};text-transform:uppercase;letter-spacing:0.5px;padding-top:2px;min-width:28px;">${r.sev}</div>
+          <div><span style="font-size:11px;font-weight:700;color:#222;">${r.label} — </span><span style="font-size:11px;color:#666;">${r.detail}</span></div>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+
 function drawSignalCard(data) {
   const el = document.getElementById('signal-card') || document.getElementById('analyst-signal');
   if (!el) return;
@@ -1384,27 +1454,30 @@ function drawSignalCard(data) {
   const rootPct = (toF(pool.root_prop) * 100 || 0).toFixed(2);
   const rankStr = rank ? `#${rank} by emission, ${rootPct}% root prop` : null;
 
-  // Build signal card — primary signal dominant, secondary data smaller
+  // Build signal card — verdict first, 5px left accent border
   if (!perfStr && !flowStr && !rankStr) { el.style.display='none'; return; }
   el.style.display = 'block';
 
-  // Primary: performance vs TAO (most investable signal)
-  const primaryHTML = perfStr
-    ? `<div style="font-size:15px;font-weight:700;line-height:1.3;" class="${perfClass}">SN${netuid} is ${perfStr}</div>`
-    : `<div style="font-size:15px;font-weight:700;color:#888;">SN${netuid} — insufficient history for comparison</div>`;
+  // Derive primary verdict
+  let verdict = 'HOLD', verdictColor = '#999';
+  if (perfClass === 'green') { verdict = 'ACCUMULATE'; verdictColor = '#1a7a3a'; }
+  else if (perfClass === 'red') { verdict = 'REDUCE'; verdictColor = '#c0392b'; }
+  const bgColor = verdict === 'ACCUMULATE' ? '#f0faf4' : verdict === 'REDUCE' ? '#fdf2f2' : '#f8f8f8';
 
-  // Secondary row: flow + rank on one small line
-  const secondaryParts = [
-    flowStr ? `<span class="${flowClass}" style="font-weight:700;">${flowStr}</span>` : null,
-    rankStr ? `<span style="color:#888;">${rankStr}</span>` : null,
-  ].filter(Boolean);
+  // One-line rationale
+  const rationaleItems = [perfStr, flowStr, rankStr].filter(Boolean);
+  const rationaleStr = rationaleItems.join(' &nbsp;·&nbsp; ');
 
   el.innerHTML = `
-    <div style="background:#fafafa;border:1.5px solid ${perfClass === 'green' ? '#b8dfc4' : perfClass === 'red' ? '#f0c8c3' : '#e8e8e8'};border-radius:6px;padding:14px 18px;">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:#aaa;margin-bottom:7px;">Investment Signal</div>
-      ${primaryHTML}
-      ${secondaryParts.length ? `<div style="font-size:11px;margin-top:6px;">${secondaryParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
-      <div style="font-size:10px;color:#ccc;margin-top:5px;">Baseline = dTAO launch (Feb 2025). Past performance is not indicative of future results.</div>
+    <div style="background:${bgColor};border-left:5px solid ${verdictColor};border-radius:0 6px 6px 0;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:0;">
+      <div style="flex-shrink:0;min-width:90px;">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:${verdictColor};opacity:0.8;margin-bottom:2px;">Signal</div>
+        <div style="font-size:22px;font-weight:700;color:${verdictColor};line-height:1;">${verdict}</div>
+      </div>
+      <div style="flex:1;min-width:160px;border-left:1px solid rgba(0,0,0,0.08);padding-left:14px;">
+        <div style="font-size:12px;color:#333;line-height:1.6;">${rationaleStr}</div>
+        <div style="font-size:10px;color:#aaa;margin-top:3px;">Baseline: dTAO launch Feb 2025 · Not investment advice</div>
+      </div>
     </div>
   `;
 }
