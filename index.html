@@ -1125,9 +1125,11 @@ function renderDashboard(data, fromCache) {
     </div>
     <div class="meta-actions">
       <span class="meta-ts" style="color:${freshnessColor};font-weight:700;" title="Fetched ${fmtDateTime(data.ts)}">${freshnessStr}</span>
+      <button id="usd-toggle-overview" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid ${USD_MODE_OVERVIEW?'#1a7a3a':'#ddd'};background:${USD_MODE_OVERVIEW?'#1a7a3a':'transparent'};color:${USD_MODE_OVERVIEW?'#fff':'#888'};cursor:pointer;margin-left:6px;">${USD_MODE_OVERVIEW?'USD':'TAO'}</button>
       <button onclick="(()=>{const u=new URL(location.href);u.searchParams.set('sn','${netuid}');navigator.clipboard.writeText(u.toString()).then(()=>{this.textContent='Copied!';setTimeout(()=>{this.textContent='Share'},1500)}).catch(()=>{this.textContent='Copy failed'});})()" class="btn btn-ghost" style="font-size:10px;padding:3px 12px;min-height:unset;margin-left:6px;">Share</button>
     </div>
   `;
+  {const b=document.getElementById('usd-toggle-overview');if(b)b.addEventListener('click',()=>{USD_MODE_OVERVIEW=!USD_MODE_OVERVIEW;if(STATE)renderDashboard(STATE,false);});}
 
   // --- Stats grid ---
   const rootPct = (toF(pool.root_prop) * 100 || 0).toFixed(3);
@@ -1166,8 +1168,7 @@ function renderDashboard(data, fromCache) {
     '24h Net Volume':  'Buy TAO minus sell TAO (24h). Positive = net buying pressure.',
     'Order Ratio':     'Buy orders ÷ sell orders (24h). Above 1× = more buys than sells.',
   };
-  const _ovTgl=`<div style="grid-column:1/-1;display:flex;justify-content:flex-end;align-items:center;padding-bottom:2px;"><span style="font-size:9px;color:#bbb;margin-right:6px;">Display in</span><button id="usd-toggle-overview" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid ${USD_MODE_OVERVIEW?'#1a7a3a':'#ddd'};background:${USD_MODE_OVERVIEW?'#1a7a3a':'transparent'};color:${USD_MODE_OVERVIEW?'#fff':'#888'};cursor:pointer;">${USD_MODE_OVERVIEW?'USD':'TAO'}</button></div>`;
-  document.getElementById('stats-grid').innerHTML = [{_raw:_ovTgl},
+  document.getElementById('stats-grid').innerHTML = [
     { v: fmtVal(poolTAO, taoPriceUSD, USD_MODE_OVERVIEW), l: 'Liquidity',       s: USD_MODE_OVERVIEW && taoPriceUSD ? 'pool depth (USD)' : 'pool depth (TAO)' },
     { v: fmtVal(mcapTAO, taoPriceUSD, USD_MODE_OVERVIEW), l: 'Market Cap',     s: 'alpha × price' },
     { v: yieldStr,                     l: 'Est. Ann. Yield', s: 'emission ÷ market cap', c: yieldClass },
@@ -1184,7 +1185,6 @@ function renderDashboard(data, fromCache) {
     </div>
   `).join('');
 
-  {const b=document.getElementById('usd-toggle-overview');if(b)b.addEventListener('click',()=>{USD_MODE_OVERVIEW=!USD_MODE_OVERVIEW;if(STATE)renderDashboard(STATE,false);});}
   // --- Signal + risk lead ---
   drawSignalCard(data);
   renderRiskSection(data);
