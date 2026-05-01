@@ -687,7 +687,7 @@ input[type=number]::placeholder { color: #bbb; }
         </div>
       </div>
       <div class="chart-box" style="margin-bottom:14px;">
-        <div class="chart-title">ALPHA PRICE (TAO)</div>
+        <div class="chart-title" id="price-chart-title">ALPHA PRICE (TAO)</div>
         <div class="chart-wrap chart-wrap-tall"><canvas id="main-chart"></canvas></div>
       </div>
       <div class="chart-box" style="margin-bottom:14px;">
@@ -1101,12 +1101,12 @@ function renderDashboard(data, fromCache) {
       <div class="meta-primary-lbl">Emission Rank</div>
     </div>
     <div class="meta-primary">
-      <div class="meta-primary-val">${fmtAlpha(mcapTAO)} <span style="font-size:12px;font-weight:400;color:#aaa;">TAO</span></div>
+      <div class="meta-primary-val">${fmtVal(mcapTAO, taoPriceUSD)}${USD_MODE && taoPriceUSD ? '' : '<span style="font-size:12px;font-weight:400;color:#aaa;"> TAO</span>'}</div>
       <div class="meta-primary-lbl">Market Cap</div>
     </div>
     <div class="meta-divider"></div>
     <div class="meta-stat">
-      <div class="meta-val">${fmtPrice(pool.price)}</div>
+      <div class="meta-val">${USD_MODE && taoPriceUSD ? '$'+(pool.price * taoPriceUSD).toFixed(4) : fmtPrice(pool.price)}</div>
       <div class="meta-lbl">Alpha Price</div>
     </div>
     <div class="meta-stat">
@@ -1138,7 +1138,7 @@ function renderDashboard(data, fromCache) {
   const sellTAO      = (toF(pool.tao_sell_volume_24_hr)  || 0) / 1e9;
   const netVolTAO    = buyTAO - sellTAO;
   const netVolClass  = netVolTAO >= 0 ? 'green' : 'red';
-  const netVolStr    = (netVolTAO >= 0 ? '+' : '') + fmtAlpha(netVolTAO) + ' TAO';
+  const netVolStr    = (netVolTAO >= 0 ? '+' : '') + fmtVal(netVolTAO, taoPriceUSD);
   // Buy/sell count ratio
   const buys24  = pool.buys_24_hr  || 0;
   const sells24 = pool.sells_24_hr || 0;
@@ -1165,7 +1165,7 @@ function renderDashboard(data, fromCache) {
     'Order Ratio':     'Buy orders ÷ sell orders (24h). Above 1× = more buys than sells.',
   };
   document.getElementById('stats-grid').innerHTML = [
-    { v: fmtAlpha(poolTAO) + ' TAO',   l: 'Liquidity',       s: 'pool depth (TAO)' },
+    { v: fmtVal(poolTAO, taoPriceUSD), l: 'Liquidity',       s: USD_MODE && taoPriceUSD ? 'pool depth (USD)' : 'pool depth (TAO)' },
     { v: fmtVal(mcapTAO, taoPriceUSD), l: 'Market Cap',     s: 'alpha × price' },
     { v: yieldStr,                     l: 'Est. Ann. Yield', s: 'emission ÷ market cap', c: yieldClass },
     { v: fmtAlpha(alphaStkd),          l: 'Validator Stake', s: 'alpha staked' },
@@ -1932,7 +1932,7 @@ function drawDualChart(id, labels, prices, ranks, hasRank) {
         padding: 10, cornerRadius: 3,
         callbacks: {
           label: ctx => ctx.datasetIndex === 0
-            ? `Price: ${fmtPrice6(ctx.parsed.y)} TAO`
+            ? `Price: ${USD_MODE && taoPriceUSD ? '$'+(ctx.parsed.y * taoPriceUSD).toFixed(6) : fmtPrice6(ctx.parsed.y)+' TAO'}`
             : `Rank: #${Math.round(ctx.parsed.y)}`,
         }
       }
@@ -1946,7 +1946,7 @@ function drawDualChart(id, labels, prices, ranks, hasRank) {
       y: {
         position: 'left',
         min: priceMin, max: priceMax,
-        ticks: { font: { family: 'Arial', size: 9 }, color: '#1a7a3a', callback: v => fmtPrice6(v) },
+        ticks: { font: { family: 'Arial', size: 9 }, color: '#1a7a3a', callback: v => USD_MODE && taoPriceUSD ? '$'+(v*taoPriceUSD).toFixed(6) : fmtPrice6(v) },
         grid:   { color: '#f5f5f5' },
         border: { color: '#eee' },
       },
@@ -1995,6 +1995,8 @@ function drawDualChart(id, labels, prices, ranks, hasRank) {
     });
   }
 
+  const titleEl = document.getElementById('price-chart-title');
+  if (titleEl) titleEl.textContent = USD_MODE && taoPriceUSD ? 'ALPHA PRICE (USD)' : 'ALPHA PRICE (TAO)';
   canvas._c = new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: { labels, datasets },
