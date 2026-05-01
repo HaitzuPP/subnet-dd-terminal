@@ -619,7 +619,6 @@ input[type=number]::placeholder { color: #bbb; }
     <input type="number" id="netuid-input" placeholder="Subnet number (1–128)  e.g. 54, 64, 19" min="1" max="512" autofocus />
     <button class="btn btn-dark" id="run-btn">Run DD</button>
     <button class="btn btn-outline hidden" id="refresh-btn">Refresh</button>
-    <button class="btn btn-ghost" id="usd-toggle-btn" title="Toggle TAO / USD display" style="font-size:11px;padding:6px 14px;font-weight:700;">TAO</button>
     <span id="status-msg"></span>
   </div>
 </div>
@@ -679,12 +678,12 @@ input[type=number]::placeholder { color: #bbb; }
         <span class="sec-title">Price &amp; Rank
           <span id="rank-legend-hint" style="color:#aaa;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:6px;"></span>
         </span>
-        <div class="toggles" id="price-period-toggles">
+        <div style="display:flex;align-items:center;gap:6px;"><button id="usd-toggle-chart" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid #ddd;background:transparent;color:#888;cursor:pointer;">TAO</button><div class="toggles" id="price-period-toggles">
           <button class="tgl active" data-period="7d">7D</button>
           <button class="tgl" data-period="30d">30D</button>
           <button class="tgl" data-period="90d">90D</button>
           <button class="tgl" data-period="all">All</button>
-        </div>
+        </div></div>
       </div>
       <div class="chart-box" style="margin-bottom:14px;">
         <div class="chart-title" id="price-chart-title">ALPHA PRICE (TAO)</div>
@@ -747,7 +746,10 @@ let STATE = null;         // current loaded subnet data
 let PERIOD = '7d';        // active dashboard chart period
 let OWNER_PERIOD = '3m';  // active owner wallet period
 let RANK_EXPANDED = false;  // rank table expand/collapse state
-let USD_MODE = false;         // TAO vs USD display
+let USD_MODE_OVERVIEW   = false;  // meta card + stats grid
+let USD_MODE_CHART      = false;  // price chart
+let USD_MODE_MINERS     = false;  // miners section
+let USD_MODE_VALIDATORS = false;  // validators section
 let PRICE_PERIOD  = '7d';  // independent period for the price + rank chart
 
 // ============================================================
@@ -1101,12 +1103,12 @@ function renderDashboard(data, fromCache) {
       <div class="meta-primary-lbl">Emission Rank</div>
     </div>
     <div class="meta-primary">
-      <div class="meta-primary-val">${USD_MODE && taoPriceUSD ? fmtVal(mcapTAO, taoPriceUSD) : fmtAlpha(mcapTAO) + '<span style="font-size:12px;font-weight:400;color:#aaa;"> TAO</span>'}</div>
+      <div class="meta-primary-val">${USD_MODE_OVERVIEW && taoPriceUSD ? fmtVal(mcapTAO, taoPriceUSD, true) : fmtAlpha(mcapTAO) + '<span style="font-size:12px;font-weight:400;color:#aaa;"> TAO</span>'}</div>
       <div class="meta-primary-lbl">Market Cap</div>
     </div>
     <div class="meta-divider"></div>
     <div class="meta-stat">
-      <div class="meta-val">${USD_MODE && taoPriceUSD ? '$'+(pool.price * taoPriceUSD).toFixed(4) : fmtPrice(pool.price)}</div>
+      <div class="meta-val">${USD_MODE_OVERVIEW && taoPriceUSD ? '$'+(pool.price * taoPriceUSD).toFixed(4) : fmtPrice(pool.price)}</div>
       <div class="meta-lbl">Alpha Price</div>
     </div>
     <div class="meta-stat">
@@ -1138,7 +1140,7 @@ function renderDashboard(data, fromCache) {
   const sellTAO      = (toF(pool.tao_sell_volume_24_hr)  || 0) / 1e9;
   const netVolTAO    = buyTAO - sellTAO;
   const netVolClass  = netVolTAO >= 0 ? 'green' : 'red';
-  const netVolStr    = (netVolTAO >= 0 ? '+' : '') + fmtVal(netVolTAO, taoPriceUSD);
+  const netVolStr    = (netVolTAO >= 0 ? '+' : '') + fmtVal(netVolTAO, taoPriceUSD, USD_MODE_OVERVIEW);
   // Buy/sell count ratio
   const buys24  = pool.buys_24_hr  || 0;
   const sells24 = pool.sells_24_hr || 0;
@@ -1164,16 +1166,17 @@ function renderDashboard(data, fromCache) {
     '24h Net Volume':  'Buy TAO minus sell TAO (24h). Positive = net buying pressure.',
     'Order Ratio':     'Buy orders ÷ sell orders (24h). Above 1× = more buys than sells.',
   };
-  document.getElementById('stats-grid').innerHTML = [
-    { v: fmtVal(poolTAO, taoPriceUSD), l: 'Liquidity',       s: USD_MODE && taoPriceUSD ? 'pool depth (USD)' : 'pool depth (TAO)' },
-    { v: fmtVal(mcapTAO, taoPriceUSD), l: 'Market Cap',     s: 'alpha × price' },
+  const _ovTgl=`<div style="grid-column:1/-1;display:flex;justify-content:flex-end;align-items:center;padding-bottom:2px;"><span style="font-size:9px;color:#bbb;margin-right:6px;">Display in</span><button id="usd-toggle-overview" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid ${USD_MODE_OVERVIEW?'#1a7a3a':'#ddd'};background:${USD_MODE_OVERVIEW?'#1a7a3a':'transparent'};color:${USD_MODE_OVERVIEW?'#fff':'#888'};cursor:pointer;">${USD_MODE_OVERVIEW?'USD':'TAO'}</button></div>`;
+  document.getElementById('stats-grid').innerHTML = [{_raw:_ovTgl},
+    { v: fmtVal(poolTAO, taoPriceUSD, USD_MODE_OVERVIEW), l: 'Liquidity',       s: USD_MODE_OVERVIEW && taoPriceUSD ? 'pool depth (USD)' : 'pool depth (TAO)' },
+    { v: fmtVal(mcapTAO, taoPriceUSD, USD_MODE_OVERVIEW), l: 'Market Cap',     s: 'alpha × price' },
     { v: yieldStr,                     l: 'Est. Ann. Yield', s: 'emission ÷ market cap', c: yieldClass },
     { v: fmtAlpha(alphaStkd),          l: 'Validator Stake', s: 'alpha staked' },
     { v: stakers,                      l: 'Stakers',        s: 'unique wallets' },
     { v: `${rootPct}%`,                l: 'Root Prop',      s: 'emission share', c: 'green' },
     { v: netVolStr,                    l: '24h Net Volume',  s: 'buy − sell (TAO)', c: netVolClass },
     { v: `${bsRatio}×`,               l: 'Order Ratio',     s: `${buys24} buys / ${sells24} sells`, c: bsClass },
-  ].map(s => `
+  ].map(s => s._raw ? s._raw : `
     <div class="stat-card"${TILE_TIPS[s.l] ? ` title="${TILE_TIPS[s.l]}"` : ''}>
       <div class="stat-val ${s.c || ''}">${s.v}</div>
       <div class="stat-lbl">${s.l}</div>
@@ -1181,6 +1184,7 @@ function renderDashboard(data, fromCache) {
     </div>
   `).join('');
 
+  {const b=document.getElementById('usd-toggle-overview');if(b)b.addEventListener('click',()=>{USD_MODE_OVERVIEW=!USD_MODE_OVERVIEW;if(STATE)renderDashboard(STATE,false);});}
   // --- Signal + risk lead ---
   drawSignalCard(data);
   renderRiskSection(data);
@@ -1932,7 +1936,7 @@ function drawDualChart(id, labels, prices, ranks, hasRank, taoPriceUSD) {
         padding: 10, cornerRadius: 3,
         callbacks: {
           label: ctx => ctx.datasetIndex === 0
-            ? `Price: ${USD_MODE && taoPriceUSD ? '$'+(ctx.parsed.y * taoPriceUSD).toFixed(6) : fmtPrice6(ctx.parsed.y)+' TAO'}`
+            ? `Price: ${USD_MODE_CHART && taoPriceUSD ? '$'+(ctx.parsed.y * taoPriceUSD).toFixed(6) : fmtPrice6(ctx.parsed.y)+' TAO'}`
             : `Rank: #${Math.round(ctx.parsed.y)}`,
         }
       }
@@ -1946,7 +1950,7 @@ function drawDualChart(id, labels, prices, ranks, hasRank, taoPriceUSD) {
       y: {
         position: 'left',
         min: priceMin, max: priceMax,
-        ticks: { font: { family: 'Arial', size: 9 }, color: '#1a7a3a', callback: v => USD_MODE && taoPriceUSD ? '$'+(v*taoPriceUSD).toFixed(6) : fmtPrice6(v) },
+        ticks: { font: { family: 'Arial', size: 9 }, color: '#1a7a3a', callback: v => USD_MODE_CHART && taoPriceUSD ? '$'+(v*taoPriceUSD).toFixed(6) : fmtPrice6(v) },
         grid:   { color: '#f5f5f5' },
         border: { color: '#eee' },
       },
@@ -1996,7 +2000,7 @@ function drawDualChart(id, labels, prices, ranks, hasRank, taoPriceUSD) {
   }
 
   const titleEl = document.getElementById('price-chart-title');
-  if (titleEl) titleEl.textContent = USD_MODE && taoPriceUSD ? 'ALPHA PRICE (USD)' : 'ALPHA PRICE (TAO)';
+  if (titleEl) titleEl.textContent = USD_MODE_CHART && taoPriceUSD ? 'ALPHA PRICE (USD)' : 'ALPHA PRICE (TAO)';
   canvas._c = new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: { labels, datasets },
@@ -2415,10 +2419,10 @@ function pct(v) {
   return (f >= 0 ? '+' : '') + f.toFixed(2) + '%';
 }
 
-// fmtVal: format a TAO amount in either TAO or USD depending on USD_MODE
-function fmtVal(taoAmt, taoPriceUSD) {
+// fmtVal: format a TAO amount. Pass usdMode=true for USD.
+function fmtVal(taoAmt, taoPriceUSD, usdMode) {
   if (taoAmt === null || taoAmt === undefined) return 'N/A';
-  if (USD_MODE && taoPriceUSD) {
+  if (usdMode && taoPriceUSD) {
     const usd = taoAmt * taoPriceUSD;
     if (usd >= 1e6)  return '$' + (usd / 1e6).toFixed(2) + 'M';
     if (usd >= 1e3)  return '$' + (usd / 1e3).toFixed(1) + 'K';
@@ -2593,16 +2597,14 @@ document.getElementById('price-period-toggles').addEventListener('click', e => {
 
 document.getElementById('clear-hist-btn').addEventListener('click', clearHistory);
 
-document.getElementById('usd-toggle-btn').addEventListener('click', () => {
-  USD_MODE = !USD_MODE;
-  const btn = document.getElementById('usd-toggle-btn');
-  btn.textContent = USD_MODE ? 'USD' : 'TAO';
-  btn.style.background = USD_MODE ? '#1a7a3a' : '';
-  btn.style.color       = USD_MODE ? '#fff'    : '';
-  btn.style.borderColor = USD_MODE ? '#1a7a3a' : '';
-  if (STATE) {
-    renderDashboard(STATE, false);
-  }
+document.getElementById('usd-toggle-chart').addEventListener('click',()=>{
+  USD_MODE_CHART=!USD_MODE_CHART;
+  const btn=document.getElementById('usd-toggle-chart');
+  btn.textContent=USD_MODE_CHART?'USD':'TAO';
+  btn.style.background=USD_MODE_CHART?'#1a7a3a':'transparent';
+  btn.style.color=USD_MODE_CHART?'#fff':'#888';
+  btn.style.borderColor=USD_MODE_CHART?'#1a7a3a':'#ddd';
+  if(STATE)drawPriceChart(STATE,PRICE_PERIOD);
 });
 
 // ============================================================
@@ -2693,7 +2695,7 @@ function renderMinerSection(data) {
     return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
       +'<span style="min-width:36px;font-size:10px;color:#bbb;flex-shrink:0;">UID '+m.uid+'</span>'
       +'<span class="key-pill" style="flex:1;overflow:hidden;min-width:0;">'+truncKey(hotkeySS58)+'</span>'
-      +'<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">'+fmtVal(rewardTAO,taoPriceUSD)+'/d</span>'
+      +'<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">'+fmtVal(rewardTAO,taoPriceUSD,USD_MODE_MINERS)+'/d</span>'
       +'<span class="mob-col-hide" style="min-width:60px;text-align:right;font-weight:700;color:'+deltaColor+';flex-shrink:0;" title="vs expected accumulation since registration">'+deltaStr+'</span>'
       +'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;'+pillBg+'">'+signal+'</span>'
       +'</div>';
@@ -2704,6 +2706,7 @@ function renderMinerSection(data) {
       <div class="sec-hdr" style="margin-bottom:4px;">
         <span class="sec-title">Miner Activity</span>
         ${activeMiners !== null ? `<span style="font-size:9px;font-weight:700;padding:2px 10px;border-radius:10px;background:#e8f5e9;color:#1a7a3a;">${activeMiners} active this epoch</span>` : ''}
+        <button id="usd-toggle-miners" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid ${USD_MODE_MINERS?'#1a7a3a':'#ddd'};background:${USD_MODE_MINERS?'#1a7a3a':'transparent'};color:${USD_MODE_MINERS?'#fff':'#888'};cursor:pointer;margin-left:auto;">${USD_MODE_MINERS?'USD':'TAO'}</button>
       </div>
       <div style="font-size:10px;color:#aaa;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
         ${maxNeurons !== null ? `<span>${maxNeurons} slots</span>` : ''}${trendHTML}
@@ -2713,7 +2716,7 @@ function renderMinerSection(data) {
       <div class="stat-card"><div class="stat-val">${activeMiners !== null ? activeMiners : '—'}</div><div class="stat-lbl">Active Miners</div><div class="stat-sub">earning this epoch</div></div>
       <div class="stat-card"><div class="stat-val">${activeValidators !== null ? activeValidators : '—'}</div><div class="stat-lbl">Active Validators</div><div class="stat-sub">with valid permits</div></div>
       <div class="stat-card"><div class="stat-val">${activeKeys !== null ? activeKeys : '—'}<span style="font-size:11px;font-weight:400;color:#aaa;"> / ${maxNeurons !== null ? maxNeurons : '—'}</span></div><div class="stat-lbl">Registered UIDs</div><div class="stat-sub">of max capacity</div></div>
-      ${totalMinerRewardTAO > 0 ? `<div class="stat-card"><div class="stat-val">${fmtVal(totalMinerRewardTAO, taoPriceUSD)}</div><div class="stat-lbl">Top 10 Daily</div><div class="stat-sub">combined mining rewards</div></div>` : ''}
+      ${totalMinerRewardTAO > 0 ? `<div class="stat-card"><div class="stat-val">${fmtVal(totalMinerRewardTAO, taoPriceUSD, USD_MODE_MINERS)}</div><div class="stat-lbl">Top 10 Daily</div><div class="stat-sub">combined mining rewards</div></div>` : ''}
     </div>
     <div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">ACTIVE MINERS — MONTHLY COUNT</div><div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div></div>
     ${!noMiners ? `
@@ -2731,6 +2734,7 @@ function renderMinerSection(data) {
     : '<div style="font-size:11px;color:#bbb;padding:12px 0;">No active miners found in metagraph.</div>'}
   `;
 
+  {const b=document.getElementById('usd-toggle-miners');if(b)b.addEventListener('click',()=>{USD_MODE_MINERS=!USD_MODE_MINERS;if(STATE)renderMinerSection(STATE);});}
   const ctx = document.getElementById('miner-trend-chart');
   if (ctx) {
     if (ctx._chartInst) ctx._chartInst.destroy();
@@ -2798,7 +2802,7 @@ function renderValidatorSection(data) {
     const bg=sig.cls==='green'?'#1a7a3a':sig.cls==='red'?'#c0392b':sig.cls==='amber'?'#e67e22':'#aaa';
     const w=Math.max(pct,0.5).toFixed(2);
     const r=i===0?'3px 0 0 3px':i===validators.length-1?'0 3px 3px 0':'0';
-    const rewardStr=fmtVal(reward,taoPriceUSD);
+    const rewardStr=fmtVal(reward,taoPriceUSD,USD_MODE_VALIDATORS);
     const label=pct>=14?('UID '+v.uid+' · '+rewardStr+'/d · '+pct.toFixed(1)+'%'):pct>=8?('UID '+v.uid+' · '+pct.toFixed(1)+'%'):pct>=4?(''+v.uid):'';
     return '<div style="display:inline-flex;align-items:center;justify-content:center;vertical-align:top;height:40px;width:'+w+'%;background:'+bg+';border-radius:'+r+';overflow:hidden;padding:0 4px;box-sizing:border-box;" title="UID '+v.uid+' · '+pct.toFixed(1)+'% · '+rewardStr+'/d · '+sig.signal+'"><span style="font-family:Arial;font-size:9px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+label+'</span></div>';
   }).join('');
@@ -2817,7 +2821,7 @@ function renderValidatorSection(data) {
     return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
       +'<span style="min-width:36px;font-size:10px;color:#bbb;flex-shrink:0;">UID '+v.uid+'</span>'
       +'<span class="key-pill" style="flex:1;overflow:hidden;min-width:0;">'+truncKey(hk)+(isOwner?' <span style="font-size:8px;background:#e8f5e9;color:#1a7a3a;padding:1px 4px;border-radius:2px;margin-left:3px;">owner</span>':'')+'</span>'
-      +'<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">'+fmtVal(reward,taoPriceUSD)+'/d</span>'
+      +'<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">'+fmtVal(reward,taoPriceUSD,USD_MODE_VALIDATORS)+'/d</span>'
       +'<span class="mob-col-hide" style="min-width:36px;text-align:right;font-size:10px;color:#888;flex-shrink:0;">'+pct+'</span>'
       +'<div class="mob-col-hide" style="min-width:48px;flex-shrink:0;">'+sparkHTML(sig.sparkData,sc)+'</div>'
       +'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;'+pillBg+'">'+sig.signal+'</span>'
@@ -2830,8 +2834,9 @@ function renderValidatorSection(data) {
       <div class="sec-hdr" style="margin-bottom:4px;">
         <span class="sec-title">Validator Rewards</span>
         <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;${aggBg}">${aggLabel}</span>
+        <button id="usd-toggle-validators" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid ${USD_MODE_VALIDATORS?'#1a7a3a':'#ddd'};background:${USD_MODE_VALIDATORS?'#1a7a3a':'transparent'};color:${USD_MODE_VALIDATORS?'#fff':'#888'};cursor:pointer;margin-left:auto;">${USD_MODE_VALIDATORS?'USD':'TAO'}</button>
       </div>
-      <div style="font-size:10px;color:#aaa;">${fmtVal(totalDailyTAO, taoPriceUSD)} distributed daily · ${validators.length} validator${validators.length !== 1 ? 's' : ''}</div>
+      <div style="font-size:10px;color:#aaa;">${fmtVal(totalDailyTAO, taoPriceUSD, USD_MODE_VALIDATORS)} distributed daily · ${validators.length} validator${validators.length !== 1 ? 's' : ''}</div>
     </div>
     ${(()=>{
       const top3Reward=validators.slice(0,3).reduce((s,v)=>s+parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9,0);
@@ -2839,7 +2844,7 @@ function renderValidatorSection(data) {
       const concCls=top3Pct&&parseFloat(top3Pct)>80?'red':top3Pct&&parseFloat(top3Pct)>60?'':'green';
       return `<div class="stats-grid" style="margin-bottom:14px;">
         <div class="stat-card"><div class="stat-val">${validators.length}</div><div class="stat-lbl">Validators</div><div class="stat-sub">active permits</div></div>
-        <div class="stat-card"><div class="stat-val">${fmtVal(totalDailyTAO,taoPriceUSD)}</div><div class="stat-lbl">Daily Reward</div><div class="stat-sub">total distributed</div></div>
+        <div class="stat-card"><div class="stat-val">${fmtVal(totalDailyTAO,taoPriceUSD,USD_MODE_VALIDATORS)}</div><div class="stat-lbl">Daily Reward</div><div class="stat-sub">total distributed</div></div>
         ${top3Pct?`<div class="stat-card" title="Top-3 validators' share of daily rewards. Above 80% = high concentration."><div class="stat-val ${concCls}">${top3Pct}%</div><div class="stat-lbl">Top-3 Share</div><div class="stat-sub">concentration</div></div>`:''}
         <div class="stat-card"><div class="stat-val" style="color:${holdCount>sellCount?'#1a7a3a':'#c0392b'};">${holdCount} / ${validators.length}</div><div class="stat-lbl">Holding</div><div class="stat-sub">vs distributing</div></div>
       </div>`;
@@ -2870,6 +2875,7 @@ function renderValidatorSection(data) {
     }
   `;
 
+  {const b=document.getElementById('usd-toggle-validators');if(b)b.addEventListener('click',()=>{USD_MODE_VALIDATORS=!USD_MODE_VALIDATORS;if(STATE)renderValidatorSection(STATE);});}
   if (hasHistData) {
     const palette=['#1a7a3a','#2980b9','#e67e22','#8e44ad','#c0392b','#16a085'];
     const datasets=[];
@@ -2889,8 +2895,8 @@ function renderValidatorSection(data) {
       if(ctx._chartInst) ctx._chartInst.destroy();
       if(!datasets.length){ canvasMsg('validator-ts-chart','No stake history data available'); return; }
       ctx._chartInst=new Chart(ctx,{type:'line',data:{datasets},options:{responsive:true,maintainAspectRatio:false,parsing:{xAxisKey:'x',yAxisKey:'y'},interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Arial',size:9},color:'#888',boxWidth:12,padding:10,filter:i=>!i.text.includes('Expected')}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtVal(c.parsed.y,taoPriceUSD)}}},
-        scales:{x:{type:'category',ticks:{font:{family:'Arial',size:9},color:'#bbb',maxTicksLimit:10},grid:{display:false}},y:{ticks:{font:{family:'Arial',size:9},color:'#bbb',callback:v=>USD_MODE&&taoPriceUSD?'$'+(v*taoPriceUSD).toFixed(0):fmtAlpha(v)},grid:{color:'#f5f5f5'},beginAtZero:false}}
+        plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Arial',size:9},color:'#888',boxWidth:12,padding:10,filter:i=>!i.text.includes('Expected')}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtVal(c.parsed.y,taoPriceUSD,USD_MODE_VALIDATORS)}}},
+        scales:{x:{type:'category',ticks:{font:{family:'Arial',size:9},color:'#bbb',maxTicksLimit:10},grid:{display:false}},y:{ticks:{font:{family:'Arial',size:9},color:'#bbb',callback:v=>USD_MODE_VALIDATORS&&taoPriceUSD?'$'+(v*taoPriceUSD).toFixed(0):fmtAlpha(v)},grid:{color:'#f5f5f5'},beginAtZero:false}}
       }});
     }
   }
