@@ -1841,7 +1841,7 @@ function drawPriceChart(data, period) {
     return;
   }
   // Reuse drawDualChart with no rank overlay
-  drawDualChart('main-chart', s.labels, s.prices, [], false);
+  drawDualChart('main-chart', s.labels, s.prices, [], false, data.taoPriceUSD);
 }
 
 // Emission rank — standalone line chart (y-axis reversed: rank 1 at top)
@@ -1902,7 +1902,7 @@ function drawCharts(data, period) {
   drawNetFlowChart(data, period);
 }
 
-function drawDualChart(id, labels, prices, ranks, hasRank) {
+function drawDualChart(id, labels, prices, ranks, hasRank, taoPriceUSD) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
   if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
