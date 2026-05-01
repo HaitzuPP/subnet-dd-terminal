@@ -1101,7 +1101,7 @@ function renderDashboard(data, fromCache) {
       <div class="meta-primary-lbl">Emission Rank</div>
     </div>
     <div class="meta-primary">
-      <div class="meta-primary-val">${fmtVal(mcapTAO, taoPriceUSD)}${USD_MODE && taoPriceUSD ? '' : '<span style="font-size:12px;font-weight:400;color:#aaa;"> TAO</span>'}</div>
+      <div class="meta-primary-val">${USD_MODE && taoPriceUSD ? fmtVal(mcapTAO, taoPriceUSD) : fmtAlpha(mcapTAO) + '<span style="font-size:12px;font-weight:400;color:#aaa;"> TAO</span>'}</div>
       <div class="meta-primary-lbl">Market Cap</div>
     </div>
     <div class="meta-divider"></div>
