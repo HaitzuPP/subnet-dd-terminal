@@ -155,17 +155,60 @@ input[type=number]::placeholder { color: #bbb; }
   line-height: 1.6;
 }
 
-/* ---- META CARD ---- */
-.meta-card {
+/* ---- VERDICT STRIP ---- */
+.verdict-strip {
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 20px;
-  padding: 16px 20px;
-  border: 1.5px solid #e8e8e8;
-  border-radius: 6px;
+  gap: 16px;
+  padding: 16px 0 14px;
+  margin-bottom: 16px;
+  border-bottom: 1.5px solid #eee;
   flex-wrap: wrap;
 }
+.verdict-id { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.verdict-name { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+.verdict-symbol { font-size: 11px; color: #aaa; font-weight: 400; }
+.verdict-age { font-size: 10px; color: #bbb; font-weight: 700; }
+.verdict-signals { display: flex; gap: 14px; flex-wrap: wrap; flex: 1; align-items: center; }
+.vsig { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.vsig-green { color: #1a7a3a; }
+.vsig-red { color: #c0392b; }
+.vsig-amber { color: #b8860b; }
+.vsig-grey { color: #aaa; }
+.vsig-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.verdict-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.verdict-desc { font-size: 11px; color: #777; line-height: 1.5; margin-bottom: 18px; max-width: 680px; }
+
+/* ---- SIGNAL CARDS ---- */
+.signal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.sig-card {
+  border: 1.5px solid #eee;
+  border-radius: 5px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sig-card-top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.sig-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.sig-dot-green  { background: #1a7a3a; }
+.sig-dot-red    { background: #c0392b; }
+.sig-dot-amber  { background: #d4a017; }
+.sig-dot-grey   { background: #ccc; }
+.sig-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #aaa; }
+.sig-val { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.1; color: #111; }
+.sig-val-green { color: #1a7a3a; }
+.sig-val-red   { color: #c0392b; }
+.sig-period { font-size: 9px; color: #bbb; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 1px; }
+.sig-read { font-size: 11px; color: #555; line-height: 1.5; margin-top: 6px; }
+.sig-sub  { font-size: 10px; color: #aaa; margin-top: 3px; }
+
+/* ---- META BADGE (kept for pills) ---- */
 .meta-badge {
   background: #111;
   color: #fff;
@@ -175,21 +218,30 @@ input[type=number]::placeholder { color: #bbb; }
   border-radius: 10px;
   letter-spacing: 0.8px;
 }
-.meta-name { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
-.meta-symbol { font-size: 11px; color: #aaa; }
-.meta-divider { width: 1px; height: 36px; background: #eee; flex-shrink: 0; }
-.meta-stat { text-align: center; min-width: 76px; }
-.meta-val  { font-size: 14px; font-weight: 700; line-height: 1.2; }
-.meta-lbl  { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
-.meta-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .meta-ts { font-size: 10px; color: #ccc; }
 
-/* ---- STATS GRID ---- */
+/* ---- RAW DATA SECTION ---- */
+.raw-section { margin-top: 24px; }
+.raw-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1.5px solid #eee;
+  border-bottom: 1.5px solid #eee;
+  cursor: pointer;
+  margin-bottom: 14px;
+  user-select: none;
+}
+.raw-toggle:hover .sec-title { color: #555; }
+.raw-toggle-icon { font-size: 11px; color: #bbb; font-weight: 700; }
+
+/* ---- STATS GRID (raw section) ---- */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
   gap: 9px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .stat-card {
   border: 1.5px solid #eee;
@@ -530,6 +582,23 @@ input[type=number]::placeholder { color: #bbb; }
   #rank-expand-row .btn { min-height: 36px; }
 }
 
+  /* --- Verdict strip --- */
+  .verdict-strip { padding: 12px 0 10px; gap: 10px; margin-bottom: 12px; }
+  .verdict-name  { font-size: 15px; }
+  .verdict-signals { gap: 8px; }
+  .vsig { font-size: 10px; }
+
+  /* --- Signal cards --- 2 col on mobile */
+  .signal-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .sig-card  { padding: 11px 12px; }
+  .sig-val   { font-size: 18px; }
+  .sig-label { font-size: 8px; }
+  .sig-read  { font-size: 10px; }
+
+  /* --- Raw toggle --- */
+  .raw-toggle { padding: 9px 0; }
+}
+
 /* Very small phones (≤ 380px) — tighter still */
 @media (max-width: 380px) {
   .tab { font-size: 8px; padding: 10px 2px; }
@@ -538,6 +607,8 @@ input[type=number]::placeholder { color: #bbb; }
   .meta-val { font-size: 11px; }
   .chart-wrap { height: 150px; }
   .chart-wrap-tall { height: 170px; }
+  .signal-grid { gap: 6px; }
+  .sig-val { font-size: 16px; }
 }
 </style>
 </head>
@@ -584,22 +655,18 @@ input[type=number]::placeholder { color: #bbb; }
 
   <div id="db-content" class="hidden">
 
-    <!-- 1. Identity + primary callouts -->
-    <div id="meta-card" class="meta-card"></div>
+    <!-- 1. Verdict strip — identity + inline quick signals -->
+    <div id="verdict-strip" class="verdict-strip"></div>
 
-    <!-- 1b. Executive summary — auto-generated signals -->
-    <div id="exec-summary"></div>
+    <!-- 2. Description (one line, shown only if available) -->
+    <div id="verdict-desc" class="verdict-desc hidden"></div>
 
-    <!-- 2. Stats grid -->
-    <div id="stats-grid" class="stats-grid" style="margin-bottom:20px;"></div>
+    <!-- 3. Signal cards — 4 focused metrics -->
+    <div id="signal-cards" class="signal-grid"></div>
 
-    <!-- 3. Owner wallet inline -->
-    <div id="owner-dash"></div>
-
-    <!-- Period selector — single global toggle controlling all 4 charts below -->
+    <!-- 4. Charts section -->
     <div class="sec-hdr" style="margin-bottom:14px;">
-      <span class="sec-title">Charts
-        <span style="font-weight:700;text-transform:none;letter-spacing:0;font-size:10px;color:#888;margin-left:8px;">ALL CHARTS ↓</span>
+      <span class="sec-title">Net TAO Flow
         <span id="rank-legend-hint" style="color:#aaa;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:4px;"></span>
       </span>
       <div class="toggles" id="period-toggles">
@@ -610,13 +677,12 @@ input[type=number]::placeholder { color: #bbb; }
       </div>
     </div>
 
-    <!-- 4. Net TAO Flow — most actionable chart, leads the chart section -->
     <div class="chart-box" style="margin-bottom:14px;">
       <div class="chart-title">NET TAO FLOW — DAILY BUY/SELL PRESSURE IN POOL (TAO)</div>
       <div class="chart-wrap"><canvas id="flow-chart"></canvas></div>
     </div>
 
-    <!-- 5. Alpha price + rank — own period toggle controlling both charts below -->
+    <!-- 5. Alpha price + rank -->
     <div class="sec-hdr" style="margin-bottom:10px;">
       <span class="sec-title">Price &amp; Rank</span>
       <div class="toggles" id="price-period-toggles">
@@ -637,8 +703,22 @@ input[type=number]::placeholder { color: #bbb; }
       <div class="chart-wrap chart-wrap-tall"><canvas id="rank-chart"></canvas></div>
     </div>
 
-    <div style="font-size:10px;color:#ccc;margin-bottom:4px;">
-      Net TAO flow = daily delta in pool reserves. Positive = net buying pressure; negative = net selling. Alpha staked in alpha token units (not TAO).
+    <!-- 6. Owner wallet -->
+    <div id="owner-dash"></div>
+
+    <!-- 7. Raw data — collapsible -->
+    <div class="raw-section">
+      <div class="raw-toggle" onclick="toggleRaw(this)">
+        <span class="sec-title">Raw Data</span>
+        <span class="raw-toggle-icon" id="raw-toggle-icon">▼ Show</span>
+      </div>
+      <div id="raw-body" class="hidden">
+        <div id="stats-grid" class="stats-grid" style="margin-top:14px;margin-bottom:4px;"></div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:#ccc;margin-top:12px;margin-bottom:4px;">
+      Net TAO flow = daily delta in pool reserves. Positive = net buying pressure; negative = net selling.
     </div>
 
   </div>
@@ -917,123 +997,10 @@ function renderAll(data, fromCache) {
 // DASHBOARD
 // ============================================================
 function renderDashboard(data, fromCache) {
-  const { pool, allSorted, history, netuid, stakerCount } = data;
-
   showDB('content');
 
-  // --- Meta card ---
-  const p1d  = toF(pool.price_change_1_day)  || 0;
-  const p7d  = toF(pool.price_change_1_week) || 0;
-  const p30d = toF(pool.price_change_1_month)|| 0;
-
-  // Market cap — computed here so it's available for the banner
-  const mcapTAO = (toF(pool.market_cap) || 0) / 1e9;
-
-  // Subnet age from registration timestamp
-  let ageStr = null;
-  {
-    const rawTs = (data.meta || {}).registered_at || (data.meta || {}).created_at
-               || (data.meta || {}).registered;
-    if (rawTs) {
-      const n = Number(rawTs);
-      const ms = !isNaN(n) && n > 1e8 ? (n < 2e9 ? n * 1000 : n) : new Date(rawTs).getTime();
-      const ageDays = Math.floor((Date.now() - ms) / 86400000);
-      if (!isNaN(ageDays) && ageDays >= 0) ageStr = `${ageDays}d old`;
-    }
-  }
-  const subnetDesc = (data.meta || {}).description || (data.meta || {}).purpose
-                  || (data.meta || {}).subnet_description || '';
-
-  document.getElementById('meta-card').innerHTML = `
-    <div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:2px;">
-        <div class="meta-badge">SN${pool.netuid}</div>
-        ${ageStr ? `<span style="font-size:10px;color:#aaa;font-weight:700;">${ageStr}</span>` : ''}
-      </div>
-      <div class="meta-name" style="margin-top:2px;">${pool.name || 'Unnamed'}</div>
-      <div class="meta-symbol">${pool.symbol || ''}</div>
-      ${subnetDesc ? `<div style="font-size:11px;color:#666;margin-top:5px;line-height:1.4;max-width:360px;">${subnetDesc.slice(0, 200)}${subnetDesc.length > 200 ? '...' : ''}</div>` : ''}
-    </div>
-    <div class="meta-divider"></div>
-    <div class="meta-primary">
-      <div class="meta-primary-val">
-        <span class="rank-badge ${rankClass(pool.rank)}">#${pool.rank}</span>
-      </div>
-      <div class="meta-primary-lbl">Emission Rank</div>
-    </div>
-    <div class="meta-primary">
-      <div class="meta-primary-val">${fmtAlpha(mcapTAO)} <span style="font-size:12px;font-weight:400;color:#aaa;">TAO</span></div>
-      <div class="meta-primary-lbl">Market Cap</div>
-    </div>
-    <div class="meta-divider"></div>
-    <div class="meta-stat">
-      <div class="meta-val">${fmtPrice(pool.price)}</div>
-      <div class="meta-lbl">Alpha Price</div>
-    </div>
-    <div class="meta-stat">
-      <div class="meta-val ${p1d >= 0 ? 'green' : 'red'}">${pct(p1d)}</div>
-      <div class="meta-lbl">24h</div>
-    </div>
-    <div class="meta-stat">
-      <div class="meta-val ${p7d >= 0 ? 'green' : 'red'}">${pct(p7d)}</div>
-      <div class="meta-lbl">7d</div>
-    </div>
-    <div class="meta-stat">
-      <div class="meta-val ${p30d >= 0 ? 'green' : 'red'}">${pct(p30d)}</div>
-      <div class="meta-lbl">30d</div>
-    </div>
-    <div class="meta-actions">
-      ${fromCache ? `<span class="tag tag-amber">Cached</span>` : ''}
-      <span class="meta-ts">${fmtDate(data.ts)}</span>
-    </div>
-  `;
-
-  // --- Stats grid ---
-  const rootPct = (toF(pool.root_prop) * 100 || 0).toFixed(3);
-  const stakers = stakerCount !== null ? stakerCount.toLocaleString() : 'N/A';
-  // Convert rao to human-readable TAO amounts
-  const poolTAO      = (toF(pool.total_tao)              || 0) / 1e9;
-  // mcapTAO already computed above for the banner
-  const alphaStkd    = (toF(pool.alpha_staked)           || 0) / 1e9;
-  const buyTAO       = (toF(pool.tao_buy_volume_24_hr)   || 0) / 1e9;
-  const sellTAO      = (toF(pool.tao_sell_volume_24_hr)  || 0) / 1e9;
-  const netVolTAO    = buyTAO - sellTAO;
-  const netVolClass  = netVolTAO >= 0 ? 'green' : 'red';
-  const netVolStr    = (netVolTAO >= 0 ? '+' : '') + fmtAlpha(netVolTAO) + ' TAO';
-  // Buy/sell count ratio
-  const buys24  = pool.buys_24_hr  || 0;
-  const sells24 = pool.sells_24_hr || 0;
-  const bsRatio = sells24 > 0 ? (buys24 / sells24).toFixed(2) : buys24 > 0 ? '∞' : '—';
-  const bsClass = buys24 >= sells24 ? 'green' : 'red';
-
-  // Implied annualised yield: emission (rao/block) * ~7200 blocks/day * 365 / market cap
-  const BLOCKS_PER_DAY = 7200;
-  const emissionTaoPerDay = (toF(pool.emission) || 0) * BLOCKS_PER_DAY / 1e9;
-  const impliedYieldPct = mcapTAO > 0 && emissionTaoPerDay > 0
-    ? (emissionTaoPerDay * 365 / mcapTAO * 100).toFixed(1)
-    : null;
-  const yieldStr   = impliedYieldPct ? `${impliedYieldPct}%` : 'N/A';
-  const yieldClass = impliedYieldPct && parseFloat(impliedYieldPct) >= 10 ? 'green' : '';
-
-  document.getElementById('stats-grid').innerHTML = [
-    { v: fmtAlpha(poolTAO) + ' TAO',   l: 'Pool TAO',       s: 'AMM liquidity' },
-    { v: fmtAlpha(mcapTAO) + ' TAO',   l: 'Market Cap',     s: 'alpha × price' },
-    { v: yieldStr,                     l: 'Implied Yield',  s: 'ann. emission / mcap', c: yieldClass },
-    { v: fmtAlpha(alphaStkd),          l: 'Alpha Staked',   s: 'alpha tokens' },
-    { v: stakers,                      l: 'Stakers',        s: 'unique wallets' },
-    { v: `${rootPct}%`,                l: 'Root Prop',      s: 'emission share', c: 'green' },
-    { v: netVolStr,                    l: 'Net Vol 24h',    s: 'TAO buy − sell (24h)', c: netVolClass },
-    { v: `${bsRatio}×`,               l: 'Buy/Sell Ratio', s: `${buys24} buys / ${sells24} sells (24h)`, c: bsClass },
-  ].map(s => `
-    <div class="stat-card">
-      <div class="stat-val ${s.c || ''}">${s.v}</div>
-      <div class="stat-lbl">${s.l}</div>
-      ${s.s ? `<div class="stat-sub">${s.s}</div>` : ''}
-    </div>
-  `).join('');
-
-  // --- Executive summary ---
-  renderExecSummary(data);
+  renderVerdictStrip(data, fromCache);
+  renderSignalCards(data);
 
   // --- Price chart + rank chart (own toggle) ---
   drawPriceChart(data, PRICE_PERIOD);
@@ -1044,6 +1011,241 @@ function renderDashboard(data, fromCache) {
 
   // --- Owner wallet inline ---
   renderOwnerDash(data);
+
+  // --- Raw stats grid ---
+  renderStatsGrid(data);
+}
+
+// ============================================================
+// VERDICT STRIP — identity + inline quick signals
+// ============================================================
+function renderVerdictStrip(data, fromCache) {
+  const el = document.getElementById('verdict-strip');
+  const descEl = document.getElementById('verdict-desc');
+  if (!el) return;
+
+  const { pool, meta, netuid } = data;
+  const p1d  = toF(pool.price_change_1_day)  || 0;
+  const p7d  = toF(pool.price_change_1_week) || 0;
+  const p30d = toF(pool.price_change_1_month)|| 0;
+  const ownerSS58 = ((meta || {}).owner || {}).ss58 || null;
+
+  // Subnet age
+  let ageStr = null;
+  {
+    const rawTs = (meta || {}).registered_at || (meta || {}).created_at || (meta || {}).registered;
+    if (rawTs) {
+      const n = Number(rawTs);
+      const ms = !isNaN(n) && n > 1e8 ? (n < 2e9 ? n * 1000 : n) : new Date(rawTs).getTime();
+      const ageDays = Math.floor((Date.now() - ms) / 86400000);
+      if (!isNaN(ageDays) && ageDays >= 0) ageStr = `${ageDays}d`;
+    }
+  }
+
+  // Inline signal badges
+  const sigs = [];
+  // Price 24h
+  const p1dClass = p1d >= 0 ? 'vsig-green' : 'vsig-red';
+  const p1dDot   = p1d >= 0 ? '#1a7a3a'    : '#c0392b';
+  sigs.push(`<span class="vsig ${p1dClass}"><span class="vsig-dot" style="background:${p1dDot}"></span>${p1d >= 0 ? '+' : ''}${p1d.toFixed(1)}% 24h</span>`);
+  // Price 7d
+  const p7dClass = p7d >= 0 ? 'vsig-green' : 'vsig-red';
+  const p7dDot   = p7d >= 0 ? '#1a7a3a'    : '#c0392b';
+  sigs.push(`<span class="vsig ${p7dClass}"><span class="vsig-dot" style="background:${p7dDot}"></span>${p7d >= 0 ? '+' : ''}${p7d.toFixed(1)}% 7D</span>`);
+  // Price 30d
+  const p30dClass = p30d >= 0 ? 'vsig-green' : 'vsig-red';
+  const p30dDot   = p30d >= 0 ? '#1a7a3a'    : '#c0392b';
+  sigs.push(`<span class="vsig ${p30dClass}"><span class="vsig-dot" style="background:${p30dDot}"></span>${p30d >= 0 ? '+' : ''}${p30d.toFixed(1)}% 30D</span>`);
+  // Rank
+  if (pool.rank) {
+    const rClass = pool.rank <= 10 ? 'vsig-green' : pool.rank <= 35 ? 'vsig-amber' : 'vsig-red';
+    const rDot   = pool.rank <= 10 ? '#1a7a3a'    : pool.rank <= 35 ? '#d4a017'    : '#c0392b';
+    sigs.push(`<span class="vsig ${rClass}"><span class="vsig-dot" style="background:${rDot}"></span>Rank #${pool.rank}</span>`);
+  }
+
+  el.innerHTML = `
+    <div class="verdict-id">
+      <div class="meta-badge">SN${pool.netuid}</div>
+      ${ageStr ? `<span class="verdict-age">${ageStr} old</span>` : ''}
+    </div>
+    <div style="flex-shrink:0;">
+      <div class="verdict-name">${pool.name || 'Unnamed'}</div>
+      ${pool.symbol ? `<span class="verdict-symbol">${pool.symbol}</span>` : ''}
+    </div>
+    <div class="verdict-signals">
+      ${sigs.join('')}
+    </div>
+    <div class="verdict-actions">
+      ${fromCache ? `<span class="tag tag-amber" style="font-size:9px;">Cached</span>` : ''}
+      ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank" style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;white-space:nowrap;">Taostats &#8599;</a>` : ''}
+    </div>
+  `;
+
+  // Description — below the strip, faint
+  const subnetDesc = (meta || {}).description || (meta || {}).purpose || (meta || {}).subnet_description || '';
+  if (descEl) {
+    if (subnetDesc) {
+      descEl.textContent = subnetDesc.slice(0, 200) + (subnetDesc.length > 200 ? '...' : '');
+      descEl.classList.remove('hidden');
+    } else {
+      descEl.innerHTML = '';
+      descEl.classList.add('hidden');
+    }
+  }
+}
+
+// ============================================================
+// SIGNAL CARDS — 4 focused metrics above the charts
+// ============================================================
+function renderSignalCards(data) {
+  const el = document.getElementById('signal-cards');
+  if (!el) return;
+
+  const { pool, history, stakerCount } = data;
+  const mcapTAO = (toF(pool.market_cap) || 0) / 1e9;
+  const buyTAO  = (toF(pool.tao_buy_volume_24_hr)  || 0) / 1e9;
+  const sellTAO = (toF(pool.tao_sell_volume_24_hr) || 0) / 1e9;
+  const buys24  = pool.buys_24_hr  || 0;
+  const sells24 = pool.sells_24_hr || 0;
+
+  // 30-day net pool flow
+  let netFlow30d = null;
+  if (history && history.length >= 2) {
+    const cut = Date.now() - 30 * 86400000;
+    const recent = [...history]
+      .filter(h => h.timestamp && new Date(h.timestamp).getTime() >= cut && toF(h.total_tao) !== null)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    if (recent.length >= 2) {
+      netFlow30d = (toF(recent[recent.length - 1].total_tao) - toF(recent[0].total_tao)) / 1e9;
+    }
+  }
+
+  // Implied yield
+  const BLOCKS_PER_DAY = 7200;
+  const emissionTaoPerDay = (toF(pool.emission) || 0) * BLOCKS_PER_DAY / 1e9;
+  const impliedYield = mcapTAO > 0 && emissionTaoPerDay > 0
+    ? emissionTaoPerDay * 365 / mcapTAO * 100 : null;
+
+  // --- Card 1: Emission Rank ---
+  const rank = pool.rank;
+  const rankDot   = rank <= 10 ? 'sig-dot-green' : rank <= 35 ? 'sig-dot-amber' : 'sig-dot-red';
+  const rankValCl = rank <= 10 ? 'sig-val-green' : rank <= 35 ? '' : 'sig-val-red';
+  const rankRead  = rank <= 10
+    ? 'Top-10 placement. Strong emission allocation, no deregistration risk.'
+    : rank <= 35
+      ? 'Mid-tier. Stable for now but below the top-10 where incentives are materially stronger.'
+      : 'Lower-tier. Deregistration exposure if validator engagement drops.';
+
+  // --- Card 2: Net Flow 30D ---
+  const flowDot  = netFlow30d === null ? 'sig-dot-grey'
+    : netFlow30d > 1 ? 'sig-dot-green' : netFlow30d < -1 ? 'sig-dot-red' : 'sig-dot-grey';
+  const flowValCl = netFlow30d === null ? '' : netFlow30d > 1 ? 'sig-val-green' : netFlow30d < -1 ? 'sig-val-red' : '';
+  const flowVal  = netFlow30d !== null ? (netFlow30d >= 0 ? '+' : '') + fmtAlpha(netFlow30d) + ' TAO' : 'N/A';
+  const flowRead = netFlow30d === null ? 'Insufficient history.'
+    : netFlow30d > 1 ? 'Pool reserves growing — more capital entering than leaving.'
+    : netFlow30d < -1 ? 'Pool reserves declining — validator sell pressure exceeds buyer demand.'
+    : 'Balanced flow. No strong directional signal from pool movement.';
+
+  // --- Card 3: Implied Yield ---
+  const yieldDot = impliedYield === null ? 'sig-dot-grey'
+    : impliedYield >= 20 ? 'sig-dot-green' : impliedYield >= 8 ? 'sig-dot-amber' : 'sig-dot-grey';
+  const yieldValCl = impliedYield !== null && impliedYield >= 20 ? 'sig-val-green' : '';
+  const yieldVal = impliedYield !== null ? impliedYield.toFixed(1) + '%' : 'N/A';
+  const yieldRead = impliedYield === null ? 'Emission data unavailable.'
+    : impliedYield >= 20 ? 'High carry for stakers who intend to hold alpha long-term.'
+    : impliedYield >= 8  ? 'Moderate carry. Reasonable for accumulators, not a standalone entry signal.'
+    : 'Compressed yield. Market is pricing in growth above current emission rate.';
+
+  // --- Card 4: Buy/Sell Ratio 24h ---
+  const totalTxns = buys24 + sells24;
+  const buyPct = totalTxns > 0 ? Math.round(buys24 / totalTxns * 100) : null;
+  const bsDot   = buyPct === null ? 'sig-dot-grey' : buyPct >= 55 ? 'sig-dot-green' : buyPct <= 45 ? 'sig-dot-red' : 'sig-dot-grey';
+  const bsValCl = buyPct === null ? '' : buyPct >= 55 ? 'sig-val-green' : buyPct <= 45 ? 'sig-val-red' : '';
+  const bsVal   = buyPct !== null ? `${buyPct}% buys` : 'N/A';
+  const bsRead  = buyPct === null ? 'No 24h transaction data.'
+    : buyPct >= 65 ? `${buys24} buys vs ${sells24} sells. Buyer conviction dominant.`
+    : buyPct <= 35 ? `${buys24} buys vs ${sells24} sells. Seller-led session.`
+    : `${buys24} buys vs ${sells24} sells. Mixed session, no dominant side.`;
+
+  const cards = [
+    { dot: rankDot,  label: 'Emission Rank',  val: rank ? `#${rank}` : 'N/A', valCl: rankValCl,  period: null, read: rankRead },
+    { dot: flowDot,  label: 'Net Pool Flow',   val: flowVal,                   valCl: flowValCl,  period: '30D', read: flowRead },
+    { dot: yieldDot, label: 'Implied Yield',   val: yieldVal,                  valCl: yieldValCl, period: 'annualised', read: yieldRead },
+    { dot: bsDot,    label: 'Buy Side 24h',    val: bsVal,                     valCl: bsValCl,    period: '24h txns', read: bsRead },
+  ];
+
+  el.innerHTML = cards.map(c => `
+    <div class="sig-card">
+      <div class="sig-card-top">
+        <span class="sig-dot ${c.dot}"></span>
+        <span class="sig-label">${c.label}</span>
+      </div>
+      <div class="sig-val ${c.valCl}">${c.val}</div>
+      ${c.period ? `<div class="sig-period">${c.period}</div>` : ''}
+      <div class="sig-read">${c.read}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// STATS GRID (raw data section)
+// ============================================================
+function renderStatsGrid(data) {
+  const el = document.getElementById('stats-grid');
+  if (!el) return;
+
+  const { pool, stakerCount } = data;
+  const mcapTAO   = (toF(pool.market_cap)             || 0) / 1e9;
+  const poolTAO   = (toF(pool.total_tao)              || 0) / 1e9;
+  const alphaStkd = (toF(pool.alpha_staked)           || 0) / 1e9;
+  const buyTAO    = (toF(pool.tao_buy_volume_24_hr)   || 0) / 1e9;
+  const sellTAO   = (toF(pool.tao_sell_volume_24_hr)  || 0) / 1e9;
+  const netVolTAO = buyTAO - sellTAO;
+  const buys24    = pool.buys_24_hr  || 0;
+  const sells24   = pool.sells_24_hr || 0;
+  const rootPct   = (toF(pool.root_prop) * 100 || 0).toFixed(3);
+  const stakers   = stakerCount !== null ? stakerCount.toLocaleString() : 'N/A';
+  const netVolClass = netVolTAO >= 0 ? 'green' : 'red';
+  const netVolStr   = (netVolTAO >= 0 ? '+' : '') + fmtAlpha(netVolTAO) + ' TAO';
+  const bsRatio   = sells24 > 0 ? (buys24 / sells24).toFixed(2) : buys24 > 0 ? '∞' : '—';
+  const bsClass   = buys24 >= sells24 ? 'green' : 'red';
+
+  const BLOCKS_PER_DAY = 7200;
+  const emissionTaoPerDay = (toF(pool.emission) || 0) * BLOCKS_PER_DAY / 1e9;
+  const impliedYieldPct = mcapTAO > 0 && emissionTaoPerDay > 0
+    ? (emissionTaoPerDay * 365 / mcapTAO * 100).toFixed(1) : null;
+  const yieldStr   = impliedYieldPct ? `${impliedYieldPct}%` : 'N/A';
+  const yieldClass = impliedYieldPct && parseFloat(impliedYieldPct) >= 10 ? 'green' : '';
+
+  el.innerHTML = [
+    { v: fmtPrice(pool.price),           l: 'Alpha Price',    s: 'TAO per alpha' },
+    { v: fmtAlpha(poolTAO) + ' TAO',     l: 'Pool TAO',       s: 'AMM liquidity' },
+    { v: fmtAlpha(mcapTAO) + ' TAO',     l: 'Market Cap',     s: 'alpha × price' },
+    { v: yieldStr,                        l: 'Implied Yield',  s: 'ann. emission / mcap', c: yieldClass },
+    { v: fmtAlpha(alphaStkd),             l: 'Alpha Staked',   s: 'alpha tokens' },
+    { v: stakers,                         l: 'Stakers',        s: 'unique wallets' },
+    { v: `${rootPct}%`,                   l: 'Root Prop',      s: 'emission share', c: 'green' },
+    { v: netVolStr,                       l: 'Net Vol 24h',    s: 'TAO buy − sell', c: netVolClass },
+    { v: `${bsRatio}×`,                  l: 'Buy/Sell Ratio', s: `${buys24} buys / ${sells24} sells`, c: bsClass },
+  ].map(s => `
+    <div class="stat-card">
+      <div class="stat-val ${s.c || ''}">${s.v}</div>
+      <div class="stat-lbl">${s.l}</div>
+      ${s.s ? `<div class="stat-sub">${s.s}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// RAW DATA TOGGLE
+// ============================================================
+function toggleRaw(headerEl) {
+  const body = document.getElementById('raw-body');
+  const icon = document.getElementById('raw-toggle-icon');
+  if (!body) return;
+  const isHidden = body.classList.contains('hidden');
+  body.classList.toggle('hidden', !isHidden);
+  if (icon) icon.textContent = isHidden ? '▲ Hide' : '▼ Show';
 }
 
 // ============================================================
