@@ -706,7 +706,29 @@ input[type=number]::placeholder { color: #bbb; }
     <!-- 6. Owner wallet -->
     <div id="owner-dash"></div>
 
-    <!-- 7. Raw data — collapsible -->
+    <!-- 7. Validators — collapsible, lazy-loaded -->
+    <div class="raw-section">
+      <div class="raw-toggle" onclick="toggleLazy('validators', this)">
+        <span class="sec-title">Validators</span>
+        <span class="raw-toggle-icon" id="validators-toggle-icon">▼ Show</span>
+      </div>
+      <div id="validators-body" class="hidden">
+        <div id="validators-content" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- 8. Miners — collapsible, lazy-loaded -->
+    <div class="raw-section">
+      <div class="raw-toggle" onclick="toggleLazy('miners', this)">
+        <span class="sec-title">Miners</span>
+        <span class="raw-toggle-icon" id="miners-toggle-icon">▼ Show</span>
+      </div>
+      <div id="miners-body" class="hidden">
+        <div id="miners-content" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- 9. Raw data — collapsible -->
     <div class="raw-section">
       <div class="raw-toggle" onclick="toggleRaw(this)">
         <span class="sec-title">Raw Data</span>
@@ -999,6 +1021,16 @@ function renderAll(data, fromCache) {
 function renderDashboard(data, fromCache) {
   showDB('content');
 
+  // Reset lazy sections to collapsed state on every new render
+  ['validators', 'miners'].forEach(s => {
+    const body = document.getElementById(s + '-body');
+    const icon = document.getElementById(s + '-toggle-icon');
+    const content = document.getElementById(s + '-content');
+    if (body)    body.classList.add('hidden');
+    if (icon)    icon.textContent = '▼ Show';
+    if (content) content.innerHTML = '';
+  });
+
   renderVerdictStrip(data, fromCache);
   renderSignalCards(data);
 
@@ -1246,6 +1278,155 @@ function toggleRaw(headerEl) {
   const isHidden = body.classList.contains('hidden');
   body.classList.toggle('hidden', !isHidden);
   if (icon) icon.textContent = isHidden ? '▲ Hide' : '▼ Show';
+}
+
+// ============================================================
+// LAZY SECTIONS — VALIDATORS & MINERS
+// ============================================================
+const _lazyFetched = {};   // tracks which sections have been fetched per subnet
+const _lazyData    = {};   // cached data per section key
+
+function toggleLazy(section, headerEl) {
+  const body = document.getElementById(section + '-body');
+  const icon = document.getElementById(section + '-toggle-icon');
+  if (!body) return;
+
+  const isHidden = body.classList.contains('hidden');
+  body.classList.toggle('hidden', !isHidden);
+  if (icon) icon.textContent = isHidden ? '▲ Hide' : '▼ Show';
+
+  // Only fetch on first expand
+  if (isHidden) {
+    const netuid = STATE.netuid;
+    const cacheKey = section + '_' + netuid;
+    if (_lazyFetched[cacheKey]) return;  // already fetched
+
+    _lazyFetched[cacheKey] = true;
+    if (section === 'validators') fetchAndRenderValidators(netuid);
+    if (section === 'miners')     fetchAndRenderMiners(netuid);
+  }
+}
+
+async function fetchAndRenderValidators(netuid) {
+  const el = document.getElementById('validators-content');
+  if (!el) return;
+  el.innerHTML = '<p style="color:#999;font-size:11px;padding:8px 0;">Loading validators...</p>';
+
+  try {
+    const url = `https://api.taostats.io/api/dtao/validator/v1?netuid=${netuid}&limit=256`;
+    const resp = await fetch(url, { headers: { Authorization: 'tao-8c2e099e-9e07-45c1-9069-727768f8f7a1:3f972bae' } });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    const rows = json.data || json.validators || json.results || [];
+    if (!rows.length) { el.innerHTML = '<p style="color:#999;font-size:11px;">No validator data available.</p>'; return; }
+
+    // Sort by stake desc
+    rows.sort((a, b) => (toF(b.stake) || 0) - (toF(a.stake) || 0));
+
+    const colStyle = 'padding:7px 10px;border-bottom:1px solid #f0f0f0;font-size:11px;vertical-align:middle;';
+    const hdStyle  = 'padding:7px 10px;font-size:10px;font-weight:700;color:#666;border-bottom:2px solid #eee;text-transform:uppercase;letter-spacing:0.3px;';
+
+    let html = `<div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="${hdStyle}text-align:left;">#</th>
+          <th style="${hdStyle}text-align:left;">UID</th>
+          <th style="${hdStyle}text-align:left;">Hotkey</th>
+          <th style="${hdStyle}text-align:right;">Stake (TAO)</th>
+          <th style="${hdStyle}text-align:right;">Alpha Stake</th>
+          <th style="${hdStyle}text-align:right;">Daily Emission</th>
+          <th style="${hdStyle}text-align:right;">Vtrust</th>
+        </tr></thead><tbody>`;
+
+    rows.slice(0, 100).forEach((v, i) => {
+      const stakeTAO  = fmt2(toF(v.stake)        / 1e9 || 0);
+      const alphaStk  = fmt2(toF(v.alpha_stake)  / 1e9 || 0);
+      const emission  = fmt2(toF(v.daily_emission)/ 1e9 || 0);
+      const vtrust    = (toF(v.validator_trust) || 0).toFixed(4);
+      const hotkey    = v.hotkey || v.hotkey_ss58 || '';
+      const uid       = v.uid ?? v.neuron_uid ?? '';
+      const shortKey  = hotkey ? hotkey.slice(0, 8) + '...' + hotkey.slice(-6) : '-';
+
+      html += `<tr>
+        <td style="${colStyle}color:#999;">${i + 1}</td>
+        <td style="${colStyle}">${uid}</td>
+        <td style="${colStyle}font-family:monospace;font-size:10px;" title="${hotkey}">${shortKey}</td>
+        <td style="${colStyle}text-align:right;">${stakeTAO}</td>
+        <td style="${colStyle}text-align:right;">${alphaStk}</td>
+        <td style="${colStyle}text-align:right;">${emission}</td>
+        <td style="${colStyle}text-align:right;">${vtrust}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    if (rows.length > 100) html += `<p style="font-size:10px;color:#999;margin-top:6px;">Showing top 100 of ${rows.length} validators.</p>`;
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = `<p style="color:#c0392b;font-size:11px;">Failed to load validators: ${e.message}</p>`;
+    _lazyFetched['validators_' + netuid] = false;  // allow retry
+  }
+}
+
+async function fetchAndRenderMiners(netuid) {
+  const el = document.getElementById('miners-content');
+  if (!el) return;
+  el.innerHTML = '<p style="color:#999;font-size:11px;padding:8px 0;">Loading miners...</p>';
+
+  try {
+    const url = `https://api.taostats.io/api/dtao/neuron/v1?netuid=${netuid}&limit=256`;
+    const resp = await fetch(url, { headers: { Authorization: 'tao-8c2e099e-9e07-45c1-9069-727768f8f7a1:3f972bae' } });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    const rows = json.data || json.neurons || json.results || [];
+    if (!rows.length) { el.innerHTML = '<p style="color:#999;font-size:11px;">No miner data available.</p>'; return; }
+
+    // Filter to miners only (is_validator false or trust < 0.5), sort by incentive desc
+    const miners = rows.filter(n => !n.is_validator && !(toF(n.validator_trust) > 0.5));
+    const sorted = miners.length ? miners : rows;
+    sorted.sort((a, b) => (toF(b.incentive) || 0) - (toF(a.incentive) || 0));
+
+    const colStyle = 'padding:7px 10px;border-bottom:1px solid #f0f0f0;font-size:11px;vertical-align:middle;';
+    const hdStyle  = 'padding:7px 10px;font-size:10px;font-weight:700;color:#666;border-bottom:2px solid #eee;text-transform:uppercase;letter-spacing:0.3px;';
+
+    let html = `<div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="${hdStyle}text-align:left;">#</th>
+          <th style="${hdStyle}text-align:left;">UID</th>
+          <th style="${hdStyle}text-align:left;">Hotkey</th>
+          <th style="${hdStyle}text-align:right;">Incentive</th>
+          <th style="${hdStyle}text-align:right;">Alpha Stake</th>
+          <th style="${hdStyle}text-align:right;">Daily Emission</th>
+          <th style="${hdStyle}text-align:right;">Trust</th>
+        </tr></thead><tbody>`;
+
+    sorted.slice(0, 100).forEach((n, i) => {
+      const incentive = (toF(n.incentive) || 0).toFixed(4);
+      const alphaStk  = fmt2(toF(n.alpha_stake)   / 1e9 || 0);
+      const emission  = fmt2(toF(n.daily_emission) / 1e9 || 0);
+      const trust     = (toF(n.trust) || 0).toFixed(4);
+      const hotkey    = n.hotkey || n.hotkey_ss58 || '';
+      const uid       = n.uid ?? n.neuron_uid ?? '';
+      const shortKey  = hotkey ? hotkey.slice(0, 8) + '...' + hotkey.slice(-6) : '-';
+
+      html += `<tr>
+        <td style="${colStyle}color:#999;">${i + 1}</td>
+        <td style="${colStyle}">${uid}</td>
+        <td style="${colStyle}font-family:monospace;font-size:10px;" title="${hotkey}">${shortKey}</td>
+        <td style="${colStyle}text-align:right;">${incentive}</td>
+        <td style="${colStyle}text-align:right;">${alphaStk}</td>
+        <td style="${colStyle}text-align:right;">${emission}</td>
+        <td style="${colStyle}text-align:right;">${trust}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    if (sorted.length > 100) html += `<p style="font-size:10px;color:#999;margin-top:6px;">Showing top 100 of ${sorted.length} miners.</p>`;
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = `<p style="color:#c0392b;font-size:11px;">Failed to load miners: ${e.message}</p>`;
+    _lazyFetched['miners_' + netuid] = false;  // allow retry
+  }
 }
 
 // ============================================================
