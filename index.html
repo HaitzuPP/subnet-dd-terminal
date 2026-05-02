@@ -703,9 +703,23 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ============================================================
 // CACHE HELPERS
 // ============================================================
-const CACHE_VER = 'sn_v4_';
+const CACHE_VER      = 'sn_v4_';
+const ALLPOOLS_KEY   = 'sn_allpools_v1';
+const ALLPOOLS_TTL   = 20 * 60 * 1000;   // 20 min — same data for every subnet
+const SUBNET_FRESH   = 5  * 60 * 1000;   // 5  min — skip re-fetch if same subnet still hot
 
 function cacheKey(netuid) { return CACHE_VER + netuid; }
+
+// Shared cache for all-subnets list — fetched once, reused across all subnet loads
+async function fetchAllSorted() {
+  const hit = readCache(ALLPOOLS_KEY);
+  if (hit && (Date.now() - hit.ts) < ALLPOOLS_TTL) return hit.data;
+  step('Fetching subnet universe...');
+  const raw = await get('/api/dtao/pool/v1', { limit: 100 });
+  const sorted = [...(Array.isArray(raw) ? raw : [])].sort((a,b) => (a.rank||999)-(b.rank||999));
+  writeCache(ALLPOOLS_KEY, { ts: Date.now(), data: sorted });
+  return sorted;
+}
 
 function writeCache(key, payload) {
   const str = JSON.stringify(payload);
@@ -740,12 +754,25 @@ function readCache(key) {
 async function loadSubnet(netuid, useCache) {
   const cKey = cacheKey(netuid);
 
+  // If same subnet is already hot in STATE (< 5 min), just re-render — zero API calls
+  if (useCache && STATE && Number(STATE.netuid) === Number(netuid) && (Date.now() - STATE.ts) < SUBNET_FRESH) {
+    const ageMin = Math.floor((Date.now() - STATE.ts) / 60000);
+    renderAll(STATE, true);
+    setMsg(`Data is ${ageMin < 1 ? 'live' : ageMin + 'm old'} — click Refresh for latest`);
+    showRefreshBtn(true);
+    return;
+  }
+
   if (useCache) {
     const cached = readCache(cKey);
     if (cached) {
+      // Restore allSorted from its own cache so exec summary has rank context
+      const ap = readCache(ALLPOOLS_KEY);
+      if (ap && ap.data && ap.data.length) cached.allSorted = ap.data;
       STATE = cached;
       renderAll(cached, true);
-      setMsg(`Cached ${fmtDate(cached.ts)} — click Refresh for live data`);
+      const ageMin = Math.floor((Date.now() - cached.ts) / 60000);
+      setMsg(`Cached ${ageMin < 1 ? 'just now' : ageMin + 'm ago'} — click Refresh for live data`);
       showRefreshBtn(true);
       return;
     }
@@ -763,36 +790,28 @@ async function loadSubnet(netuid, useCache) {
     const pool = Array.isArray(poolArr) ? poolArr[0] : poolArr;
     if (!pool || !pool.netuid) throw new Error(`SN${netuid} not found. Check the subnet number.`);
 
-    // 2. TAO price history — fetch full history early for indexed performance chart
-    await sleep(500);
-    step('Fetching TAO price history...');
-    let taoPriceUSD = null;
-    let taoPriceHistory = [];
-    try {
-      const raw = await get('/api/price/history/v1', { asset: 'tao', limit: 450 });
-      taoPriceHistory = Array.isArray(raw) ? raw : [];
-      // Most recent record is first — extract current price from it
-      const item = taoPriceHistory[0];
-      taoPriceUSD = toF(item?.price) || toF(item?.usd_price)
-                 || toF(item?.current_price) || toF(item?.close);
-      if (taoPriceUSD) step(`TAO: $${taoPriceUSD.toFixed(2)}`);
-    } catch(e) { console.warn('tao price history:', e.message); }
+    // 2. All subnets — shared global cache, avoids re-fetch if recently loaded
+    await sleep(300);
+    const allSorted = await fetchAllSorted();
 
-    // 3. All subnets for live rank table
-    await sleep(500);
-    step('Fetching all subnets for rank table...');
-    const allPools = await get('/api/dtao/pool/v1', { limit: 100 });
-    const allSorted = [...(Array.isArray(allPools) ? allPools : [])].sort(
-      (a, b) => (a.rank || 999) - (b.rank || 999)
-    );
+    // 3. TAO current price — single lightweight call, not full history
+    let taoPriceUSD = null;
+    try {
+      await sleep(300);
+      step('Fetching TAO price...');
+      const taoRaw = await get('/api/price/history/v1', { asset: 'tao', limit: 1 });
+      const item = Array.isArray(taoRaw) ? taoRaw[0] : taoRaw;
+      taoPriceUSD = toF(item?.price) || toF(item?.usd_price) || toF(item?.current_price) || toF(item?.close);
+      if (taoPriceUSD) step(`TAO: $${taoPriceUSD.toFixed(2)}`);
+    } catch(e) { console.warn('tao price:', e.message); }
 
     // 4. Historical pool data (price + rank time series)
-    await sleep(500);
+    await sleep(300);
     step('Fetching price and rank history...');
     const history = await get('/api/dtao/pool/history/v1', { netuid, limit: 450 });
 
     // 5. Subnet metadata (owner coldkey)
-    await sleep(500);
+    await sleep(300);
     step('Fetching subnet metadata...');
     const metaArr = await get('/api/subnet/latest/v1', { netuid });
     const meta = Array.isArray(metaArr) ? metaArr[0] : metaArr;
@@ -802,14 +821,14 @@ async function loadSubnet(netuid, useCache) {
     const ownerColdkey = (meta?.owner?.ss58) || null;
     if (ownerColdkey) {
       try {
-        await sleep(500);
+        await sleep(300);
         step('Fetching owner wallet balance...');
         const balArr = await get('/api/dtao/stake_balance/latest/v1', { coldkey: ownerColdkey, netuid });
         ownerBalance = Array.isArray(balArr) ? (balArr[0] || null) : balArr;
         const ownerHotkey = ownerBalance?.hotkey?.ss58;
         if (ownerHotkey) {
           try {
-            await sleep(500);
+            await sleep(300);
             step('Fetching owner balance history...');
             // Try with netuid first, then without (some subnets return empty with netuid)
             let hist = await get('/api/dtao/stake_balance/history/v1',
@@ -827,7 +846,7 @@ async function loadSubnet(netuid, useCache) {
     // 7. Current staker count (uses pagination.total_items — get() strips it)
     let stakerCount = null;
     try {
-      await sleep(500);
+      await sleep(300);
       step('Fetching staker count...');
       const scUrl = new URL(API + '/api/dtao/stake_balance/latest/v1');
       scUrl.searchParams.set('netuid', String(netuid));
@@ -845,7 +864,7 @@ async function loadSubnet(netuid, useCache) {
     let ownerTransfers = [];
     if (ownerColdkey) {
       try {
-        await sleep(500);
+        await sleep(300);
         step('Fetching owner transfer history...');
         const tfRaw = await get('/api/transfer/v1', { address: ownerColdkey, limit: 100 });
         ownerTransfers = Array.isArray(tfRaw) ? tfRaw : [];
@@ -861,18 +880,16 @@ async function loadSubnet(netuid, useCache) {
       ownerTransfers,
       stakerCount,
       taoPriceUSD,
-      taoPriceHistory,
       ts: Date.now(),
     };
 
     STATE = data;
-    // Write trimmed cache — allSorted re-fetched live, histories capped to control size
+    // Write trimmed cache — histories capped to control localStorage size
     writeCache(cKey, {
       ...data,
-      allSorted:       [],
+      allSorted:       [],        // allSorted lives in its own cache key; exclude to save space
       ownerBalHistory: (data.ownerBalHistory || []).slice(0, 150),
       ownerTransfers:  (data.ownerTransfers  || []).slice(0, 100),
-      taoPriceHistory: (data.taoPriceHistory || []).slice(0, 450),
     });
     saveHistory(data);
     renderAll(data, false);
