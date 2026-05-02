@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subnet DD Terminal — TAO Institute</title>
+<title>Subnet DD Terminal - Pylon Partners</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,7 +19,7 @@ body {
 /* ---- HEADER ---- */
 .hdr {
   padding: 20px 32px 16px;
-  border-bottom: 1.5px solid #111;
+  border-bottom: 2px solid #111;
 }
 .hdr-row {
   display: flex;
@@ -45,7 +45,7 @@ input[type=number] {
 }
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
-input[type=number]:focus  { border-color: #1a7a3a; box-shadow: 0 0 0 2px rgba(26,122,58,0.12); }
+input[type=number]:focus  { border-color: #1a7a3a; }
 input[type=number]::placeholder { color: #bbb; }
 
 .btn {
@@ -67,7 +67,6 @@ input[type=number]::placeholder { color: #bbb; }
 .btn-outline:hover { background: #1a7a3a; color: #fff; }
 .btn-ghost  { background: transparent; color: #666; border: 1.5px solid #ddd; }
 .btn-ghost:hover { border-color: #999; color: #111; }
-.btn:focus-visible { outline: 2px solid #1a7a3a; outline-offset: 2px; }
 
 #status-msg { font-size: 11px; color: #999; font-style: italic; }
 
@@ -97,17 +96,15 @@ input[type=number]::placeholder { color: #bbb; }
   font-family: Arial, sans-serif;
   font-size: 10px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 3px 10px;
   background: #f5f5f5;
   border: 1.5px solid #e0e0e0;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   white-space: nowrap;
   color: #555;
   transition: all 0.1s;
   letter-spacing: 0.2px;
-  text-align: left;
-  line-height: 1.3;
 }
 .hist-pill:hover { background: #111; color: #fff; border-color: #111; }
 .hist-pill.pill-active { background: #111; color: #fff; border-color: #111; }
@@ -145,7 +142,7 @@ input[type=number]::placeholder { color: #bbb; }
   0%,80%,100% { transform: translateY(0); opacity: 0.3; }
   40% { transform: translateY(-9px); opacity: 1; }
 }
-#load-step { font-size: 11px; color: #888; margin-top: 14px; font-style: italic; letter-spacing: 0.1px; min-height: 18px; }
+#load-step { font-size: 11px; color: #bbb; margin-top: 14px; }
 
 .err-box {
   background: #fdf0f0;
@@ -198,13 +195,9 @@ input[type=number]::placeholder { color: #bbb; }
   border: 1.5px solid #eee;
   border-radius: 5px;
   padding: 12px 14px;
-  transition: border-color 0.12s;
 }
-.stat-card[title] { cursor: help; }
-.stat-card[title]:hover { border-color: #ccc; }
 .stat-val { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.2; }
 .stat-lbl { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; }
-.stat-card[title] .stat-lbl { border-bottom: 1px dotted #ddd; display: inline-block; cursor: help; }
 .stat-sub { font-size: 11px; color: #888; margin-top: 3px; font-weight: 600; }
 
 /* ---- SECTION HEADER ---- */
@@ -232,7 +225,6 @@ input[type=number]::placeholder { color: #bbb; }
   letter-spacing: 0.3px;
 }
 .tgl:hover { color: #111; border-color: #aaa; }
-.tgl:focus-visible { outline: 2px solid #1a7a3a; outline-offset: 2px; }
 .tgl.active { background: #111; color: #fff; border-color: #111; }
 
 /* ---- CHART ---- */
@@ -245,9 +237,9 @@ input[type=number]::placeholder { color: #bbb; }
 .chart-title {
   font-size: 9px;
   font-weight: 700;
-  color: #888;
+  color: #aaa;
   text-transform: uppercase;
-  letter-spacing: 0.7px;
+  letter-spacing: 0.6px;
   margin-bottom: 12px;
 }
 .chart-wrap { position: relative; height: 200px; }
@@ -434,52 +426,6 @@ input[type=number]::placeholder { color: #bbb; }
 .bold  { font-weight: 700; }
 .hidden { display: none !important; }
 
-/* ---- SUB-NAV TABS ---- */
-.sub-tab-bar {
-  display: flex;
-  gap: 0;
-  border-bottom: 1.5px solid #e8e8e8;
-  margin: 16px 0 20px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.sub-tab-bar::-webkit-scrollbar { display: none; }
-.sub-tab {
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 9px 18px;
-  border: none;
-  background: transparent;
-  color: #aaa;
-  cursor: pointer;
-  white-space: nowrap;
-  border-bottom: 2.5px solid transparent;
-  margin-bottom: -1.5px;
-  transition: color 0.12s, border-color 0.12s;
-  letter-spacing: 0.1px;
-}
-.sub-tab:hover { color: #444; }
-.sub-tab.active { color: #111; border-bottom-color: #1a7a3a; }
-.sub-tab-panel { display: none; }
-.sub-tab-panel.active { display: block; }
-@media (max-width: 640px) {
-  .sub-tab { font-size: 11px; padding: 8px 13px; }
-}
-
-/* --- Mobile helpers --- */
-.mob-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  overflow-y: hidden;
-}
-.mob-col-hide { /* hidden at ≤480px via @media below */ }
-.taostats-link {
-  display: inline-block;
-  padding: 6px 0;
-}
-
 /* ---- TABLE WRAP — scrollable border box ---- */
 .table-wrap {
   border: 1.5px solid #eee;
@@ -508,7 +454,7 @@ input[type=number]::placeholder { color: #bbb; }
 
   /* --- Hist nav bar --- */
   .hist-navbar { padding: 6px 10px; gap: 6px; }
-  .hist-pill { font-size: 9px; padding: 3px 8px; min-height: 36px; display: inline-flex; align-items: center; }
+  .hist-pill { font-size: 9px; padding: 3px 8px; }
 
   /* --- Panels --- */
   .panel { padding: 14px 14px 44px; max-width: 100%; }
@@ -536,15 +482,15 @@ input[type=number]::placeholder { color: #bbb; }
 
   /* --- Section headers --- */
   .sec-hdr   { flex-wrap: wrap; gap: 6px; }
-  .sec-title { font-size: 9px; flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+  .sec-title { font-size: 9px; }
 
   /* --- Period toggles --- */
-  .tgl { padding: 3px 8px; font-size: 9px; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+  .tgl { padding: 3px 8px; font-size: 9px; }
   #period-toggles { flex-wrap: wrap; gap: 3px; }
 
   /* --- Charts --- */
   .chart-box       { padding: 10px 10px; margin-bottom: 10px; }
-  .chart-title     { font-size: 9px; letter-spacing: 0.3px; margin-bottom: 8px; }
+  .chart-title     { font-size: 7px; letter-spacing: 0.3px; margin-bottom: 8px; }
   .chart-wrap      { height: 170px; }
   .chart-wrap-tall { height: 190px; }
   .chart-grid-2    { gap: 10px; margin-bottom: 10px; }
@@ -563,7 +509,7 @@ input[type=number]::placeholder { color: #bbb; }
   /* --- Owner section --- */
   .owner-card      { padding: 12px 14px; gap: 9px; }
   .owner-field-lbl { font-size: 8px; min-width: 46px; }
-  .key-pill        { font-size: 10px; padding: 5px 8px; min-height: 30px; display: inline-flex; align-items: center; }
+  .key-pill        { font-size: 10px; padding: 3px 8px; }
   .owner-tags      { gap: 5px; }
   .holdings-grid   { grid-template-columns: 1fr 1fr; gap: 7px; }
 
@@ -592,18 +538,6 @@ input[type=number]::placeholder { color: #bbb; }
   .meta-val { font-size: 11px; }
   .chart-wrap { height: 150px; }
   .chart-wrap-tall { height: 170px; }
-  .mob-col-hide { display: none !important; }
-}
-
-/* Mid-range phones (≤ 480px) — column hiding & tighter layout */
-@media (max-width: 480px) {
-  .mob-col-hide { display: none !important; }
-  .sec-hdr { gap: 4px; }
-  .sec-title { font-size: 8px; }
-  .chart-box { padding: 8px 8px; }
-  .chart-wrap { height: 155px; }
-  .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
-  .stat-val { font-size: 13px; }
 }
 </style>
 </head>
@@ -613,10 +547,10 @@ input[type=number]::placeholder { color: #bbb; }
 <div class="hdr">
   <div class="hdr-row">
     <span class="hdr-title">Subnet DD Terminal</span>
-    <span class="hdr-sub">Pylon Partners · TAO Institute · <a href="https://taostats.io" target="_blank" style="color:#1a7a3a;text-decoration:none;font-weight:700;">Taostats</a> data</span>
+    <span class="hdr-sub">Pylon Partners / TAO Institute / Taostats</span>
   </div>
   <div class="search-row">
-    <input type="number" id="netuid-input" placeholder="Subnet number (1–128)  e.g. 54, 64, 19" min="1" max="512" autofocus />
+    <input type="number" id="netuid-input" placeholder="Subnet number (e.g. 64)" min="1" max="512" autofocus />
     <button class="btn btn-dark" id="run-btn">Run DD</button>
     <button class="btn btn-outline hidden" id="refresh-btn">Refresh</button>
     <span id="status-msg"></span>
@@ -626,7 +560,7 @@ input[type=number]::placeholder { color: #bbb; }
 <!-- HISTORY NAV BAR -->
 <div class="hist-navbar">
   <div class="hist-pills-wrap" id="hist-pills"></div>
-  <button class="btn btn-ghost" id="clear-hist-btn" style="font-size:10px;padding:4px 10px;flex-shrink:0;">Clear</button>
+  <button class="btn btn-ghost" id="clear-hist-btn" style="font-size:10px;padding:4px 10px;min-height:unset;flex-shrink:0;">Clear</button>
 </div>
 
 <!-- =========================================================
@@ -635,95 +569,76 @@ input[type=number]::placeholder { color: #bbb; }
 <div class="panel active" id="panel-dashboard">
 
   <div id="db-empty" class="state-box">
-    <span class="state-icon" style="opacity:0.25;font-size:28px;">◎</span>
+    <span class="state-icon">&#9741;</span>
     <div class="state-title">No subnet loaded</div>
-    <div style="font-size:12px;color:#aaa;margin-top:6px;">Enter a subnet number and press Enter or click Run DD</div>
-    <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-      <button onclick="quickLoad(1)"  class="btn btn-ghost" style="font-size:13px;padding:8px 18px;" title="Root network — governs emission weights">SN1 · Root</button>
-      <button onclick="quickLoad(19)" class="btn btn-ghost" style="font-size:13px;padding:8px 18px;" title="AI inference — highest volume subnet">SN19 · Inference</button>
-      <button onclick="quickLoad(4)"  class="btn btn-ghost" style="font-size:13px;padding:8px 18px;" title="Multimodal AI — text, image, video">SN4 · Targon</button>
-      <button onclick="quickLoad(64)" class="btn btn-ghost" style="font-size:13px;padding:8px 18px;" title="Serverless GPU compute marketplace">SN64 · Chutes</button>
-    </div>
+    <div>Enter a subnet number above and click Run DD</div>
   </div>
 
   <div id="db-loading" class="state-box hidden">
     <div class="state-title" style="margin-bottom:16px;">Fetching subnet data</div>
     <div class="loading-dots"><span></span><span></span><span></span></div>
-    <div style="width:220px;height:4px;background:#eee;border-radius:2px;margin:12px auto 8px;overflow:hidden;">
-      <div id="load-progress-bar" style="height:100%;width:0%;background:#1a7a3a;border-radius:2px;transition:width 0.3s ease;"></div>
-    </div>
-    <div id="load-step" style="font-size:11px;color:#999;margin-top:4px;"></div>
+    <div id="load-step"></div>
   </div>
 
   <div id="db-error" class="hidden"></div>
 
   <div id="db-content" class="hidden">
 
-    <!-- Persistent header: verdict + risk + identity -->
-    <div id="analyst-signal" style="display:none;margin-bottom:10px;"></div>
-    <div id="risk-section" style="display:none;margin-bottom:14px;"></div>
+    <!-- 1. Identity + primary callouts -->
     <div id="meta-card" class="meta-card"></div>
 
-    <!-- Sub-section navigation -->
-    <div class="sub-tab-bar" id="sub-tab-bar">
-      <button class="sub-tab active" data-subtab="price">Price &amp; Ranking</button>
-      <button class="sub-tab" data-subtab="owner">Owner Wallet</button>
-      <button class="sub-tab" data-subtab="miners">Miners</button>
-      <button class="sub-tab" data-subtab="validators">Validators</button>
+    <!-- 1b. Executive summary — auto-generated signals -->
+    <div id="exec-summary"></div>
+
+    <!-- 2. Stats grid -->
+    <div id="stats-grid" class="stats-grid" style="margin-bottom:20px;"></div>
+
+    <!-- 3. Owner wallet inline -->
+    <div id="owner-dash"></div>
+
+    <!-- Period selector — single global toggle controlling all 4 charts below -->
+    <div class="sec-hdr" style="margin-bottom:14px;">
+      <span class="sec-title">Charts
+        <span style="font-weight:700;text-transform:none;letter-spacing:0;font-size:10px;color:#888;margin-left:8px;">ALL CHARTS ↓</span>
+        <span id="rank-legend-hint" style="color:#aaa;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:4px;"></span>
+      </span>
+      <div class="toggles" id="period-toggles">
+        <button class="tgl active" data-period="7d">7D</button>
+        <button class="tgl" data-period="30d">30D</button>
+        <button class="tgl" data-period="90d">90D</button>
+        <button class="tgl" data-period="12m">12M</button>
+      </div>
     </div>
 
-    <!-- Tab: Price & Ranking -->
-    <div class="sub-tab-panel active" id="subtab-price">
-      <div class="sec-hdr" style="margin-bottom:10px;">
-        <span class="sec-title">Price &amp; Rank
-          <span id="rank-legend-hint" style="color:#aaa;font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;margin-left:6px;"></span>
-        </span>
-        <div style="display:flex;align-items:center;gap:6px;"><button id="usd-toggle-chart" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid #ddd;background:transparent;color:#888;cursor:pointer;">TAO</button><div class="toggles" id="price-period-toggles">
-          <button class="tgl active" data-period="7d">7D</button>
-          <button class="tgl" data-period="30d">30D</button>
-          <button class="tgl" data-period="90d">90D</button>
-          <button class="tgl" data-period="all">All</button>
-        </div></div>
-      </div>
-      <div class="chart-box" style="margin-bottom:14px;">
-        <div class="chart-title" id="price-chart-title">ALPHA PRICE (TAO)</div>
-        <div class="chart-wrap chart-wrap-tall"><canvas id="main-chart"></canvas></div>
-      </div>
-      <div class="chart-box" style="margin-bottom:14px;">
-        <div class="chart-title">EMISSION RANK</div>
-        <div class="chart-wrap chart-wrap-tall"><canvas id="rank-chart"></canvas></div>
-      </div>
-      <div class="sec-hdr" style="margin-bottom:10px;padding-top:4px;">
-        <span class="sec-title">Net TAO Flow</span>
-        <div class="toggles" id="period-toggles">
-          <button class="tgl active" data-period="7d">7D</button>
-          <button class="tgl" data-period="30d">30D</button>
-          <button class="tgl" data-period="90d">90D</button>
-          <button class="tgl" data-period="12m">12M</button>
-        </div>
-      </div>
-      <div class="chart-box" style="margin-bottom:20px;">
-        <div class="chart-title">DAILY BUY / SELL PRESSURE IN POOL (TAO)</div>
-        <div class="chart-wrap"><canvas id="flow-chart"></canvas></div>
-      </div>
-      <!-- Hidden sinks — JS writes here, not displayed -->
-      <div id="stats-grid" style="display:none;"></div>
-      <div id="peer-comp" style="display:none;"></div>
+    <!-- 4. Net TAO Flow — most actionable chart, leads the chart section -->
+    <div class="chart-box" style="margin-bottom:14px;">
+      <div class="chart-title">NET TAO FLOW — DAILY BUY/SELL PRESSURE IN POOL (TAO)</div>
+      <div class="chart-wrap"><canvas id="flow-chart"></canvas></div>
     </div>
 
-    <!-- Tab: Owner Wallet -->
-    <div class="sub-tab-panel" id="subtab-owner">
-      <div id="owner-dash"></div>
+    <!-- 5. Alpha price + rank — own period toggle controlling both charts below -->
+    <div class="sec-hdr" style="margin-bottom:10px;">
+      <span class="sec-title">Price &amp; Rank</span>
+      <div class="toggles" id="price-period-toggles">
+        <button class="tgl active" data-period="7d">7D</button>
+        <button class="tgl" data-period="30d">30D</button>
+        <button class="tgl" data-period="90d">90D</button>
+        <button class="tgl" data-period="all">All</button>
+      </div>
     </div>
 
-    <!-- Tab: Miners -->
-    <div class="sub-tab-panel" id="subtab-miners">
-      <div id="miner-section"></div>
+    <div class="chart-box" style="margin-bottom:14px;">
+      <div class="chart-title">ALPHA PRICE (TAO)</div>
+      <div class="chart-wrap chart-wrap-tall"><canvas id="main-chart"></canvas></div>
     </div>
 
-    <!-- Tab: Validators -->
-    <div class="sub-tab-panel" id="subtab-validators">
-      <div id="validator-section"></div>
+    <div class="chart-box" style="margin-bottom:14px;">
+      <div class="chart-title">EMISSION RANK — lower is better</div>
+      <div class="chart-wrap chart-wrap-tall"><canvas id="rank-chart"></canvas></div>
+    </div>
+
+    <div style="font-size:10px;color:#ccc;margin-bottom:4px;">
+      Net TAO flow = daily delta in pool reserves. Positive = net buying pressure; negative = net selling. Alpha staked in alpha token units (not TAO).
     </div>
 
   </div>
@@ -746,16 +661,12 @@ let STATE = null;         // current loaded subnet data
 let PERIOD = '7d';        // active dashboard chart period
 let OWNER_PERIOD = '3m';  // active owner wallet period
 let RANK_EXPANDED = false;  // rank table expand/collapse state
-let USD_MODE_OVERVIEW   = false;  // meta card + stats grid
-let USD_MODE_CHART      = false;  // price chart
-let USD_MODE_MINERS     = false;  // miners section
-let USD_MODE_VALIDATORS = false;  // validators section
 let PRICE_PERIOD  = '7d';  // independent period for the price + rank chart
 
 // ============================================================
 // API FETCH
 // ============================================================
-async function get(path, params = {}, _retry = 3) {
+async function get(path, params = {}, _retry = 2) {
   const url = new URL(API + path);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
@@ -766,7 +677,7 @@ async function get(path, params = {}, _retry = 3) {
   if (r.status === 429 && _retry > 0) {
     // Rate limited — wait 2s and retry automatically
     step('Rate limited, retrying...');
-    await new Promise(res => setTimeout(res, 5000));
+    await new Promise(res => setTimeout(res, 2000));
     return get(path, params, _retry - 1);
   }
   if (!r.ok) {
@@ -792,8 +703,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ============================================================
 // CACHE HELPERS
 // ============================================================
-const CACHE_VER = 'sn_v5_';
-const HK = 'sn_hist_v2';
+const CACHE_VER = 'sn_v4_';
 
 function cacheKey(netuid) { return CACHE_VER + netuid; }
 
@@ -821,7 +731,7 @@ function readCache(key) {
 
 // Migrate: clear old v3 keys so they don't eat quota
 (function migrateLegacyCache() {
-  Object.keys(localStorage).filter(k => /^sn_v[1-4]_/.test(k)).forEach(k => localStorage.removeItem(k));
+  Object.keys(localStorage).filter(k => k.startsWith('sn_v3_')).forEach(k => localStorage.removeItem(k));
 })();
 
 // ============================================================
@@ -834,9 +744,8 @@ async function loadSubnet(netuid, useCache) {
     const cached = readCache(cKey);
     if (cached) {
       STATE = cached;
-      localStorage.setItem('sn_last_netuid', String(netuid));
       renderAll(cached, true);
-      setMsg(`Cached · ${fmtAge(cached.ts)} ago — click Refresh for live data`);
+      setMsg(`Cached ${fmtDate(cached.ts)} — click Refresh for live data`);
       showRefreshBtn(true);
       return;
     }
@@ -846,15 +755,6 @@ async function loadSubnet(netuid, useCache) {
   setMsg('');
   btnState(true);
   showRefreshBtn(false);
-  let _stepN = 0;
-  const _totalSteps = 12;
-  const _stepOrig = step;
-  function step(msg) {
-    _stepN++;
-    const pct = Math.round((_stepN / _totalSteps) * 100);
-    const el = document.getElementById('load-step');
-    if (el) el.innerHTML = '<span style="color:#1a7a3a;font-weight:700;">' + pct + '%</span> — ' + msg;
-  }
 
   try {
     // 1. Current pool data for this subnet
@@ -864,7 +764,7 @@ async function loadSubnet(netuid, useCache) {
     if (!pool || !pool.netuid) throw new Error(`SN${netuid} not found. Check the subnet number.`);
 
     // 2. TAO price history — fetch full history early for indexed performance chart
-    await sleep(700);
+    await sleep(500);
     step('Fetching TAO price history...');
     let taoPriceUSD = null;
     let taoPriceHistory = [];
@@ -879,7 +779,7 @@ async function loadSubnet(netuid, useCache) {
     } catch(e) { console.warn('tao price history:', e.message); }
 
     // 3. All subnets for live rank table
-    await sleep(700);
+    await sleep(500);
     step('Fetching all subnets for rank table...');
     const allPools = await get('/api/dtao/pool/v1', { limit: 100 });
     const allSorted = [...(Array.isArray(allPools) ? allPools : [])].sort(
@@ -887,12 +787,12 @@ async function loadSubnet(netuid, useCache) {
     );
 
     // 4. Historical pool data (price + rank time series)
-    await sleep(700);
+    await sleep(500);
     step('Fetching price and rank history...');
     const history = await get('/api/dtao/pool/history/v1', { netuid, limit: 450 });
 
     // 5. Subnet metadata (owner coldkey)
-    await sleep(700);
+    await sleep(500);
     step('Fetching subnet metadata...');
     const metaArr = await get('/api/subnet/latest/v1', { netuid });
     const meta = Array.isArray(metaArr) ? metaArr[0] : metaArr;
@@ -902,21 +802,21 @@ async function loadSubnet(netuid, useCache) {
     const ownerColdkey = (meta?.owner?.ss58) || null;
     if (ownerColdkey) {
       try {
-        await sleep(700);
+        await sleep(500);
         step('Fetching owner wallet balance...');
         const balArr = await get('/api/dtao/stake_balance/latest/v1', { coldkey: ownerColdkey, netuid });
         ownerBalance = Array.isArray(balArr) ? (balArr[0] || null) : balArr;
         const ownerHotkey = ownerBalance?.hotkey?.ss58;
         if (ownerHotkey) {
           try {
-            await sleep(700);
+            await sleep(500);
             step('Fetching owner balance history...');
             // Try with netuid first, then without (some subnets return empty with netuid)
             let hist = await get('/api/dtao/stake_balance/history/v1',
-              { coldkey: ownerColdkey, hotkey: ownerHotkey, netuid, limit: 500 });
+              { coldkey: ownerColdkey, hotkey: ownerHotkey, netuid, limit: 400 });
             if (!hist || (Array.isArray(hist) && !hist.length)) {
               hist = await get('/api/dtao/stake_balance/history/v1',
-                { coldkey: ownerColdkey, hotkey: ownerHotkey, limit: 500 });
+                { coldkey: ownerColdkey, hotkey: ownerHotkey, limit: 400 });
             }
             ownerBalHistory = Array.isArray(hist) ? hist : [];
           } catch(e) { console.warn('balance history:', e.message); }
@@ -927,7 +827,7 @@ async function loadSubnet(netuid, useCache) {
     // 7. Current staker count (uses pagination.total_items — get() strips it)
     let stakerCount = null;
     try {
-      await sleep(700);
+      await sleep(500);
       step('Fetching staker count...');
       const scUrl = new URL(API + '/api/dtao/stake_balance/latest/v1');
       scUrl.searchParams.set('netuid', String(netuid));
@@ -941,56 +841,15 @@ async function loadSubnet(netuid, useCache) {
       }
     } catch(e) { console.warn('staker count:', e.message); }
 
-    // 8. Owner TAO wallet transfers — removed (unused, saves a rate-limited API call)
-    const ownerTransfers = [];
-
-    // 9. Subnet history — miner/validator count trend
-    let subnetHistory = [];
-    try {
-      await sleep(700);
-      step('Fetching subnet history for miner trend...');
-      const shRaw = await get('/api/subnet/history/v1', { netuid, limit: 365 });
-      subnetHistory = Array.isArray(shRaw) ? shRaw : [];
-    } catch(e) { console.warn('subnet history:', e.message); }
-
-    // 10. Metagraph — per-neuron reward data
-    let metagraph = [];
-    try {
-      await sleep(700);
-      step('Fetching metagraph...');
-      const mgRaw = await get('/api/metagraph/latest/v1', { netuid, limit: 512 });
-      metagraph = Array.isArray(mgRaw) ? mgRaw : [];
-    } catch(e) { console.warn('metagraph:', e.message); }
-
-    // 11. Owner full portfolio — all alpha positions across subnets
-    let ownerAllPositions = [];
+    // 8. Owner TAO wallet transfers (shows whether team has moved funds)
+    let ownerTransfers = [];
     if (ownerColdkey) {
       try {
-        await sleep(700);
-        step('Fetching owner portfolio positions...');
-        const apRaw = await get('/api/dtao/stake_balance/latest/v1', { coldkey: ownerColdkey, limit: 50 });
-        ownerAllPositions = Array.isArray(apRaw) ? apRaw : [];
-      } catch(e) { console.warn('owner all positions:', e.message); }
-    }
-
-    // 12. Validator balance histories (top validators by reward, max 5)
-    let validatorHistories = {};
-    const topValidators = (metagraph || [])
-      .filter(n => n.hotkey && n.coldkey && (n.validator_permit === true || parseFloat(n.validator_trust || 0) > 0.05))
-      .sort((a, b) => parseFloat(b.emission || 0) - parseFloat(a.emission || 0))
-      .slice(0, 5);
-    for (const v of topValidators) {
-      try {
-        const ck = (v.coldkey && v.coldkey.ss58) ? v.coldkey.ss58 : v.coldkey;
-        const hk = (v.hotkey  && v.hotkey.ss58)  ? v.hotkey.ss58  : v.hotkey;
-        if (!ck || !hk) continue;
-        await sleep(700);
-        step('Fetching validator ' + v.uid + ' history...');
-        const vh = await get('/api/dtao/stake_balance/history/v1', {
-          coldkey: ck, hotkey: hk, netuid, limit: 200
-        });
-        validatorHistories[v.uid] = Array.isArray(vh) ? vh : [];
-      } catch(e) { console.warn('validator history uid ' + v.uid + ':', e.message); }
+        await sleep(500);
+        step('Fetching owner transfer history...');
+        const tfRaw = await get('/api/transfer/v1', { address: ownerColdkey, limit: 100 });
+        ownerTransfers = Array.isArray(tfRaw) ? tfRaw : [];
+      } catch(e) { console.warn('owner transfers:', e.message); }
     }
 
     const data = {
@@ -1000,10 +859,6 @@ async function loadSubnet(netuid, useCache) {
       ownerBalance,
       ownerBalHistory,
       ownerTransfers,
-      ownerAllPositions,
-      subnetHistory,
-      metagraph,
-      validatorHistories,
       stakerCount,
       taoPriceUSD,
       taoPriceHistory,
@@ -1015,16 +870,11 @@ async function loadSubnet(netuid, useCache) {
     writeCache(cKey, {
       ...data,
       allSorted:       [],
-      ownerBalHistory: (data.ownerBalHistory || []).slice(0, 500),
+      ownerBalHistory: (data.ownerBalHistory || []).slice(0, 150),
       ownerTransfers:  (data.ownerTransfers  || []).slice(0, 100),
-      subnetHistory:   (data.subnetHistory   || []).slice(0, 180),
-      metagraph:           (data.metagraph           || []).slice(0, 256),
-      ownerAllPositions:   (data.ownerAllPositions   || []).slice(0, 50),
-      validatorHistories:  data.validatorHistories || {},
-      taoPriceHistory:     (data.taoPriceHistory     || []).slice(0, 450),
+      taoPriceHistory: (data.taoPriceHistory || []).slice(0, 450),
     });
     saveHistory(data);
-    localStorage.setItem('sn_last_netuid', String(netuid));
     renderAll(data, false);
     setMsg('');
     showRefreshBtn(true);
@@ -1050,7 +900,7 @@ function renderAll(data, fromCache) {
 // DASHBOARD
 // ============================================================
 function renderDashboard(data, fromCache) {
-  const { pool, allSorted, history, netuid, stakerCount, taoPriceUSD } = data;
+  const { pool, allSorted, history, netuid, stakerCount } = data;
 
   showDB('content');
 
@@ -1077,14 +927,6 @@ function renderDashboard(data, fromCache) {
   const subnetDesc = (data.meta || {}).description || (data.meta || {}).purpose
                   || (data.meta || {}).subnet_description || '';
 
-  // Freshness stamp
-  const freshnessMs = Date.now() - (data.ts || Date.now());
-  const freshnessStr = freshnessMs < 5000 ? 'Live'
-    : freshnessMs < 60000 ? `${Math.round(freshnessMs/1000)}s ago`
-    : freshnessMs < 3600000 ? `${Math.round(freshnessMs/60000)}m ago`
-    : `${Math.round(freshnessMs/3600000)}h ago`;
-  const freshnessColor = freshnessMs < 300000 ? '#1a7a3a' : freshnessMs < 3600000 ? '#c8960c' : '#c0392b';
-
   document.getElementById('meta-card').innerHTML = `
     <div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:2px;">
@@ -1098,17 +940,17 @@ function renderDashboard(data, fromCache) {
     <div class="meta-divider"></div>
     <div class="meta-primary">
       <div class="meta-primary-val">
-        <span class="rank-badge ${rankClass(pool.rank)}">#${pool.rank ?? '—'}</span>
+        <span class="rank-badge ${rankClass(pool.rank)}">#${pool.rank}</span>
       </div>
       <div class="meta-primary-lbl">Emission Rank</div>
     </div>
     <div class="meta-primary">
-      <div class="meta-primary-val">${USD_MODE_OVERVIEW && taoPriceUSD ? fmtVal(mcapTAO, taoPriceUSD, true) : fmtAlpha(mcapTAO) + '<span style="font-size:12px;font-weight:400;color:#aaa;"> TAO</span>'}</div>
+      <div class="meta-primary-val">${fmtAlpha(mcapTAO)} <span style="font-size:12px;font-weight:400;color:#aaa;">TAO</span></div>
       <div class="meta-primary-lbl">Market Cap</div>
     </div>
     <div class="meta-divider"></div>
     <div class="meta-stat">
-      <div class="meta-val">${USD_MODE_OVERVIEW && taoPriceUSD ? '$'+(pool.price * taoPriceUSD).toFixed(4) : fmtPrice(pool.price)}</div>
+      <div class="meta-val">${fmtPrice(pool.price)}</div>
       <div class="meta-lbl">Alpha Price</div>
     </div>
     <div class="meta-stat">
@@ -1124,12 +966,10 @@ function renderDashboard(data, fromCache) {
       <div class="meta-lbl">30d</div>
     </div>
     <div class="meta-actions">
-      <span class="meta-ts" style="color:${freshnessColor};font-weight:700;" title="Fetched ${fmtDateTime(data.ts)}">${freshnessStr}</span>
-      <button id="usd-toggle-overview" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid ${USD_MODE_OVERVIEW?'#1a7a3a':'#ddd'};background:${USD_MODE_OVERVIEW?'#1a7a3a':'transparent'};color:${USD_MODE_OVERVIEW?'#fff':'#888'};cursor:pointer;margin-left:6px;">${USD_MODE_OVERVIEW?'USD':'TAO'}</button>
-      <button onclick="(()=>{const u=new URL(location.href);u.searchParams.set('sn','${netuid}');navigator.clipboard.writeText(u.toString()).then(()=>{this.textContent='Copied!';setTimeout(()=>{this.textContent='Share'},1500)}).catch(()=>{this.textContent='Copy failed'});})()" class="btn btn-ghost" style="font-size:10px;padding:3px 12px;min-height:unset;margin-left:6px;">Share</button>
+      ${fromCache ? `<span class="tag tag-amber">Cached</span>` : ''}
+      <span class="meta-ts">${fmtDate(data.ts)}</span>
     </div>
   `;
-  {const b=document.getElementById('usd-toggle-overview');if(b)b.addEventListener('click',()=>{USD_MODE_OVERVIEW=!USD_MODE_OVERVIEW;if(STATE)renderDashboard(STATE,false);});}
 
   // --- Stats grid ---
   const rootPct = (toF(pool.root_prop) * 100 || 0).toFixed(3);
@@ -1142,7 +982,7 @@ function renderDashboard(data, fromCache) {
   const sellTAO      = (toF(pool.tao_sell_volume_24_hr)  || 0) / 1e9;
   const netVolTAO    = buyTAO - sellTAO;
   const netVolClass  = netVolTAO >= 0 ? 'green' : 'red';
-  const netVolStr    = (netVolTAO >= 0 ? '+' : '') + fmtVal(netVolTAO, taoPriceUSD, USD_MODE_OVERVIEW);
+  const netVolStr    = (netVolTAO >= 0 ? '+' : '') + fmtAlpha(netVolTAO) + ' TAO';
   // Buy/sell count ratio
   const buys24  = pool.buys_24_hr  || 0;
   const sells24 = pool.sells_24_hr || 0;
@@ -1158,322 +998,273 @@ function renderDashboard(data, fromCache) {
   const yieldStr   = impliedYieldPct ? `${impliedYieldPct}%` : 'N/A';
   const yieldClass = impliedYieldPct && parseFloat(impliedYieldPct) >= 10 ? 'green' : '';
 
-  const TILE_TIPS = {
-    'Liquidity':       'Total TAO in the AMM pool — proxy for depth. Larger pool = less slippage.',
-    'Market Cap':      'Alpha tokens in circulation × current alpha price (in TAO).',
-    'Est. Ann. Yield': 'Annualised emission ÷ market cap. Above 10% = competitive for validators.',
-    'Validator Stake': 'Total alpha staked by validators — proxy for validator conviction.',
-    'Stakers':         'Unique wallets with alpha staked on this subnet.',
-    'Root Prop':       'Share of emission via root network (SN1). Higher = more governance exposure.',
-    '24h Net Volume':  'Buy TAO minus sell TAO (24h). Positive = net buying pressure.',
-    'Order Ratio':     'Buy orders ÷ sell orders (24h). Above 1× = more buys than sells.',
-  };
   document.getElementById('stats-grid').innerHTML = [
-    { v: fmtVal(poolTAO, taoPriceUSD, USD_MODE_OVERVIEW), l: 'Liquidity',       s: USD_MODE_OVERVIEW && taoPriceUSD ? 'pool depth (USD)' : 'pool depth (TAO)' },
-    { v: fmtVal(mcapTAO, taoPriceUSD, USD_MODE_OVERVIEW), l: 'Market Cap',     s: 'alpha × price' },
-    { v: yieldStr,                     l: 'Est. Ann. Yield', s: 'emission ÷ market cap', c: yieldClass },
-    { v: fmtAlpha(alphaStkd),          l: 'Validator Stake', s: 'alpha staked' },
+    { v: fmtAlpha(poolTAO) + ' TAO',   l: 'Pool TAO',       s: 'AMM liquidity' },
+    { v: fmtAlpha(mcapTAO) + ' TAO',   l: 'Market Cap',     s: 'alpha × price' },
+    { v: yieldStr,                     l: 'Implied Yield',  s: 'ann. emission / mcap', c: yieldClass },
+    { v: fmtAlpha(alphaStkd),          l: 'Alpha Staked',   s: 'alpha tokens' },
     { v: stakers,                      l: 'Stakers',        s: 'unique wallets' },
     { v: `${rootPct}%`,                l: 'Root Prop',      s: 'emission share', c: 'green' },
-    { v: netVolStr,                    l: '24h Net Volume',  s: 'buy − sell (TAO)', c: netVolClass },
-    { v: `${bsRatio}×`,               l: 'Order Ratio',     s: `${buys24} buys / ${sells24} sells`, c: bsClass },
-  ].map(s => s._raw ? s._raw : `
-    <div class="stat-card"${TILE_TIPS[s.l] ? ` title="${TILE_TIPS[s.l]}"` : ''}>
+    { v: netVolStr,                    l: 'Net Vol 24h',    s: 'TAO buy − sell (24h)', c: netVolClass },
+    { v: `${bsRatio}×`,               l: 'Buy/Sell Ratio', s: `${buys24} buys / ${sells24} sells (24h)`, c: bsClass },
+  ].map(s => `
+    <div class="stat-card">
       <div class="stat-val ${s.c || ''}">${s.v}</div>
       <div class="stat-lbl">${s.l}</div>
       ${s.s ? `<div class="stat-sub">${s.s}</div>` : ''}
     </div>
   `).join('');
 
-  // --- Signal + risk lead ---
-  drawSignalCard(data);
-  renderRiskSection(data);
+  // --- Executive summary ---
+  renderExecSummary(data);
 
-  // --- Charts ---
+  // --- Price chart + rank chart (own toggle) ---
   drawPriceChart(data, PRICE_PERIOD);
   drawRankChart(data, PRICE_PERIOD);
+
+  // --- Net flow (global toggle) ---
   drawCharts(data, PERIOD);
 
-  // --- Peer comp ---
-  renderPeerComp(data);
-
-  // --- Owner + detail sections ---
+  // --- Owner wallet inline ---
   renderOwnerDash(data);
-  renderMinerSection(data);
-  renderValidatorSection(data);
 }
 
-
 // ============================================================
-// ANALYST SIGNAL CARD
+// EXECUTIVE SUMMARY — AUTO-GENERATED SIGNALS
 // ============================================================
-function renderAnalystSignal(data) {
-  const el = document.getElementById('analyst-signal');
+function renderExecSummary(data) {
+  const el = document.getElementById('exec-summary');
   if (!el) return;
-  const { pool, meta, metagraph, ownerBalance, taoPriceUSD } = data;
-  const signals = [];
-  const warnings = [];
 
-  // Buy/sell pressure
-  const bsRaw = parseFloat(pool.buy_sell_ratio || pool.buy_sell_ratio_24h || pool.buys_sell_ratio || 0);
-  const buys = parseInt(pool.buys_24_hr || pool.buys_24h || pool.buys || 0);
-  const sells = parseInt(pool.sells_24_hr || pool.sells_24h || pool.sells || 0);
-  if (buys + sells > 0) {
-    const ratio = buys / (sells || 1);
-    if (ratio < 0.7) warnings.push('heavy sell pressure (' + buys + ' buys vs ' + sells + ' sells)');
-    else if (ratio > 1.5) signals.push('strong buy pressure (' + buys + ' buys vs ' + sells + ' sells)');
+  const { pool, history, ownerBalance, ownerBalHistory, allSorted, netuid } = data;
+  const mcapTAO = (toF(pool.market_cap) || 0) / 1e9;
+  const p7d  = toF(pool.price_change_1_week)  || 0;
+  const p30d = toF(pool.price_change_1_month) || 0;
+  const rank = pool.rank || null;
+
+  // 30-day net pool flow from history
+  let netFlow30d = null;
+  if (history && history.length >= 2) {
+    const cut = Date.now() - 30 * 86400000;
+    const recent = [...history]
+      .filter(h => h.timestamp && new Date(h.timestamp).getTime() >= cut && toF(h.total_tao) !== null)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    if (recent.length >= 2) {
+      netFlow30d = (toF(recent[recent.length - 1].total_tao) - toF(recent[0].total_tao)) / 1e9;
+    }
   }
 
-  // Miner utilisation
-  const activeM = meta.active_miners;
-  const maxN = meta.max_neurons;
-  if (activeM != null && maxN) {
-    const pct = (activeM / maxN * 100).toFixed(0);
-    if (activeM / maxN < 0.5) warnings.push('subnet ' + pct + '% full (' + activeM + '/' + maxN + ' slots)');
-    else if (activeM / maxN > 0.9) signals.push('subnet at capacity (' + activeM + '/' + maxN + ' UIDs)');
+  // Implied annualised yield
+  const BLOCKS_PER_DAY = 7200;
+  const emissionTaoPerDay = (toF(pool.emission) || 0) * BLOCKS_PER_DAY / 1e9;
+  const impliedYield = mcapTAO > 0 && emissionTaoPerDay > 0
+    ? emissionTaoPerDay * 365 / mcapTAO * 100 : null;
+
+  // Owner 30-day trend from balance history
+  let ownerTrend30d = null;
+  if (ownerBalHistory && ownerBalHistory.length >= 2) {
+    const sorted = [...ownerBalHistory]
+      .filter(h => h.timestamp && toF(h.balance_as_tao) !== null)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    if (sorted.length >= 2) {
+      const latest = sorted[sorted.length - 1];
+      const prior  = sorted[Math.max(0, sorted.length - 31)];
+      ownerTrend30d = (toF(latest.balance_as_tao) - toF(prior.balance_as_tao)) / 1e9;
+    }
   }
 
-  // Validator count
-  const activeV = meta.active_validators;
-  if (activeV != null) {
-    if (activeV <= 1) warnings.push('only ' + activeV + ' active validator — centralisation risk');
-    else if (activeV >= 10) signals.push(activeV + ' active validators — healthy decentralisation');
+  // Buy/sell conviction from 24h data
+  const buys24  = pool.buys_24_hr  || 0;
+  const sells24 = pool.sells_24_hr || 0;
+  const totalTxns = buys24 + sells24;
+  const buyPct = totalTxns > 0 ? (buys24 / totalTxns * 100).toFixed(0) : null;
+
+  // --- Build signal points ---
+  const pts = []; // { c: 'green'|'red'|'amber'|'grey', t: html string }
+
+  // Rank
+  if (rank) {
+    const total = allSorted ? allSorted.length : null;
+    if (rank <= 10) {
+      pts.push({ c: 'green', t: `<b>#${rank} emission rank</b> — top-10 placement. Elevated alpha incentives and no near-term deregistration risk.` });
+    } else if (rank <= 35) {
+      pts.push({ c: 'amber', t: `<b>#${rank} emission rank</b> — mid-tier. Below the top-10 cutoff where validator incentives are materially stronger. A few rank positions matter here.` });
+    } else {
+      pts.push({ c: 'red', t: `<b>#${rank} emission rank</b> — lower-tier${total ? ` (bottom ${(((total - rank) / total) * 100).toFixed(0)}% of ${total} active subnets)` : ''}. Real deregistration exposure if validator engagement slips.` });
+    }
   }
 
-  // Owner holding signal
-  if (ownerBalance) {
-    const bal = parseFloat(ownerBalance.balance || 0) / 1e9;
-    if (bal > 1000000) signals.push('owner holding ' + fmtAlpha(bal) + ' alpha tokens');
+  // 30d pool flow
+  if (netFlow30d !== null) {
+    if (netFlow30d > 1) {
+      pts.push({ c: 'green', t: `<b>+${fmtAlpha(netFlow30d)} TAO</b> net inflow over 30 days — pool reserves growing. More capital entering than leaving.` });
+    } else if (netFlow30d < -1) {
+      pts.push({ c: 'red', t: `<b>${fmtAlpha(netFlow30d)} TAO</b> net outflow over 30 days — pool reserves declining. Validator distribution is outpacing buyer demand.` });
+    } else {
+      pts.push({ c: 'grey', t: `Near-neutral 30-day pool flow (<b>${netFlow30d >= 0 ? '+' : ''}${fmtAlpha(netFlow30d)} TAO</b>) — balanced buy and sell pressure. No directional signal from flow alone.` });
+    }
   }
 
-  // Emission rank
-  const rank = pool.rank;
-  if (rank != null) {
-    if (rank <= 10) signals.push('top-10 emission rank (#' + rank + ')');
-    else if (rank > 80) warnings.push('low emission rank (#' + rank + ' of ~128 active subnets)');
+  // 30d price
+  if (p30d > 15) {
+    pts.push({ c: 'green', t: `<b>${pct(p30d)}</b> over 30 days — strong price momentum. Confirm with 7d trend (${pct(p7d)}) to check if the move is sustaining.` });
+  } else if (p30d < -20) {
+    pts.push({ c: 'red', t: `<b>${pct(p30d)}</b> over 30 days — material drawdown. Likely reflecting validator distribution pressure and/or weakening sentiment.` });
+  } else if (Math.abs(p30d) <= 5) {
+    pts.push({ c: 'grey', t: `<b>${pct(p30d)}</b> over 30 days — price range-bound. No strong directional catalyst visible from price action alone.` });
   }
 
-  if (!signals.length && !warnings.length) { el.style.display = 'none'; return; }
+  // 24h buyer conviction
+  if (buyPct !== null && totalTxns >= 5) {
+    if (parseInt(buyPct) >= 65) {
+      pts.push({ c: 'green', t: `<b>${buyPct}% of 24h transactions are buys</b> (${buys24} buys / ${sells24} sells) — buyer conviction is dominant in the current session.` });
+    } else if (parseInt(buyPct) <= 35) {
+      pts.push({ c: 'red', t: `<b>Only ${buyPct}% of 24h transactions are buys</b> (${buys24} buys / ${sells24} sells) — seller-led session. Short-term pressure likely to continue.` });
+    }
+  }
 
-  const sigHTML = signals.map(s =>
-    '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#1a7a3a;background:#e8f5e9;padding:2px 9px;border-radius:10px;margin:2px;">✓ ' + s + '</span>'
-  ).join('');
-  const warnHTML = warnings.map(w =>
-    '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#c0392b;background:#fdecea;padding:2px 9px;border-radius:10px;margin:2px;">⚠ ' + w + '</span>'
-  ).join('');
+  // Implied yield
+  if (impliedYield !== null) {
+    if (impliedYield >= 20) {
+      pts.push({ c: 'green', t: `<b>${impliedYield.toFixed(1)}% implied annualised yield</b> — high emission-to-market-cap ratio. Attractive carry for stakers who intend to hold alpha.` });
+    } else if (impliedYield >= 8) {
+      pts.push({ c: 'amber', t: `<b>${impliedYield.toFixed(1)}% implied yield</b> — moderate. Reasonable carry for accumulators but not a standalone entry signal.` });
+    } else if (impliedYield > 0) {
+      pts.push({ c: 'grey', t: `<b>${impliedYield.toFixed(1)}% implied yield</b> — compressed. Market is pricing in growth expectations well above current emission.` });
+    }
+  }
 
-  el.style.display = 'block';
-  el.innerHTML = '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#bbb;margin-bottom:7px;">Quick Signals</div>'
-    + '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + warnHTML + sigHTML + '</div>';
+  // Owner trend
+  if (ownerTrend30d !== null) {
+    if (ownerTrend30d > 0.5) {
+      pts.push({ c: 'green', t: `Owner wallet <b>accumulated +${fmtAlpha(ownerTrend30d)} TAO</b> in alpha value over 30 days — team is adding, not reducing.` });
+    } else if (ownerTrend30d < -0.5) {
+      pts.push({ c: 'red', t: `Owner wallet <b>reduced by ${fmtAlpha(Math.abs(ownerTrend30d))} TAO</b> in the past 30 days — monitor the Monthly Balance chart closely.` });
+    }
+  } else if (ownerBalance) {
+    const ownerTAO = (toF(ownerBalance.balance_as_tao) || 0) / 1e9;
+    if (ownerTAO > 1) {
+      pts.push({ c: 'amber', t: `Owner holds <b>${fmtAlpha(ownerTAO)} TAO</b> equivalent in alpha. Insufficient history to determine trend direction — see Monthly Balance chart below.` });
+    }
+  }
+
+  if (!pts.length) { el.innerHTML = ''; return; }
+
+  // Dominant signal for border colour
+  const counts = { green: 0, red: 0, amber: 0, grey: 0 };
+  pts.forEach(p => counts[p.c]++);
+  let dominant = 'grey';
+  if (counts.red   >= counts.green && counts.red   > 0) dominant = 'red';
+  else if (counts.green > 0)                            dominant = 'green';
+  else if (counts.amber > 0)                            dominant = 'amber';
+
+  const borderColor = { green: '#1a7a3a', red: '#c0392b', amber: '#d4a017', grey: '#ddd' }[dominant];
+  const dotColor    = { green: '#1a7a3a', red: '#c0392b', amber: '#b8860b', grey: '#aaa' };
+
+  el.innerHTML = `
+    <div style="border:1px solid #e0e0e0;border-left:3px solid ${borderColor};padding:14px 18px;margin-bottom:20px;background:#fafafa;">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#aaa;margin-bottom:10px;">
+        Key Signals — SN${netuid}
+      </div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;">
+        ${pts.map(p => `
+          <li style="display:flex;gap:9px;align-items:flex-start;font-size:12px;color:#333;line-height:1.6;">
+            <span style="flex-shrink:0;width:6px;height:6px;border-radius:50%;background:${dotColor[p.c]};margin-top:5px;"></span>
+            <span>${p.t}</span>
+          </li>`).join('')}
+      </ul>
+      <div style="font-size:10px;color:#ccc;margin-top:10px;padding-top:8px;border-top:1px solid #eee;">
+        Derived from pool history, emission data, and owner wallet. Not investment advice.
+      </div>
+    </div>
+  `;
 }
+
 // ============================================================
-// OWNER PORTFOLIO
+// OWNER WALLET — INLINE DASHBOARD SECTION
 // ============================================================
 function renderOwnerDash(data) {
-  const { pool, meta, ownerBalance, ownerBalHistory, ownerAllPositions, taoPriceUSD, netuid } = data;
+  const { pool, meta, ownerBalance, ownerBalHistory, taoPriceUSD, netuid } = data;
   const el = document.getElementById('owner-dash');
   if (!el) return;
 
-  const ownerObj   = (meta || {}).owner        || null;
-  const hotkeyObj  = (meta || {}).owner_hotkey  || null;
-  const ownerSS58  = ownerObj  && (ownerObj.ss58  || (typeof ownerObj  === 'string' ? ownerObj  : null));
-  const hotkeySS58 = hotkeyObj && (hotkeyObj.ss58 || (typeof hotkeyObj === 'string' ? hotkeyObj : null));
-  const separateHotkey = ownerSS58 && hotkeySS58 && ownerSS58 !== hotkeySS58;
+  const ownerObj = (meta || {}).owner || null;
+  const ownerSS58 = ownerObj && (ownerObj.ss58 || (typeof ownerObj === 'string' ? ownerObj : null));
 
-  if (!ownerBalance && (!ownerBalHistory || !ownerBalHistory.length) && (!ownerAllPositions || !ownerAllPositions.length)) {
-    const ck = (meta.owner && (meta.owner.ss58 || meta.owner)) || null;
-    if (ck) {
-      el.innerHTML = '<div style="padding:10px 0;font-size:11px;color:#bbb;border-top:1.5px solid #f0f0f0;margin-top:8px;">'
-        + '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#ccc;">Owner Portfolio</span>'
-        + '<div style="margin-top:6px;">Owner key found but no alpha stake returned from API.</div></div>';
-    } else { el.innerHTML = ''; }
+  // Only render if we have something to show
+  if (!ownerBalance && (!ownerBalHistory || !ownerBalHistory.length)) {
+    el.innerHTML = '';
     return;
   }
 
-  const allPos = ownerAllPositions || [];
-  let totalPortfolioTAO = 0;
-  allPos.forEach(p => { totalPortfolioTAO += parseFloat(p.balance_as_tao || 0) / 1e9; });
-  if (ownerBalance && !allPos.length) totalPortfolioTAO = parseFloat(ownerBalance.balance_as_tao || 0) / 1e9;
-  const portfolioUSD = taoPriceUSD ? totalPortfolioTAO * taoPriceUSD : null;
-
-  let tokenDelta90 = null;
-  if (ownerBalHistory && ownerBalHistory.length >= 2) {
-    const srt = [...ownerBalHistory].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-    const old90  = srt.find(h => new Date(h.timestamp).getTime() >= Date.now() - 90*86400000);
-    const latest = srt[srt.length - 1];
-    if (old90 && latest) {
-      const oA = parseFloat(old90.balance || 0) / 1e9;
-      const nA = parseFloat(latest.balance || 0) / 1e9;
-      tokenDelta90 = oA > 0.001 ? ((nA - oA) / oA * 100) : null;
-    }
+  // Holdings cards
+  let holdingsHTML = '';
+  if (ownerBalance) {
+    const alphaAmt   = (toF(ownerBalance.balance)        || 0) / 1e9;
+    const taoAmt     = (toF(ownerBalance.balance_as_tao) || 0) / 1e9;
+    const usdVal     = taoPriceUSD ? taoAmt * taoPriceUSD : null;
+    holdingsHTML = `
+      <div class="holdings-grid" style="margin-bottom:14px;">
+        <div class="stat-card">
+          <div class="stat-val">${fmtAlpha(alphaAmt)}</div>
+          <div class="stat-lbl">Owner Alpha</div>
+          <div class="stat-sub">${(pool.symbol && /[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : 'tokens'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">${fmtAlpha(taoAmt)} <span style="font-size:11px;font-weight:400;color:#aaa;">TAO</span></div>
+          <div class="stat-lbl">Owner TAO Value</div>
+          <div class="stat-sub">at current alpha price</div>
+        </div>
+        ${usdVal !== null ? `<div class="stat-card">
+          <div class="stat-val">$${fmtUSD(usdVal)}</div>
+          <div class="stat-lbl">Owner USD Value</div>
+          <div class="stat-sub">${taoPriceUSD ? 'live TAO/USD' : 'est.'}</div>
+        </div>` : ''}
+      </div>
+    `;
   }
-
-  let accumSignal = null, accumColor = '#aaa';
-  if (ownerBalHistory && ownerBalHistory.length >= 2) {
-    const srt = [...ownerBalHistory].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-    const earliest  = parseFloat(srt[0].balance || 0) / 1e9;
-    const latestBal = parseFloat(srt[srt.length-1].balance || 0) / 1e9;
-    const days      = Math.max(1, (new Date(srt[srt.length-1].timestamp) - new Date(srt[0].timestamp)) / 86400000);
-    const dailyEmit = ownerBalance ? parseFloat(ownerBalance.daily_reward || ownerBalance.emission || 0) / 1e9 : 0;
-    const expected  = earliest + dailyEmit * days;
-    if (latestBal >= expected * 1.05)      { accumSignal = 'Accumulating'; accumColor = '#1a7a3a'; }
-    else if (latestBal >= expected * 0.9)  { accumSignal = 'Holding';      accumColor = '#1a7a3a'; }
-    else if (latestBal >= expected * 0.5)  { accumSignal = 'Partial sell'; accumColor = '#e67e22'; }
-    else                                   { accumSignal = 'Distributing'; accumColor = '#c0392b'; }
-  }
-
-  const keysHTML = (ownerSS58 || hotkeySS58) ? `
-    <div class="owner-card" style="margin-bottom:10px;">
-      ${ownerSS58 ? `<div class="owner-row"><span class="owner-field-lbl">Coldkey</span><span class="key-pill" onclick="copyKey(this,'${ownerSS58}')" title="${ownerSS58}">${truncKey(ownerSS58)}</span><span style="font-size:9px;color:#aaa;margin-left:4px;">controlling wallet</span></div>` : ''}
-      ${hotkeySS58 ? `<div class="owner-row" style="margin-top:6px;"><span class="owner-field-lbl">Hotkey</span><span class="key-pill" onclick="copyKey(this,'${hotkeySS58}')" title="${hotkeySS58}">${truncKey(hotkeySS58)}</span><span style="font-size:9px;color:${separateHotkey ? '#1a7a3a' : '#aaa'};margin-left:4px;">${separateHotkey ? '✓ separate emissions wallet' : 'same as coldkey'}</span></div>` : ''}
-    </div>` : '';
 
   el.innerHTML = `
-    <div style="margin-bottom:12px;">
-      <div class="sec-hdr" style="margin-bottom:4px;">
-        <span class="sec-title">Owner Portfolio — ${pool.name || ('SN' + pool.netuid)}</span>
-        ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank" class="taostats-link" style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats ↗</a>` : ''}
-      <button onclick="(()=>{const u=new URL(location.href);u.searchParams.set('sn','${netuid}');navigator.clipboard.writeText(u.toString()).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy link',1500)}).catch(()=>{});})()" class="btn btn-ghost" style="font-size:10px;padding:3px 10px;min-height:unset;">Copy link</button>
+    <div class="sec-hdr" style="margin-bottom:12px;">
+      <span class="sec-title">Owner Wallet</span>
+      ${ownerSS58 ? `<a href="https://taostats.io/address/${ownerSS58}" target="_blank"
+        style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">View on Taostats &#8599;</a>` : ''}
+    </div>
+    ${holdingsHTML}
+    <div class="sec-hdr" style="margin-bottom:10px;">
+      <span class="sec-title">Monthly Stake Balance Change</span>
+      <div class="toggles" id="owner-period-toggles">
+        <button class="tgl ${OWNER_PERIOD === '3m'   ? 'active' : ''}" data-period="3m">3M</button>
+        <button class="tgl ${OWNER_PERIOD === '6m'   ? 'active' : ''}" data-period="6m">6M</button>
+        <button class="tgl ${OWNER_PERIOD === 'dtao' ? 'active' : ''}" data-period="dtao">dTAO</button>
       </div>
     </div>
-    ${keysHTML}
-    <div class="stats-grid" style="margin-bottom:14px;">
-      ${portfolioUSD !== null ? `<div class="stat-card"><div class="stat-val">$${fmtUSD(portfolioUSD)}</div><div class="stat-lbl">Portfolio (USD)</div><div class="stat-sub">at live alpha prices</div></div>` : ''}
-      ${tokenDelta90 !== null ? `<div class="stat-card"><div class="stat-val ${tokenDelta90 >= 0 ? 'green' : 'red'}">${tokenDelta90 >= 0 ? '+' : ''}${tokenDelta90.toFixed(1)}%</div><div class="stat-lbl">Token Δ (90d)</div><div class="stat-sub">alpha count, not price</div></div>` : ''}
-      ${allPos.length > 0 ? `<div class="stat-card"><div class="stat-val">${allPos.length}</div><div class="stat-lbl">Subnets Held</div><div class="stat-sub">coldkey + hotkey</div></div>` : ''}
-      ${accumSignal ? `<div class="stat-card"><div class="stat-val" style="font-size:15px;color:${accumColor};">${accumSignal}</div><div class="stat-lbl">Behaviour</div><div class="stat-sub">vs emission rate</div></div>` : ''}
+    <div class="chart-box" style="margin-bottom:14px;">
+      <div class="chart-title">NET MONTHLY CHANGE IN OWNER STAKE BALANCE (TAO)</div>
+      <div class="chart-wrap"><canvas id="owner-flow-chart"></canvas></div>
     </div>
-    <div class="chart-box" style="margin-bottom:6px;">
-      <div class="chart-title">MONTH-ON-MONTH ALPHA TOKEN HOLDINGS (COUNT, NOT PRICE)</div>
-      <div class="chart-wrap chart-wrap-tall"><canvas id="owner-flow-chart"></canvas></div>
-    </div>
-    <div style="font-size:10px;color:#888;padding:8px 10px;background:#f9f9f9;border-radius:4px;margin-bottom:20px;line-height:1.5;">
-      Token count, not TAO value — strips out price noise. Growth above monthly emission rate = genuine accumulation. Flat = passing through. Decline = selling faster than earning.
+    <div style="font-size:10px;color:#ccc;margin-bottom:20px;">
+      Green bars = month-over-month accumulation. Red bars = drawdown or disposal. Derived from daily balance snapshots.
     </div>
   `;
-  drawOwnerStackedChart(data);
+
+  document.getElementById('owner-period-toggles').addEventListener('click', e => {
+    const b = e.target.closest('.tgl');
+    if (!b || !STATE) return;
+    document.querySelectorAll('#owner-period-toggles .tgl').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    OWNER_PERIOD = b.dataset.period;
+    drawOwnerFlowChart(STATE.ownerBalHistory || [], OWNER_PERIOD);
+  });
+
+  drawOwnerFlowChart(ownerBalHistory || [], OWNER_PERIOD);
 }
 
-
 // ============================================================
-// RISK REGISTER (auto-derived from live data)
+// SYNTHESIS SIGNAL CARD (kept for reference, no longer rendered)
 // ============================================================
-// ============================================================
-// PEER COMPARISON (static reference)
-// ============================================================
-const PEER_REF = [
-  { netuid:1,  name:'Apex',      emLabel:'~18%', trend:'→', trendCls:'grey',  note:'Root governance' },
-  { netuid:4,  name:'Targon',    emLabel:'~6%',  trend:'↑', trendCls:'green', note:'Multimodal AI' },
-  { netuid:9,  name:'Pretrain',  emLabel:'~5%',  trend:'↓', trendCls:'red',   note:'Model pretraining' },
-  { netuid:19, name:'Inference', emLabel:'~8%',  trend:'→', trendCls:'grey',  note:'AI inference' },
-  { netuid:64, name:'Chutes',    emLabel:'~3%',  trend:'↑', trendCls:'green', note:'GPU compute' },
-];
-function renderPeerComp(data) {
-  const el = document.getElementById('peer-comp');
-  if (!el) return;
-  const cur = data.netuid;
-  const liveRank = data.pool && data.pool.rank ? data.pool.rank : null;
-  const liveEm   = data.pool && data.pool.root_prop ? (parseFloat(data.pool.root_prop)*100).toFixed(1)+'%' : null;
-  const tc = { green:'#1a7a3a', red:'#c0392b', grey:'#888' };
-  const rows = PEER_REF.map(p => {
-    const isCur = p.netuid === cur;
-    return `<tr style="${isCur?'background:#f4faf6;':''}">
-      <td style="padding:6px 10px;font-size:11px;${isCur?'font-weight:700;':''}">
-        <span style="font-size:9px;color:#ccc;margin-right:3px;">SN${p.netuid}</span>${p.name}
-        ${isCur?'<span style="font-size:8px;font-weight:700;background:#1a7a3a;color:#fff;padding:1px 5px;border-radius:2px;margin-left:4px;">active</span>':''}
-      </td>
-      <td style="padding:6px 10px;font-size:11px;color:#888;">${p.note}</td>
-      <td style="padding:6px 10px;font-size:11px;text-align:right;font-weight:700;">${isCur&&liveEm?liveEm:p.emLabel}</td>
-      <td style="padding:6px 10px;font-size:11px;text-align:right;color:#666;">${isCur&&liveRank?'#'+liveRank:'—'}</td>
-      <td style="padding:6px 10px;font-size:14px;text-align:center;color:${tc[p.trendCls]};">${p.trend}</td>
-    </tr>`;
-  }).join('');
-  el.style.display = 'block';
-  el.innerHTML = `
-    <div class="sec-hdr" style="margin-bottom:8px;">
-      <span class="sec-title">Peer Comparison</span>
-      <span style="font-size:9px;color:#ccc;">Reference data · verify live</span>
-    </div>
-    <div class="table-wrap">
-      <table style="width:100%;border-collapse:collapse;">
-        <thead><tr style="background:#fafafa;">
-          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:left;">Subnet</th>
-          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:left;">Focus</th>
-          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:right;">Emission</th>
-          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:right;">Rank</th>
-          <th style="padding:5px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;text-align:center;">Trend</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  `;
-}
-
-
-function renderRiskSection(data) {
-  const el = document.getElementById('risk-section');
-  if (!el) return;
-  const { pool, history, subnetHistory, netuid } = data;
-  const risks = [];
-
-  // Risk 1: Rank / deregistration
-  const rank = toF(pool.rank);
-  if (rank !== null && rank > 50) {
-    risks.push({ sev:'HIGH', label:'Deregistration risk', detail:`Rank #${rank} — subnets outside top 32 by emission face deregistration pressure.` });
-  } else if (rank !== null && rank > 25) {
-    risks.push({ sev:'MED', label:'Rank deterioration', detail:`Rank #${rank} — approaching the deregistration zone (>32). Monitor emission share weekly.` });
-  }
-
-  // Risk 2: Low emission share
-  const emPct = toF(pool.tao_in_emission) || toF(pool.emission_percentage) || null;
-  if (emPct !== null && emPct < 1.0) {
-    risks.push({ sev:'HIGH', label:'Low emission share', detail:`${emPct.toFixed(2)}% of network emission — reduces validator incentive to stay.` });
-  }
-
-  // Risk 3: Alpha price trend (30d)
-  if (history && history.length >= 2) {
-    const sorted = [...history].filter(h => toF(h.price)).sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp));
-    const cut = Date.now() - 30*86400000;
-    const recent = sorted.filter(h => new Date(h.timestamp).getTime() >= cut);
-    if (recent.length >= 2) {
-      const chg = (toF(recent[recent.length-1].price) - toF(recent[0].price)) / toF(recent[0].price) * 100;
-      if (chg < -20) risks.push({ sev:'HIGH', label:'Alpha drawdown', detail:`${chg.toFixed(1)}% price decline in 30d — miner and validator incentives at risk.` });
-      else if (chg < -10) risks.push({ sev:'MED', label:'Alpha underperformance', detail:`${chg.toFixed(1)}% in 30d. Monitor for continued selling pressure.` });
-    }
-  }
-
-  // Risk 4: Miner count declining
-  if (subnetHistory && subnetHistory.length >= 4) {
-    const sh = [...subnetHistory].filter(h => toF(h.active_miners) !== null).sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp));
-    if (sh.length >= 4) {
-      const earlyAvg = (toF(sh[0].active_miners)+toF(sh[1].active_miners))/2;
-      const lateAvg  = (toF(sh[sh.length-1].active_miners)+toF(sh[sh.length-2].active_miners))/2;
-      if (earlyAvg > 0 && lateAvg < earlyAvg * 0.8) {
-        risks.push({ sev:'MED', label:'Miner attrition', detail:`Active miners down ~${((1-lateAvg/earlyAvg)*100).toFixed(0)}% — shrinking miner set signals weakening incentive.` });
-      }
-    }
-  }
-
-  if (risks.length === 0) { el.style.display='none'; return; }
-
-  const sevColor = { HIGH:'#c0392b', MED:'#d68000', LOW:'#1a7a3a' };
-  const sevBg    = { HIGH:'#fdf2f2', MED:'#fffaf0', LOW:'#f0faf4' };
-  el.style.display = 'block';
-  el.innerHTML = `
-    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:#aaa;margin-bottom:8px;">Risk Register</div>
-    <div style="display:flex;flex-direction:column;gap:5px;">
-      ${risks.map(r => `
-        <div style="display:flex;align-items:flex-start;gap:10px;padding:7px 11px;background:${sevBg[r.sev]};border-left:3px solid ${sevColor[r.sev]};border-radius:0 4px 4px 0;">
-          <div style="flex-shrink:0;font-size:9px;font-weight:700;color:${sevColor[r.sev]};text-transform:uppercase;letter-spacing:0.5px;padding-top:2px;min-width:28px;">${r.sev}</div>
-          <div><span style="font-size:11px;font-weight:700;color:#222;">${r.label} — </span><span style="font-size:11px;color:#666;">${r.detail}</span></div>
-        </div>`).join('')}
-    </div>
-  `;
-}
-
-
 function drawSignalCard(data) {
-  const el = document.getElementById('signal-card') || document.getElementById('analyst-signal');
+  const el = document.getElementById('signal-card');
   if (!el) return;
 
   const { pool, history, taoPriceHistory, netuid } = data;
@@ -1552,31 +1343,26 @@ function drawSignalCard(data) {
   const rootPct = (toF(pool.root_prop) * 100 || 0).toFixed(2);
   const rankStr = rank ? `#${rank} by emission, ${rootPct}% root prop` : null;
 
-  // Build signal card — verdict first, 5px left accent border
-  if (!perfStr && !flowStr && !rankStr) { el.style.display='none'; return; }
-  el.style.display = 'block';
+  // Build signal card — primary signal dominant, secondary data smaller
+  if (!perfStr && !flowStr && !rankStr) { el.innerHTML = ''; return; }
 
-  // Derive primary verdict
-  let verdict = 'HOLD', verdictColor = '#999';
-  if (perfClass === 'green') { verdict = 'ACCUMULATE'; verdictColor = '#1a7a3a'; }
-  else if (perfClass === 'red') { verdict = 'REDUCE'; verdictColor = '#c0392b'; }
-  const bgColor = verdict === 'ACCUMULATE' ? '#f0faf4' : verdict === 'REDUCE' ? '#fdf2f2' : '#f8f8f8';
+  // Primary: performance vs TAO (most investable signal)
+  const primaryHTML = perfStr
+    ? `<div style="font-size:15px;font-weight:700;line-height:1.3;" class="${perfClass}">SN${netuid} is ${perfStr}</div>`
+    : `<div style="font-size:15px;font-weight:700;color:#888;">SN${netuid} — insufficient history for comparison</div>`;
 
-  // One-line rationale
-  const rationaleItems = [perfStr, flowStr, rankStr].filter(Boolean);
-  const rationaleStr = rationaleItems.join(' &nbsp;·&nbsp; ');
+  // Secondary row: flow + rank on one small line
+  const secondaryParts = [
+    flowStr ? `<span class="${flowClass}" style="font-weight:700;">${flowStr}</span>` : null,
+    rankStr ? `<span style="color:#888;">${rankStr}</span>` : null,
+  ].filter(Boolean);
 
   el.innerHTML = `
-    <div style="background:${bgColor};border-left:5px solid ${verdictColor};border-radius:0 6px 6px 0;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:0;">
-      <div style="flex-shrink:0;min-width:90px;">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:${verdictColor};opacity:0.8;margin-bottom:2px;">Signal</div>
-        <div style="font-size:22px;font-weight:700;color:${verdictColor};line-height:1;">${verdict}</div>
-      </div>
-      <div style="flex:1;min-width:160px;border-left:1px solid rgba(0,0,0,0.1);padding-left:14px;">
-        ${perfStr ? `<div style="font-size:13px;font-weight:700;color:#222;margin-bottom:5px;line-height:1.35;">${perfStr}</div>` : ''}
-        ${flowStr ? `<div style="font-size:11px;color:#555;margin-bottom:2px;">${flowStr}</div>` : ''}
-        ${rankStr ? `<div style="font-size:11px;color:#999;">${rankStr}</div>` : ''}
-      </div>
+    <div style="background:#fafafa;border:1.5px solid ${perfClass === 'green' ? '#b8dfc4' : perfClass === 'red' ? '#f0c8c3' : '#e8e8e8'};border-radius:6px;padding:14px 18px;">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:#aaa;margin-bottom:7px;">Investment Signal</div>
+      ${primaryHTML}
+      ${secondaryParts.length ? `<div style="font-size:11px;margin-top:6px;">${secondaryParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
+      <div style="font-size:10px;color:#ccc;margin-top:5px;">Baseline = dTAO launch (Feb 2025). Past performance is not indicative of future results.</div>
     </div>
   `;
 }
@@ -1625,7 +1411,6 @@ function chartSeries(data, period) {
 // ============================================================
 function drawIndexedChart(data) {
   const canvas = document.getElementById('indexed-chart');
-  if (!canvas) return; // element removed from layout
   const baseLabel = document.getElementById('indexed-base-label');
   if (!canvas) return;
 
@@ -1841,11 +1626,11 @@ function drawIndexedChart(data) {
 function drawPriceChart(data, period) {
   const s = chartSeries(data, period);
   if (!s.prices || !s.prices.filter(Boolean).length) {
-    canvasMsg('main-chart', 'No data for this period');
+    clearCanvas('main-chart', 'No data for this period');
     return;
   }
   // Reuse drawDualChart with no rank overlay
-  drawDualChart('main-chart', s.labels, s.prices, [], false, data.taoPriceUSD);
+  drawDualChart('main-chart', s.labels, s.prices, [], false);
 }
 
 // Emission rank — standalone line chart (y-axis reversed: rank 1 at top)
@@ -1862,16 +1647,15 @@ function drawRankChart(data, period) {
 
   const maxR = Math.max(...validRanks);
   const o = JSON.parse(JSON.stringify(BASE_OPTS));
-  const minR = Math.max(1, Math.min(...validRanks) - 1);
   o.scales.y = {
     ...o.scales.y,
-    type: 'logarithmic',
     reverse: true,
-    min: minR,
-    max: maxR + Math.ceil(maxR * 0.1),
+    min: 1,
+    max: maxR + 2,
     ticks: {
       font: { family: 'Arial', size: 9 }, color: '#888',
-      callback: v => Number.isInteger(v) ? `#${v}` : null,
+      callback: v => `#${Math.round(v)}`,
+      stepSize: 1,
     },
     grid:   { color: '#f5f5f5' },
     border: { color: '#eee' },
@@ -1906,13 +1690,12 @@ function drawCharts(data, period) {
   drawNetFlowChart(data, period);
 }
 
-function drawDualChart(id, labels, prices, ranks, hasRank, taoPriceUSD) {
+function drawDualChart(id, labels, prices, ranks, hasRank) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
   if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
 
   const validPrices = prices.filter(v => v !== null);
-  if (!validPrices.length) { canvasMsg(id, 'No price data'); return; }
   const priceMin = Math.min(...validPrices) * 0.99;
   const priceMax = Math.max(...validPrices) * 1.01;
   const validRanks = (ranks || []).filter(r => r !== null);
@@ -1936,7 +1719,7 @@ function drawDualChart(id, labels, prices, ranks, hasRank, taoPriceUSD) {
         padding: 10, cornerRadius: 3,
         callbacks: {
           label: ctx => ctx.datasetIndex === 0
-            ? `Price: ${USD_MODE_CHART && taoPriceUSD ? '$'+(ctx.parsed.y * taoPriceUSD).toFixed(6) : fmtPrice6(ctx.parsed.y)+' TAO'}`
+            ? `Price: ${fmtPrice6(ctx.parsed.y)} TAO`
             : `Rank: #${Math.round(ctx.parsed.y)}`,
         }
       }
@@ -1950,7 +1733,7 @@ function drawDualChart(id, labels, prices, ranks, hasRank, taoPriceUSD) {
       y: {
         position: 'left',
         min: priceMin, max: priceMax,
-        ticks: { font: { family: 'Arial', size: 9 }, color: '#1a7a3a', callback: v => USD_MODE_CHART && taoPriceUSD ? '$'+(v*taoPriceUSD).toFixed(6) : fmtPrice6(v) },
+        ticks: { font: { family: 'Arial', size: 9 }, color: '#1a7a3a', callback: v => fmtPrice6(v) },
         grid:   { color: '#f5f5f5' },
         border: { color: '#eee' },
       },
@@ -1999,8 +1782,6 @@ function drawDualChart(id, labels, prices, ranks, hasRank, taoPriceUSD) {
     });
   }
 
-  const titleEl = document.getElementById('price-chart-title');
-  if (titleEl) titleEl.textContent = USD_MODE_CHART && taoPriceUSD ? 'ALPHA PRICE (USD)' : 'ALPHA PRICE (TAO)';
   canvas._c = new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: { labels, datasets },
@@ -2135,8 +1916,7 @@ function drawStakedChart(data, period) {
 // RANK TABLE
 // ============================================================
 function drawRankTable(allSorted, currentNetuid) {
-  const tsEl = document.getElementById('rank-table-ts');
-  if (tsEl) tsEl.textContent = 'Live';
+  document.getElementById('rank-table-ts').textContent = 'Live';
 
   const limit = RANK_EXPANDED ? 50 : 10;
   const rows = allSorted.slice(0, limit).map(s => {
@@ -2153,7 +1933,7 @@ function drawRankTable(allSorted, currentNetuid) {
       </tr>`;
   }).join('');
 
-  (document.getElementById('rank-table')||{innerHTML:''}).innerHTML = `
+  document.getElementById('rank-table').innerHTML = `
     <thead>
       <tr>
         <th>Rank</th><th>SN</th><th>Name</th>
@@ -2178,6 +1958,171 @@ function drawRankTable(allSorted, currentNetuid) {
 // ============================================================
 // OWNER WALLET
 // ============================================================
+function renderOwner(data) {
+  const { pool, meta, netuid, ownerBalance, ownerBalHistory, ownerTransfers, taoPriceUSD } = data;
+
+  const ownerObj  = meta.owner       || null;
+  const hotkeyObj = meta.owner_hotkey || null;
+  const ownerSS58  = ownerObj  && (ownerObj.ss58  || ownerObj);
+  const hotkeySS58 = hotkeyObj && (hotkeyObj.ss58 || hotkeyObj);
+
+  if (!ownerSS58) {
+    document.getElementById('ow-empty').classList.remove('hidden');
+    document.getElementById('ow-content').classList.add('hidden');
+    document.getElementById('ow-empty').querySelector('.state-title').textContent = 'Owner key not available';
+    document.getElementById('ow-empty').querySelector('div:last-child').textContent =
+      'Taostats did not return an owner key for this subnet.';
+    return;
+  }
+
+  document.getElementById('ow-empty').classList.add('hidden');
+  document.getElementById('ow-content').classList.remove('hidden');
+
+  // Identity card — tags and links only; keys moved to bottom of page
+  document.getElementById('owner-id-card').innerHTML = `
+    <div class="owner-tags">
+      <span class="tag tag-green">Registered Owner</span>
+      <span class="tag tag-grey">SN${netuid}</span>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;">
+      <a href="https://taostats.io/address/${ownerSS58}" target="_blank"
+        style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">
+        View on Taostats &#8599;
+      </a>
+      <a href="https://taostats.io/subnets/${netuid}/alphanomics" target="_blank"
+        style="font-size:10px;color:#1a7a3a;text-decoration:none;font-weight:700;">
+        Alphanomics &#8599;
+      </a>
+    </div>
+  `;
+
+  // Holdings section: owner-specific stake data
+  let holdingsHTML;
+  if (ownerBalance) {
+    const alphaAmt  = (toF(ownerBalance.balance)        || 0) / 1e9;
+    const taoAmt    = (toF(ownerBalance.balance_as_tao) || 0) / 1e9;
+    const alphaPrice = toF(pool.price) || 0;
+    const usdVal     = taoPriceUSD ? taoAmt * taoPriceUSD : null;
+    const priceRef   = taoPriceUSD
+      ? `TAO/USD: $${taoPriceUSD.toFixed(2)} | Alpha: ${fmtPrice6(alphaPrice)} TAO`
+      : `Alpha: ${fmtPrice6(alphaPrice)} TAO`;
+
+    holdingsHTML = `
+      <div class="sec-hdr">
+        <span class="sec-title">Owner Holdings (Current Value)</span>
+        <span class="grey" style="font-size:10px;">${priceRef}</span>
+      </div>
+      <div class="holdings-grid">
+        <div class="stat-card">
+          <div class="stat-val">${fmtAlpha(alphaAmt)}</div>
+          <div class="stat-lbl">Alpha Balance</div>
+          <div class="stat-sub">${(pool.symbol && /[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : 'alpha'} tokens</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">${fmtAlpha(taoAmt)} <span style="font-size:11px;font-weight:400;color:#aaa;">TAO</span></div>
+          <div class="stat-lbl">TAO Value</div>
+          <div class="stat-sub">at current alpha price</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">${usdVal !== null ? '$' + fmtUSD(usdVal) : 'N/A'}</div>
+          <div class="stat-lbl">USD Value</div>
+          <div class="stat-sub">${taoPriceUSD ? 'live TAO/USD' : 'price unavailable'}</div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Stake balance not available from API — fall back to subnet-level net flows from metadata
+    // Values are in rao units — divide by 1e9 to get TAO
+    const f1d  = (toF(meta.net_flow_1_day)   || 0) / 1e9;
+    const f7d  = (toF(meta.net_flow_7_days)  || 0) / 1e9;
+    const f30d = (toF(meta.net_flow_30_days) || 0) / 1e9;
+    const hasFlow = f1d || f7d || f30d;
+
+    function netFlowRow(label, val) {
+      const cls  = val >= 0 ? 'green' : 'red';
+      const sign = val >= 0 ? '+' : '';
+      return `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f5f5f5;">
+        <span style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.4px;">${label}</span>
+        <span style="font-size:12px;font-weight:700;" class="${cls}">${sign}${fmtAlpha(val)} TAO</span>
+      </div>`;
+    }
+
+    holdingsHTML = `
+      <div class="sec-hdr">
+        <span class="sec-title">Owner Holdings</span>
+        <span class="grey" style="font-size:10px;">Stake balance not available via API</span>
+      </div>
+      <div class="stat-card" style="margin-bottom:22px;padding:14px 18px;">
+        <div style="font-size:10px;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
+          Subnet Net Staking Flows
+        </div>
+        ${hasFlow ? netFlowRow('1 Day', f1d) + netFlowRow('7 Days', f7d) + netFlowRow('30 Days', f30d) : '<div style="font-size:11px;color:#ccc;padding:12px 0;">No flow data available</div>'}
+        <div style="font-size:10px;color:#ccc;margin-top:8px;">Subnet-wide net inflow/outflow. Owner-specific stake data not returned by Taostats for this coldkey.</div>
+      </div>
+    `;
+  }
+
+  const flowHTML = `
+    <div class="sec-hdr" style="margin-top:4px;">
+      <span class="sec-title">Monthly Stake Balance Change</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:9px;color:#ccc;font-style:italic;">Owner wallet period</span>
+        <div class="toggles" id="owner-period-toggles">
+          <button class="tgl ${OWNER_PERIOD === '3m'   ? 'active' : ''}" data-period="3m">3M</button>
+          <button class="tgl ${OWNER_PERIOD === '6m'   ? 'active' : ''}" data-period="6m">6M</button>
+          <button class="tgl ${OWNER_PERIOD === 'dtao' ? 'active' : ''}" data-period="dtao">dTAO</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">NET MONTHLY CHANGE IN OWNER TAO-DENOMINATED STAKE BALANCE</div>
+      <div class="chart-wrap"><canvas id="owner-flow-chart"></canvas></div>
+    </div>
+    <div style="font-size:10px;color:#ccc;margin-top:6px;margin-bottom:22px;">
+      Derived from daily balance snapshots. Green bars = month-over-month accumulation. Red bars = drawdown or disposal.
+    </div>
+  `;
+
+  // Transfer history section
+  const transferHTML = buildTransferHTML(ownerTransfers || [], ownerSS58);
+
+  // Registration keys at bottom — investment signals (holdings, flow, transfers) lead
+  const keysHTML = `
+    <div class="sec-hdr" style="margin-top:8px;">
+      <span class="sec-title">Registration Keys</span>
+      <span class="tag tag-amber" style="margin-left:8px;">May not be active team wallet</span>
+    </div>
+    <div class="owner-card" style="margin-bottom:22px;">
+      <div class="owner-row">
+        <span class="owner-field-lbl">Coldkey</span>
+        <span class="key-pill" onclick="copyKey(this,'${ownerSS58}')" title="${ownerSS58} — click to copy">${truncKey(ownerSS58)}</span>
+      </div>
+      ${hotkeySS58 ? `
+      <div class="owner-row">
+        <span class="owner-field-lbl">Hotkey</span>
+        <span class="key-pill" onclick="copyKey(this,'${hotkeySS58}')" title="${hotkeySS58} — click to copy">${truncKey(hotkeySS58)}</span>
+      </div>` : ''}
+      <div style="font-size:10px;color:#aaa;margin-top:6px;">
+        The coldkey is the address used to register this subnet. Teams often operate from a separate wallet.
+        The balance charts above are a better signal for actual team activity.
+      </div>
+    </div>
+  `;
+
+  document.getElementById('owner-body').innerHTML = holdingsHTML + flowHTML + transferHTML + keysHTML;
+
+  // Attach period toggle listener to the newly created element
+  document.getElementById('owner-period-toggles').addEventListener('click', e => {
+    const b = e.target.closest('.tgl');
+    if (!b || !STATE) return;
+    document.querySelectorAll('#owner-period-toggles .tgl').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    OWNER_PERIOD = b.dataset.period;
+    drawOwnerFlowChart(STATE.ownerBalHistory || [], OWNER_PERIOD);
+  });
+
+  drawOwnerFlowChart(ownerBalHistory || [], OWNER_PERIOD);
+}
 
 // ============================================================
 // CHART BUILDERS (BASE_OPTS used by dashboard and owner flow)
@@ -2222,56 +2167,228 @@ function noDataMsg(id, msg) {
   if (wrap) wrap.innerHTML = `<div class="no-data-chart">${msg}</div>`;
 }
 
-function drawOwnerStackedChart(data) {
-  const { ownerBalHistory, ownerAllPositions, pool, netuid } = data;
+function drawOwnerFlowChart(history, period) {
   const canvas = document.getElementById('owner-flow-chart');
   if (!canvas) return;
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const histSorted = [...(ownerBalHistory || [])].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-  const thisMonthMap = {};
-  for (const h of histSorted) {
-    if (h.timestamp) { const key = h.timestamp.slice(0,7); thisMonthMap[key] = parseFloat(h.balance||0)/1e9; }
-  }
-  const monthKeys = Object.keys(thisMonthMap).sort().filter(k => k >= '2025-02');
-  if (!monthKeys.length) {
-    // No history for this subnet — show current cross-subnet snapshot instead
-    const snap = (ownerAllPositions||[]).sort((a,b)=>parseFloat(b.balance_as_tao||0)-parseFloat(a.balance_as_tao||0));
-    if (!snap.length) { canvasMsg('owner-flow-chart','No balance data available for owner'); return; }
-    const PAL2=['rgba(26,122,58,0.82)','rgba(41,128,185,0.75)','rgba(142,68,173,0.65)','rgba(136,136,128,0.55)'];
-    const snapDS=snap.slice(0,5).map((p,i)=>({ label:(p.symbol&&/[a-zA-Z]/.test(p.symbol))?p.symbol:('SN'+p.netuid), data:[+(parseFloat(p.balance||0)/1e9).toFixed(4)], backgroundColor:PAL2[i%4], borderRadius:2, stack:'stk' }));
-    if (canvas._chartInst) { canvas._chartInst.destroy(); canvas._chartInst=null; }
-    canvas._chartInst=new Chart(canvas.getContext('2d'),{ type:'bar', data:{labels:['Current holdings'],datasets:snapDS}, options:{ responsive:true,maintainAspectRatio:false, plugins:{ legend:{display:true,position:'bottom',labels:{font:{family:'Arial',size:9},color:'#888',boxWidth:12,padding:14}}, tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmtAlpha(c.parsed.y)+' α'}} }, scales:{ x:{stacked:true,ticks:{font:{family:'Arial',size:9},color:'#bbb'},grid:{display:false}}, y:{stacked:true,ticks:{font:{family:'Arial',size:9},color:'#bbb',callback:v=>fmtAlpha(v)},grid:{color:'#f5f5f5'},beginAtZero:true} } } });
+
+  if (!history || !history.length) {
+    canvasMsg('owner-flow-chart', 'No balance history returned from API for this owner');
     return;
   }
-  const labels = monthKeys.map(k => { const [y,m]=k.split('-'); return MONTHS[+m-1]+" '"+y.slice(2); });
-  const thisSym = (pool&&pool.symbol&&/[a-zA-Z]/.test(pool.symbol)) ? pool.symbol : ('SN'+(pool?pool.netuid:netuid));
-  const datasets = [{ label: thisSym+' (hotkey)', data: monthKeys.map(k=>+(thisMonthMap[k]||0).toFixed(4)), backgroundColor:'rgba(26,122,58,0.82)', borderRadius:2, stack:'stk' }];
-  const others = (ownerAllPositions||[]).filter(p=>String(p.netuid)!==String(netuid)).sort((a,b)=>parseFloat(b.balance_as_tao||0)-parseFloat(a.balance_as_tao||0));
-  if (others.length>=1) { const t=others[0]; const s=(t.symbol&&/[a-zA-Z]/.test(t.symbol))?t.symbol:('SN'+t.netuid); datasets.push({ label:s+' (coldkey)', data:monthKeys.map(()=>+(parseFloat(t.balance||0)/1e9).toFixed(4)), backgroundColor:'rgba(41,128,185,0.75)', borderRadius:2, stack:'stk' }); }
-  if (others.length>=2) { const rest=others.slice(1).reduce((s,p)=>s+parseFloat(p.balance||0)/1e9,0); datasets.push({ label:'Other ('+( others.length-1)+')', data:monthKeys.map(()=>+rest.toFixed(4)), backgroundColor:'rgba(136,136,128,0.55)', borderRadius:2, stack:'stk' }); }
-  if (canvas._chartInst) { canvas._chartInst.destroy(); canvas._chartInst=null; }
-  canvas._chartInst = new Chart(canvas.getContext('2d'), {
-    type:'bar', data:{labels,datasets},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:true,position:'bottom',labels:{font:{family:'Arial',size:9},color:'#888',boxWidth:12,padding:14}}, tooltip:{mode:'index',intersect:false,callbacks:{label:c=>' '+c.dataset.label+': '+fmtAlpha(c.parsed.y)+' α'}} },
-      scales:{ x:{stacked:true,ticks:{font:{family:'Arial',size:9},color:'#bbb'},grid:{display:false}}, y:{stacked:true,ticks:{font:{family:'Arial',size:9},color:'#bbb',callback:v=>fmtAlpha(v)},grid:{color:'#f5f5f5'},beginAtZero:true} }
-    }
+
+  const now = Date.now();
+  let cutoff;
+  if (period === '3m')      cutoff = now - 90  * 86400000;
+  else if (period === '6m') cutoff = now - 180 * 86400000;
+  else                      cutoff = new Date('2025-02-01').getTime(); // dTAO launch
+
+  const sorted = [...history]
+    .filter(h => h.timestamp && new Date(h.timestamp).getTime() >= cutoff)
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  if (!sorted.length) {
+    canvasMsg('owner-flow-chart', 'No data for selected period');
+    return;
+  }
+
+  // Last snapshot per calendar month
+  const buckets = {};
+  for (const h of sorted) {
+    const key = h.timestamp.slice(0, 7); // YYYY-MM
+    buckets[key] = (toF(h.balance_as_tao) || 0) / 1e9;
+  }
+
+  const keys = Object.keys(buckets).sort();
+  if (keys.length < 2) {
+    canvasMsg('owner-flow-chart', 'Need at least 2 months of balance snapshots to compute changes');
+    return;
+  }
+
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const labels = [], deltas = [], bgColors = [], borderColors = [];
+
+  for (let i = 1; i < keys.length; i++) {
+    const delta = buckets[keys[i]] - buckets[keys[i - 1]];
+    const [y, m] = keys[i].split('-');
+    labels.push(`${MONTHS[+m - 1]} ${y.slice(2)}`);
+    deltas.push(delta);
+    bgColors.push(delta >= 0 ? '#1a7a3a28' : '#c0392b28');
+    borderColors.push(delta >= 0 ? '#1a7a3a' : '#c0392b');
+  }
+
+  if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
+
+  const o = JSON.parse(JSON.stringify(BASE_OPTS));
+  o.scales.y.ticks.callback = v => fmtAlpha(v) + ' TAO';
+  o.plugins.tooltip.callbacks = {
+    label: ctx => `${ctx.parsed.y >= 0 ? '+' : ''}${fmtAlpha(ctx.parsed.y)} TAO`,
+  };
+
+  canvas._c = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Monthly Balance Change (TAO)',
+        data: deltas,
+        backgroundColor: bgColors,
+        borderColor: borderColors,
+        borderWidth: 1.5,
+        borderRadius: 2,
+      }]
+    },
+    options: o,
   });
 }
-function drawOwnerFlowChart() { /* superseded by drawOwnerStackedChart */ }
 
+// ============================================================
+// OWNER TRANSFER HISTORY
+// ============================================================
+function buildTransferHTML(transfers, ownerSS58) {
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const MATERIAL_THRESHOLD = 1; // TAO — minimum size to flag as material
+  // Determine outbound vs inbound for each transfer
+  const rows = [...transfers]
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .map(t => {
+      const fromAddr = t.from?.ss58 || t.from || '';
+      const toAddr   = t.to?.ss58   || t.to   || '';
+      const isOut    = fromAddr === ownerSS58;
+      const isIn     = toAddr   === ownerSS58;
+      const direction = isOut ? 'out' : (isIn ? 'in' : '?');
+      const counterparty = isOut ? toAddr : fromAddr;
+      const amt = (toF(t.amount) || 0) / 1e9;
+      const ts = t.timestamp ? new Date(t.timestamp) : null;
+      const dateStr = ts ? `${ts.getDate()} ${MONTHS[ts.getMonth()]} ${String(ts.getFullYear()).slice(2)}` : '';
+      const hash = t.transaction_hash || '';
+      const hashShort = hash.length > 16 ? hash.slice(0, 8) + '...' + hash.slice(-6) : hash;
+      const taostatsLink = hash
+        ? `<a href="https://taostats.io/extrinsic/${t.extrinsic_id || hash}" target="_blank"
+             style="color:#1a7a3a;text-decoration:none;font-family:'Courier New',monospace;font-size:10px;">${hashShort} &#8599;</a>`
+        : '<span style="color:#ccc;font-size:10px;">-</span>';
+
+      const isMaterialOut = direction === 'out' && amt >= MATERIAL_THRESHOLD;
+      const rowStyle = isMaterialOut ? 'background:#fff8f8;' : '';
+
+      return `
+        <tr style="${rowStyle}">
+          <td>${dateStr}</td>
+          <td><span class="tf-${direction}">${direction === 'out' ? 'OUT' : direction === 'in' ? 'IN' : '?'}</span>
+            ${isMaterialOut ? '<span style="font-size:9px;color:#c0392b;margin-left:4px;">●</span>' : ''}</td>
+          <td class="${direction === 'out' ? 'red bold' : direction === 'in' ? 'green' : ''}">${direction === 'out' ? '-' : '+'}${fmtAlpha(amt)} TAO</td>
+          <td><span style="font-family:'Courier New',monospace;font-size:10px;color:#666;"
+              title="${counterparty}">${truncKey(counterparty)}</span></td>
+          <td>${taostatsLink}</td>
+        </tr>`;
+    }).join('');
+
+  const emptyMsg = transfers.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;padding:28px;color:#ccc;font-size:11px;">No TAO wallet transfers found for this coldkey</td></tr>'
+    : '';
+
+  // Disposition summary — only flag if material outbound detected (>= 1 TAO total)
+  let dispositionNote = '';
+  if (transfers.length > 0) {
+    const outbound = transfers.filter(t => (t.from?.ss58 || t.from) === ownerSS58);
+    const materialOut = outbound.filter(t => (toF(t.amount) || 0) / 1e9 >= MATERIAL_THRESHOLD);
+    const totalOut = materialOut.reduce((s, t) => s + (toF(t.amount) || 0) / 1e9, 0);
+    if (materialOut.length > 0) {
+      dispositionNote = `<div class="err-box" style="margin-bottom:14px;">
+        <strong>Material outbound detected:</strong> Owner coldkey has sent ${fmtAlpha(totalOut)} TAO across ${materialOut.length} transfer${materialOut.length !== 1 ? 's' : ''} of 1+ TAO each.
+        This is TAO wallet activity only; alpha unstaking appears in the Monthly Balance Flow chart above.
+      </div>`;
+    }
+  }
+
+  return `
+    <div class="sec-hdr" style="margin-top:4px;">
+      <span class="sec-title">Registration Coldkey Transfers</span>
+      <span class="grey" style="font-size:10px;">${transfers.length} TAO wallet transaction${transfers.length !== 1 ? 's' : ''} · registration key only</span>
+    </div>
+    ${dispositionNote}
+    <div class="table-wrap" style="margin-bottom:22px;">
+      <table class="tf-table">
+        <thead>
+          <tr><th>Date</th><th>Direction</th><th>Amount</th><th>Counterparty</th><th>Tx Hash</th></tr>
+        </thead>
+        <tbody>${rows || emptyMsg}</tbody>
+      </table>
+    </div>
+    <div style="font-size:10px;color:#ccc;margin-bottom:22px;">
+      TAO wallet transfers for the registration coldkey only. This key is often inactive after subnet launch.
+      For actual team disposition, use the Monthly Stake Balance Change chart above — it shows whether the team is accumulating or reducing their alpha stake.
+    </div>
+  `;
+}
+
+function buildLineChart(id, labels, values, opts = {}) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (canvas._c) { canvas._c.destroy(); canvas._c = null; }
+
+  const color = opts.color || '#1a7a3a';
+  const o = JSON.parse(JSON.stringify(BASE_OPTS));
+
+  if (opts.yMin !== undefined) o.scales.y.min = opts.yMin;
+  if (opts.yMax !== undefined) o.scales.y.max = opts.yMax;
+  if (opts.yReverse) o.scales.y.reverse = true;
+  if (opts.fmt) {
+    o.scales.y.ticks.callback = opts.fmt;
+    o.plugins.tooltip.callbacks = { label: ctx => `${opts.label}: ${opts.fmt(ctx.parsed.y)}` };
+  }
+
+  canvas._c = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: opts.label || '',
+        data: values,
+        borderColor: color,
+        backgroundColor: color + '14',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        fill: opts.fill !== false,
+        tension: 0.25,
+        spanGaps: true,
+      }]
+    },
+    options: o,
+  });
+}
+
+
+function clearCanvas(id, msg) {
+  const c = document.getElementById(id);
+  if (!c) return;
+  if (c._c) { c._c.destroy(); c._c = null; }
+  const ctx = c.getContext('2d');
+  c.width = c.offsetWidth; c.height = 190;
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.font = '11px Arial';
+  ctx.fillStyle = '#ccc';
+  ctx.textAlign = 'center';
+  ctx.fillText(msg, c.width / 2, 95);
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+const HK = 'sn_hist_v2';
 
 function saveHistory(data) {
   let h = readHistory().filter(x => x.netuid !== data.netuid);
   h.unshift({
-    netuid:   data.netuid,
-    name:     data.pool.name || '',
-    symbol:   data.pool.symbol || '',
-    price:    data.pool.price,
-    rank:     data.pool.rank,
-    p1d:      data.pool.price_change_1_day,
-    rootProp: data.pool.root_prop,
-    ts:       data.ts,
+    netuid:      data.netuid,
+    name:        data.pool.name || '',
+    symbol:      data.pool.symbol || '',
+    price:       data.pool.price,
+    rank:        data.pool.rank,
+    p1d:         data.pool.price_change_1_day,
+    rootProp:    data.pool.root_prop,
+    ts:          data.ts,
   });
   localStorage.setItem(HK, JSON.stringify(h.slice(0, 30)));
   renderHistoryPills();
@@ -2286,8 +2403,6 @@ function renderHistoryPills() {
   const el = document.getElementById('hist-pills');
   if (!el) return;
 
-  const cb = document.getElementById('clear-hist-btn');
-  if (cb) cb.classList.toggle('hidden', !h.length);
   if (!h.length) {
     el.innerHTML = '<span class="hist-empty-pill">No recent subnets</span>';
     return;
@@ -2295,28 +2410,16 @@ function renderHistoryPills() {
 
   el.innerHTML = h.map(x => {
     const isActive = STATE && Number(STATE.netuid) === Number(x.netuid);
-    const label = x.name ? `SN${x.netuid} ${x.name.slice(0, 12)}` : `SN${x.netuid}`;
+    const label = x.name ? `SN${x.netuid} ${x.name.slice(0, 10)}` : `SN${x.netuid}`;
     const rankStr = x.rank ? ` #${x.rank}` : '';
-    const ageStr = x.ts ? fmtAge(x.ts) : '';
-    const cached = readCache(cacheKey(x.netuid));
-    const hasCached = !!cached;
     return `<button class="hist-pill${isActive ? ' pill-active' : ''}"
       onclick="loadFromHistory(${x.netuid})"
-      title="${x.name || 'SN'+x.netuid} — fetched ${fmtDateTime(x.ts)}"
-      style="display:flex;flex-direction:column;align-items:flex-start;padding:3px 10px 4px;line-height:1.2;">
-      <span>${label}${rankStr}${hasCached ? '' : ' ⚡'}</span>
-      <span style="font-size:8px;opacity:0.65;font-weight:400;">${ageStr}</span>
-    </button>`;
+      title="${x.name || 'SN'+x.netuid} — queried ${fmtDate(x.ts)}">${label}${rankStr}</button>`;
   }).join('');
 }
 
 function loadFromHistory(netuid) {
   document.getElementById('netuid-input').value = netuid;
-  PERIOD = '7d'; PRICE_PERIOD = '7d';
-  document.querySelectorAll('#period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
-  document.querySelectorAll('#price-period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
-  document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.subtab === 'price'));
-  document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'subtab-price'));
   loadSubnet(netuid, true);
 }
 
@@ -2327,13 +2430,7 @@ function updateBadge() {
 function clearHistory() {
   if (!confirm('Clear all history and cached data?')) return;
   localStorage.removeItem(HK);
-  localStorage.removeItem('sn_last_netuid');
-  Object.keys(localStorage).filter(k => /^sn_v\d+_/.test(k)).forEach(k => localStorage.removeItem(k));
-  STATE = null;
-  showDB('empty');
-  showRefreshBtn(false);
-  setMsg('');
-  document.getElementById('netuid-input').value = '';
+  Object.keys(localStorage).filter(k => k.startsWith('sn_v4_') || k.startsWith('sn_v3_') || k.startsWith('sn_v2_')).forEach(k => localStorage.removeItem(k));
   renderHistoryPills();
 }
 
@@ -2348,18 +2445,11 @@ function showDB(state) {
 }
 
 function showDBError(msg) {
+  showDB('');
+  document.getElementById('db-empty').classList.remove('hidden');
   const e = document.getElementById('db-error');
-  let friendly = 'Something went wrong loading this subnet.';
-  if (/429|rate.?limit/i.test(msg)) friendly = 'Rate limit hit — wait a few seconds and try again.';
-  else if (/401|403|auth|key/i.test(msg)) friendly = 'API authentication error. Check your connection.';
-  else if (/404|not.?found/i.test(msg)) friendly = 'Subnet not found. Check the subnet number.';
-  else if (/network|fetch|failed/i.test(msg)) friendly = 'Network error — check your connection and retry.';
-  e.innerHTML = `<div class="err-box">
-    <div style="font-size:15px;font-weight:700;color:#c0392b;margin-bottom:6px;">⚠ ${friendly}</div>
-    <button onclick="document.getElementById('run-btn').click()" style="margin-top:8px;padding:6px 16px;background:#1a7a3a;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-family:Arial,sans-serif;">Try Again</button>
-    <details style="margin-top:10px;font-size:10px;color:#999;cursor:pointer;"><summary>Technical details</summary><div style="margin-top:6px;word-break:break-all;">${msg}</div></details>
-  </div>`;
-  showDB('error');
+  e.innerHTML = `<div class="err-box"><strong>Error:</strong> ${msg}</div>`;
+  e.classList.remove('hidden');
 }
 
 function setActiveTab(name) {
@@ -2419,44 +2509,10 @@ function pct(v) {
   return (f >= 0 ? '+' : '') + f.toFixed(2) + '%';
 }
 
-// fmtVal: format a TAO amount. Pass usdMode=true for USD.
-function fmtVal(taoAmt, taoPriceUSD, usdMode) {
-  if (taoAmt === null || taoAmt === undefined) return 'N/A';
-  if (usdMode && taoPriceUSD) {
-    const usd = taoAmt * taoPriceUSD;
-    if (usd >= 1e6)  return '$' + (usd / 1e6).toFixed(2) + 'M';
-    if (usd >= 1e3)  return '$' + (usd / 1e3).toFixed(1) + 'K';
-    if (usd >= 1)    return '$' + usd.toFixed(2);
-    return '$' + usd.toFixed(4);
-  }
-  return fmtAlpha(taoAmt) + ' TAO';
-}
-
 function fmtDate(ts) {
   if (!ts) return '';
   const d = new Date(typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts);
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
-}
-
-// fmtAge: "just now" / "4m ago" / "2h ago" / "3d ago" / "27 Apr 14:32"
-function fmtAge(ts) {
-  if (!ts) return '';
-  const ms = Date.now() - (typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts);
-  if (ms < 60000)      return 'just now';
-  if (ms < 3600000)    return Math.round(ms / 60000) + 'm ago';
-  if (ms < 86400000)   return Math.round(ms / 3600000) + 'h ago';
-  if (ms < 604800000)  return Math.round(ms / 86400000) + 'd ago';
-  const d = new Date(typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts);
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-       + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-}
-
-// fmtDateTime: "27 Apr 25 14:32" — full timestamp
-function fmtDateTime(ts) {
-  if (!ts) return '';
-  const d = new Date(typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts);
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
-       + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
 }
 
 function fmtChartTs(ts, period) {
@@ -2507,42 +2563,14 @@ function truncKey(addr) {
 function copyKey(el, text) {
   navigator.clipboard.writeText(text).then(() => {
     const o = el.textContent;
-    const ob = el.style.background;
-    el.textContent = '✓ Copied';
-    el.style.background = '#d4edda';
-    setTimeout(() => { el.textContent = o; el.style.background = ob; }, 1400);
-  }).catch(() => {
-    const o = el.textContent;
-    el.textContent = 'Copy failed — select manually';
-    el.style.background = '#fdecea';
-    el.title = text;
-    setTimeout(() => { el.textContent = o; el.style.background = ''; }, 2000);
-  });
+    el.textContent = 'Copied!';
+    setTimeout(() => { el.textContent = o; }, 1300);
+  }).catch(() => {});
 }
 
 // ============================================================
 // EVENTS
 // ============================================================
-function quickLoad(netuid) {
-  document.getElementById('netuid-input').value = netuid;
-  document.getElementById('run-btn').click();
-}
-
-// Sub-tab navigation
-document.getElementById('sub-tab-bar').addEventListener('click', e => {
-  const btn = e.target.closest('.sub-tab');
-  if (!btn) return;
-  const tab = btn.dataset.subtab;
-  document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.subtab === tab));
-  document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'subtab-' + tab));
-  // Re-render charts on tab switch (Chart.js needs visible canvas to size correctly)
-  if (tab === 'price' && STATE) {
-    drawPriceChart(STATE, PRICE_PERIOD);
-    drawRankChart(STATE, PRICE_PERIOD);
-    drawCharts(STATE, PERIOD);
-  }
-});
-
 document.getElementById('run-btn').addEventListener('click', () => {
   const v = parseInt(document.getElementById('netuid-input').value);
   if (!v || v < 1) { setMsg('Enter a valid subnet number'); return; }
@@ -2550,13 +2578,9 @@ document.getElementById('run-btn').addEventListener('click', () => {
   PERIOD = '7d';
   PRICE_PERIOD = '7d';
   OWNER_PERIOD = '3m';
-  if (STATE) STATE.validatorHistories = {};
   RANK_EXPANDED = false;
   document.querySelectorAll('#period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
   document.querySelectorAll('#price-period-toggles .tgl').forEach(b => b.classList.toggle('active', b.dataset.period === '7d'));
-  // Reset to price tab
-  document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.subtab === 'price'));
-  document.querySelectorAll('.sub-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'subtab-price'));
   loadSubnet(v, true);
 });
 
@@ -2566,12 +2590,7 @@ document.getElementById('netuid-input').addEventListener('keydown', e => {
 
 document.getElementById('refresh-btn').addEventListener('click', () => {
   const v = parseInt(document.getElementById('netuid-input').value);
-  if (v) {
-    document.getElementById('refresh-btn').disabled = true;
-    loadSubnet(v, false).finally(() => {
-      document.getElementById('refresh-btn').disabled = false;
-    });
-  }
+  if (v) loadSubnet(v, false);
 });
 
 document.getElementById('period-toggles').addEventListener('click', e => {
@@ -2597,315 +2616,11 @@ document.getElementById('price-period-toggles').addEventListener('click', e => {
 
 document.getElementById('clear-hist-btn').addEventListener('click', clearHistory);
 
-document.getElementById('usd-toggle-chart').addEventListener('click',()=>{
-  USD_MODE_CHART=!USD_MODE_CHART;
-  const btn=document.getElementById('usd-toggle-chart');
-  btn.textContent=USD_MODE_CHART?'USD':'TAO';
-  btn.style.background=USD_MODE_CHART?'#1a7a3a':'transparent';
-  btn.style.color=USD_MODE_CHART?'#fff':'#888';
-  btn.style.borderColor=USD_MODE_CHART?'#1a7a3a':'#ddd';
-  if(STATE)drawPriceChart(STATE,PRICE_PERIOD);
-});
-
 // ============================================================
 // INIT
 // ============================================================
 renderHistoryPills();
 updateBadge();
-
-// Auto-restore last state on page load
-(function() {
-  // URL param takes priority: ?sn=54
-  const params = new URLSearchParams(location.search);
-  const urlSn = parseInt(params.get('sn') || params.get('netuid') || '');
-  if (urlSn && urlSn >= 1 && urlSn <= 512) {
-    document.getElementById('netuid-input').value = urlSn;
-    loadSubnet(urlSn, true);
-    return;
-  }
-
-  // Otherwise restore last viewed subnet from cache (instant, no API call)
-  const lastNetuid = parseInt(localStorage.getItem('sn_last_netuid') || '');
-  if (lastNetuid && lastNetuid >= 1) {
-    const cached = readCache(cacheKey(lastNetuid));
-    if (cached) {
-      document.getElementById('netuid-input').value = lastNetuid;
-      STATE = cached;
-      renderAll(cached, true);
-      setMsg(`Cached · ${fmtAge(cached.ts)} ago`);
-      showRefreshBtn(true);
-    }
-  }
-})();
-
-// ============================================================
-// MINER SECTION
-// ============================================================
-function renderMinerSection(data) {
-  const el = document.getElementById('miner-section');
-  if (!el) return;
-  const { meta, metagraph, subnetHistory, taoPriceUSD, pool } = data;
-  const activeMiners     = meta.active_miners     != null ? meta.active_miners     : null;
-  const activeValidators = meta.active_validators != null ? meta.active_validators : (meta.validators != null ? meta.validators : null);
-  const activeKeys       = meta.active_keys       != null ? meta.active_keys       : null;
-  const maxNeurons       = meta.max_neurons       != null ? meta.max_neurons       : null;
-
-  const histAsc = [...(subnetHistory || [])].reverse();
-  const hasHistory = histAsc.length >= 2;
-  // active_miners confirmed present in /api/subnet/history/v1 records
-  const monthMap = {};
-  for (const h of histAsc) { if (h.timestamp && h.active_miners != null) { monthMap[h.timestamp.slice(0,7)] = h.active_miners; } }
-  let bucketKeys, bucketLabels, bucketCounts, bucketMode;
-  if (Object.keys(monthMap).length >= 2) {
-    bucketMode='monthly'; bucketKeys=Object.keys(monthMap).sort();
-    bucketLabels=bucketKeys.map(k=>{ const [y,m]=k.split('-'); return ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)]+" '"+y.slice(2); });
-    bucketCounts=bucketKeys.map(k=>monthMap[k]);
-  } else {
-    bucketMode='weekly'; const weekMap={};
-    for (const h of histAsc) { if (h.timestamp && h.active_miners != null) { const d=new Date(h.timestamp); const wday=d.getDay(); const diff=(d.getDate()-wday+(wday===0?-6:1)); const mon=new Date(d); mon.setDate(diff); weekMap[mon.toISOString().slice(0,10)]=h.active_miners; } }
-    bucketKeys=Object.keys(weekMap).sort(); bucketLabels=bucketKeys.map(k=>k.slice(5)); bucketCounts=bucketKeys.map(k=>weekMap[k]);
-  }
-  const monthLabels=bucketLabels, monthCounts=bucketCounts;
-
-  let trendHTML = '';
-  if (monthCounts.length >= 2) {
-    const delta=monthCounts[monthCounts.length-1]-monthCounts[0];
-    const col=delta>0?'#1a7a3a':delta<0?'#c0392b':'#888';
-    trendHTML='<span style="font-size:10px;font-weight:700;color:'+col+';">'+(delta>0?'+':'')+delta+' active miners since '+monthLabels[0]+'</span>';
-  }
-
-  const miners = (metagraph||[]).filter(n=>n.hotkey&&(parseFloat(n.daily_mining_alpha_as_tao||0)>0||parseFloat(n.incentive||0)>0)).sort((a,b)=>parseFloat(b.daily_mining_alpha_as_tao||0)-parseFloat(a.daily_mining_alpha_as_tao||0)).slice(0,10);
-  const totalMinerRewardTAO = miners.reduce((s,m)=>s+parseFloat(m.daily_mining_alpha_as_tao||0)/1e9,0);
-  const noMiners = miners.length===0;
-
-  const minerRows = miners.map(m => {
-    const rewardTAO=parseFloat(m.daily_mining_alpha_as_tao||0)/1e9;
-    const alphaStake=parseFloat(m.alpha_stake||m.total_alpha_stake||0)/1e9;
-    const hotkeySS58=(m.hotkey&&m.hotkey.ss58)?m.hotkey.ss58:(m.hotkey||'');
-    const daysReg=(()=>{ if(m.registered_at){return Math.max(1,Math.floor((Date.now()-new Date(m.registered_at))/86400000));} if(m.registered_at_block&&pool&&pool.block_number){return Math.max(1,Math.floor((pool.block_number-m.registered_at_block)*12/86400));} return 30; })();
-    const expectedStake=rewardTAO*daysReg;
-    let deltaStr='—',deltaColor='#bbb';
-    if (alphaStake>0&&expectedStake>0.001) { const d=(alphaStake-expectedStake)/expectedStake*100; deltaStr=(d>=0?'+':'')+d.toFixed(1)+'%'; deltaColor=d>=-20?'#1a7a3a':d>=-60?'#e67e22':'#c0392b'; }
-    let signal,sigCls;
-    if (alphaStake<=0){signal='no stake';sigCls='grey';}
-    else if(expectedStake>0&&alphaStake<expectedStake*0.2){signal='selling';sigCls='red';}
-    else if(expectedStake>0&&alphaStake>=expectedStake*0.7){signal='holding';sigCls='green';}
-    else{signal='partial';sigCls='amber';}
-    const pillBg=sigCls==='green'?'background:#e8f5e9;color:#1a7a3a;':sigCls==='red'?'background:#fdecea;color:#c0392b;':sigCls==='amber'?'background:#fff3cd;color:#856404;':'background:#f5f5f5;color:#888;';
-    return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
-      +'<span style="min-width:36px;font-size:10px;color:#bbb;flex-shrink:0;">UID '+m.uid+'</span>'
-      +'<span class="key-pill" style="flex:1;overflow:hidden;min-width:0;">'+truncKey(hotkeySS58)+'</span>'
-      +'<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">'+fmtVal(rewardTAO,taoPriceUSD,USD_MODE_MINERS)+'/d</span>'
-      +'<span class="mob-col-hide" style="min-width:60px;text-align:right;font-weight:700;color:'+deltaColor+';flex-shrink:0;" title="vs expected accumulation since registration">'+deltaStr+'</span>'
-      +'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;'+pillBg+'">'+signal+'</span>'
-      +'</div>';
-  }).join('');
-
-  el.innerHTML = `
-    <div style="margin-bottom:12px;">
-      <div class="sec-hdr" style="margin-bottom:4px;">
-        <span class="sec-title">Miner Activity</span>
-        ${activeMiners !== null ? `<span style="font-size:9px;font-weight:700;padding:2px 10px;border-radius:10px;background:#e8f5e9;color:#1a7a3a;">${activeMiners} active this epoch</span>` : ''}
-        <button id="usd-toggle-miners" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid ${USD_MODE_MINERS?'#1a7a3a':'#ddd'};background:${USD_MODE_MINERS?'#1a7a3a':'transparent'};color:${USD_MODE_MINERS?'#fff':'#888'};cursor:pointer;margin-left:auto;">${USD_MODE_MINERS?'USD':'TAO'}</button>
-      </div>
-      <div style="font-size:10px;color:#aaa;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-        ${maxNeurons !== null ? `<span>${maxNeurons} slots</span>` : ''}${trendHTML}
-      </div>
-    </div>
-    <div class="stats-grid" style="margin-bottom:14px;">
-      <div class="stat-card"><div class="stat-val">${activeMiners !== null ? activeMiners : '—'}</div><div class="stat-lbl">Active Miners</div><div class="stat-sub">earning this epoch</div></div>
-      <div class="stat-card"><div class="stat-val">${activeValidators !== null ? activeValidators : '—'}</div><div class="stat-lbl">Active Validators</div><div class="stat-sub">with valid permits</div></div>
-      <div class="stat-card"><div class="stat-val">${activeKeys !== null ? activeKeys : '—'}<span style="font-size:11px;font-weight:400;color:#aaa;"> / ${maxNeurons !== null ? maxNeurons : '—'}</span></div><div class="stat-lbl">Registered UIDs</div><div class="stat-sub">of max capacity</div></div>
-      ${totalMinerRewardTAO > 0 ? `<div class="stat-card"><div class="stat-val">${fmtVal(totalMinerRewardTAO, taoPriceUSD, USD_MODE_MINERS)}</div><div class="stat-lbl">Top 10 Daily</div><div class="stat-sub">combined mining rewards</div></div>` : ''}
-    </div>
-    <div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">ACTIVE MINERS — MONTHLY COUNT</div><div class="chart-wrap"><canvas id="miner-trend-chart"></canvas></div></div>
-    ${!noMiners ? `
-    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:6px;">Miner Selling Behaviour — Current Epoch <span style="font-weight:400;color:#bbb;margin-left:8px;">top rewarded UIDs</span></div>
-    <div class="mob-scroll" style="margin-bottom:4px;"><div style="min-width:340px;">
-      <div style="display:flex;gap:6px;padding:4px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;border-bottom:1.5px solid #eee;">
-        <span style="min-width:36px;flex-shrink:0;">UID</span><span style="flex:1;">Hotkey</span>
-        <span style="min-width:74px;text-align:right;flex-shrink:0;">Daily Reward</span>
-        <span class="mob-col-hide" style="min-width:60px;text-align:right;flex-shrink:0;">Alpha Stake Δ</span>
-        <span style="min-width:52px;text-align:right;flex-shrink:0;">Signal</span>
-      </div>
-      ${minerRows}
-    </div></div>
-    <div style="font-size:10px;color:#bbb;margin-top:6px;">Δ = stake vs expected accumulation. Decline = miner is selling.</div>`
-    : '<div style="font-size:11px;color:#bbb;padding:12px 0;">No active miners found in metagraph.</div>'}
-  `;
-
-  {const b=document.getElementById('usd-toggle-miners');if(b)b.addEventListener('click',()=>{USD_MODE_MINERS=!USD_MODE_MINERS;if(STATE)renderMinerSection(STATE);});}
-  const ctx = document.getElementById('miner-trend-chart');
-  if (ctx) {
-    if (ctx._chartInst) ctx._chartInst.destroy();
-    if (!hasHistory) {
-      canvasMsg('miner-trend-chart', 'No subnet history loaded — click Refresh');
-    } else if (monthLabels.length < 2) {
-      canvasMsg('miner-trend-chart', 'Insufficient history (' + monthLabels.length + ' data point' + (monthLabels.length===1?'':'s') + ' — need 2+)');
-    } else {
-      const colors=monthCounts.map((v,i)=>{ if(i===0) return 'rgba(26,122,58,0.7)'; const prev=monthCounts[i-1]; return v>prev?'rgba(26,122,58,0.85)':v<prev?'rgba(192,57,43,0.8)':'rgba(136,135,128,0.6)'; });
-      ctx._chartInst=new Chart(ctx,{ type:'bar', data:{labels:monthLabels,datasets:[{data:monthCounts,backgroundColor:colors,borderWidth:0,borderRadius:2}]},
-        options:{ responsive:true, maintainAspectRatio:false,
-          plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>c.parsed.y+' active miners'}} },
-          scales:{ x:{ticks:{font:{family:'Arial',size:9},color:'#bbb'},grid:{display:false}}, y:{ticks:{font:{family:'Arial',size:9},color:'#bbb',precision:0},grid:{color:'#f5f5f5'},beginAtZero:true} },
-          animation:{ onComplete:function(ev){ const ch=ev.chart,cx2=ch.ctx; cx2.save(); cx2.font='bold 9px Arial'; cx2.fillStyle='#666'; cx2.textAlign='center'; cx2.textBaseline='bottom'; (ch.data.datasets[0].data||[]).forEach((val,i)=>{ const mt=ch.getDatasetMeta(0),bar=mt&&mt.data[i]; if(bar) cx2.fillText(val,bar.x,bar.y-2); }); cx2.restore(); }}
-        }
-      });
-    }
-  }
-}
-
-function renderValidatorSection(data) {
-  const el = document.getElementById('validator-section');
-  if (!el) return;
-  const { metagraph, validatorHistories, pool, taoPriceUSD, netuid, meta } = data;
-  if (!metagraph||!metagraph.length) { el.innerHTML=''; return; }
-
-  const validators=metagraph.filter(n=>n.hotkey&&n.coldkey&&(n.validator_permit===true||parseFloat(n.validator_trust||0)>0.05)).sort((a,b)=>parseFloat(b.emission||0)-parseFloat(a.emission||0));
-  if (!validators.length) { el.innerHTML='<div style="padding:10px 0;font-size:11px;color:#bbb;">No validators with active permits found.</div>'; return; }
-
-  function valSignal(v) {
-    const hist=(validatorHistories||{})[v.uid]||[];
-    if (!hist.length) return {signal:'no data',cls:'grey',sparkData:[]};
-    const sorted=[...hist].sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
-    const sparkData=sorted.slice(-8).map(h=>parseFloat(h.balance_as_tao||h.balance||0)/1e9);
-    if (sorted.length>=2) {
-      const earliest=parseFloat(sorted[0].balance_as_tao||sorted[0].balance||0)/1e9;
-      const latest=parseFloat(sorted[sorted.length-1].balance_as_tao||sorted[sorted.length-1].balance||0)/1e9;
-      const days=Math.max(1,(new Date(sorted[sorted.length-1].timestamp)-new Date(sorted[0].timestamp))/86400000);
-      const dailyRew=parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9;
-      const ratio=(earliest+dailyRew*days)>0.01?latest/(earliest+dailyRew*days):1;
-      if(ratio>=0.85) return {signal:'holding',cls:'green',sparkData};
-      else if(ratio>=0.5) return {signal:'partial',cls:'amber',sparkData};
-      else return {signal:'distributing',cls:'red',sparkData};
-    }
-    return {signal:'insufficient',cls:'grey',sparkData};
-  }
-
-  const signals=validators.map(v=>valSignal(v));
-  const holdCount=signals.filter(s=>s.signal==='holding').length;
-  const sellCount=signals.filter(s=>s.signal==='distributing').length;
-  const totalDailyTAO=validators.reduce((s,v)=>s+parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9,0);
-  const noHistLoaded = !Object.values(validatorHistories || {}).some(h=>Array.isArray(h)&&h.length>0);
-  const aggLabel = noHistLoaded ? 'history not loaded'
-    : holdCount >= sellCount ? holdCount+' of '+validators.length+' holding'
-    : sellCount+' of '+validators.length+' distributing';
-  const aggBg = noHistLoaded ? 'background:#f5f5f5;color:#888;'
-    : holdCount > sellCount ? 'background:#e8f5e9;color:#1a7a3a;'
-    : sellCount > holdCount ? 'background:#fdecea;color:#c0392b;'
-    : 'background:#fff3cd;color:#856404;';
-
-  const flowBarsHTML=validators.map((v,i)=>{
-    const reward=parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9;
-    const pct=totalDailyTAO>0?reward/totalDailyTAO*100:0;
-    const sig=signals[i];
-    const bg=sig.cls==='green'?'#1a7a3a':sig.cls==='red'?'#c0392b':sig.cls==='amber'?'#e67e22':'#aaa';
-    const w=Math.max(pct,0.5).toFixed(2);
-    const r=i===0?'3px 0 0 3px':i===validators.length-1?'0 3px 3px 0':'0';
-    const rewardStr=fmtVal(reward,taoPriceUSD,USD_MODE_VALIDATORS);
-    const label=pct>=14?('UID '+v.uid+' · '+rewardStr+'/d · '+pct.toFixed(1)+'%'):pct>=8?('UID '+v.uid+' · '+pct.toFixed(1)+'%'):pct>=4?(''+v.uid):'';
-    return '<div style="display:inline-flex;align-items:center;justify-content:center;vertical-align:top;height:40px;width:'+w+'%;background:'+bg+';border-radius:'+r+';overflow:hidden;padding:0 4px;box-sizing:border-box;" title="UID '+v.uid+' · '+pct.toFixed(1)+'% · '+rewardStr+'/d · '+sig.signal+'"><span style="font-family:Arial;font-size:9px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+label+'</span></div>';
-  }).join('');
-
-  function sparkHTML(sd,col){ if(!sd||!sd.length) return ''; const mx=Math.max(...sd,0.001); return '<div style="display:flex;align-items:flex-end;gap:2px;height:20px;">'+sd.map(v=>'<div style="width:5px;height:'+Math.max(2,Math.round((v/mx)*18))+'px;border-radius:1px 1px 0 0;background:'+col+';flex-shrink:0;opacity:0.8;"></div>').join('')+'</div>'; }
-
-  const ownerHkRaw=(meta||{}).owner_hotkey, ownerHkSS58=ownerHkRaw&&(ownerHkRaw.ss58||ownerHkRaw);
-  const valRows=validators.map((v,i)=>{
-    const reward=parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9;
-    const pct=totalDailyTAO>0?(reward/totalDailyTAO*100).toFixed(1)+'%':'—';
-    const sig=signals[i];
-    const isOwner=v.is_owner_hotkey||(ownerHkSS58&&v.hotkey&&v.hotkey.ss58===ownerHkSS58);
-    const pillBg=sig.cls==='green'?'background:#e8f5e9;color:#1a7a3a;':sig.cls==='red'?'background:#fdecea;color:#c0392b;':sig.cls==='amber'?'background:#fff3cd;color:#856404;':'background:#f5f5f5;color:#888;';
-    const sc=sig.cls==='green'?'#1a7a3a':sig.cls==='red'?'#c0392b':'#aaa';
-    const hk=v.hotkey&&v.hotkey.ss58?v.hotkey.ss58:(v.hotkey||'');
-    return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:0.5px solid #f5f5f5;font-size:11px;">'
-      +'<span style="min-width:36px;font-size:10px;color:#bbb;flex-shrink:0;">UID '+v.uid+'</span>'
-      +'<span class="key-pill" style="flex:1;overflow:hidden;min-width:0;">'+truncKey(hk)+(isOwner?' <span style="font-size:8px;background:#e8f5e9;color:#1a7a3a;padding:1px 4px;border-radius:2px;margin-left:3px;">owner</span>':'')+'</span>'
-      +'<span style="min-width:74px;text-align:right;font-weight:700;color:#1a7a3a;flex-shrink:0;">'+fmtVal(reward,taoPriceUSD,USD_MODE_VALIDATORS)+'/d</span>'
-      +'<span class="mob-col-hide" style="min-width:36px;text-align:right;font-size:10px;color:#888;flex-shrink:0;">'+pct+'</span>'
-      +'<div class="mob-col-hide" style="min-width:48px;flex-shrink:0;">'+sparkHTML(sig.sparkData,sc)+'</div>'
-      +'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;'+pillBg+'">'+sig.signal+'</span>'
-      +'</div>';
-  }).join('');
-
-  const hasHistData=Object.values(validatorHistories||{}).some(h=>Array.isArray(h)&&h.length>0);
-  el.innerHTML = `
-    <div style="margin-bottom:12px;">
-      <div class="sec-hdr" style="margin-bottom:4px;">
-        <span class="sec-title">Validator Rewards</span>
-        <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:10px;${aggBg}">${aggLabel}</span>
-        <button id="usd-toggle-validators" style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:3px;border:1.5px solid ${USD_MODE_VALIDATORS?'#1a7a3a':'#ddd'};background:${USD_MODE_VALIDATORS?'#1a7a3a':'transparent'};color:${USD_MODE_VALIDATORS?'#fff':'#888'};cursor:pointer;margin-left:auto;">${USD_MODE_VALIDATORS?'USD':'TAO'}</button>
-      </div>
-      <div style="font-size:10px;color:#aaa;">${fmtVal(totalDailyTAO, taoPriceUSD, USD_MODE_VALIDATORS)} distributed daily · ${validators.length} validator${validators.length !== 1 ? 's' : ''}</div>
-    </div>
-    ${(()=>{
-      const top3Reward=validators.slice(0,3).reduce((s,v)=>s+parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9,0);
-      const top3Pct=totalDailyTAO>0?(top3Reward/totalDailyTAO*100).toFixed(1):null;
-      const concCls=top3Pct&&parseFloat(top3Pct)>80?'red':top3Pct&&parseFloat(top3Pct)>60?'':'green';
-      return `<div class="stats-grid" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-val">${validators.length}</div><div class="stat-lbl">Validators</div><div class="stat-sub">active permits</div></div>
-        <div class="stat-card"><div class="stat-val">${fmtVal(totalDailyTAO,taoPriceUSD,USD_MODE_VALIDATORS)}</div><div class="stat-lbl">Daily Reward</div><div class="stat-sub">total distributed</div></div>
-        ${top3Pct?`<div class="stat-card" title="Top-3 validators' share of daily rewards. Above 80% = high concentration."><div class="stat-val ${concCls}">${top3Pct}%</div><div class="stat-lbl">Top-3 Share</div><div class="stat-sub">concentration</div></div>`:''}
-        <div class="stat-card"><div class="stat-val" style="color:${holdCount>sellCount?'#1a7a3a':'#c0392b'};">${holdCount} / ${validators.length}</div><div class="stat-lbl">Holding</div><div class="stat-sub">vs distributing</div></div>
-      </div>`;
-    })()}
-    <div style="margin-bottom:14px;">
-      <div class="chart-title" style="margin-bottom:6px;">DAILY ALPHA DISTRIBUTION — SHARE PER VALIDATOR</div>
-      <div style="width:100%;height:40px;line-height:0;font-size:0;margin-bottom:8px;">${flowBarsHTML}</div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#1a7a3a;display:inline-block;"></span>holding</span>
-        <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#c0392b;display:inline-block;"></span>distributing</span>
-        <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#e67e22;display:inline-block;"></span>partial</span>
-        <span style="font-size:9px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:1px;background:#aaa;display:inline-block;"></span>no data</span>
-      </div>
-    </div>
-    <div class="mob-scroll" style="margin-bottom:14px;"><div style="min-width:380px;">
-      <div style="display:flex;gap:6px;padding:4px 0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#bbb;border-bottom:1.5px solid #eee;">
-        <span style="min-width:36px;flex-shrink:0;">UID</span><span style="flex:1;">Hotkey</span>
-        <span style="min-width:74px;text-align:right;flex-shrink:0;">Daily Reward</span>
-        <span class="mob-col-hide" style="min-width:36px;text-align:right;flex-shrink:0;">Share</span>
-        <span class="mob-col-hide" style="min-width:48px;flex-shrink:0;">Trend</span>
-        <span style="min-width:72px;text-align:right;flex-shrink:0;">Signal</span>
-      </div>
-      ${valRows}
-    </div></div>
-    ${hasHistData
-      ? `<div class="chart-box" style="margin-bottom:14px;"><div class="chart-title">VALIDATOR STAKE — ACTUAL VS EXPECTED (6M)</div><div class="chart-wrap chart-wrap-tall"><canvas id="validator-ts-chart"></canvas></div></div><div style="font-size:10px;color:#bbb;margin-bottom:6px;">Dashed line = expected stake if all rewards held.</div>`
-      : '<div style="font-size:11px;color:#bbb;padding:10px 14px;border:1.5px dashed #eee;border-radius:5px;margin-bottom:14px;">Validator stake history not yet loaded — click <strong>Refresh</strong> to populate.</div>'
-    }
-  `;
-
-  {const b=document.getElementById('usd-toggle-validators');if(b)b.addEventListener('click',()=>{USD_MODE_VALIDATORS=!USD_MODE_VALIDATORS;if(STATE)renderValidatorSection(STATE);});}
-  if (hasHistData) {
-    const palette=['#1a7a3a','#2980b9','#e67e22','#8e44ad','#c0392b','#16a085'];
-    const datasets=[];
-    validators.forEach((v,i)=>{
-      const hist=((validatorHistories||{})[v.uid]||[]).slice().sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
-      if(!hist.length) return;
-      const col=palette[i%palette.length];
-      const actualPts=hist.map(h=>({x:h.timestamp.slice(0,10),y:parseFloat(h.balance_as_tao||h.balance||0)/1e9}));
-      const dailyRew=parseFloat(v.daily_validating_alpha_as_tao||v.daily_total_rewards_as_tao||0)/1e9;
-      const startBal=actualPts[0]?actualPts[0].y:0, startTs=new Date(hist[0].timestamp).getTime();
-      const expPts=hist.map(h=>({x:h.timestamp.slice(0,10),y:startBal+dailyRew*(new Date(h.timestamp).getTime()-startTs)/86400000}));
-      datasets.push({label:'UID '+v.uid,data:actualPts,borderColor:col,backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:0.2});
-      datasets.push({label:'Expected (emit rate)',data:expPts,borderColor:col,backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0.15});
-    });
-    const ctx=document.getElementById('validator-ts-chart');
-    if(ctx){
-      if(ctx._chartInst) ctx._chartInst.destroy();
-      if(!datasets.length){ canvasMsg('validator-ts-chart','No stake history data available'); return; }
-      ctx._chartInst=new Chart(ctx,{type:'line',data:{datasets},options:{responsive:true,maintainAspectRatio:false,parsing:{xAxisKey:'x',yAxisKey:'y'},interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Arial',size:9},color:'#888',boxWidth:12,padding:10,filter:i=>!i.text.includes('Expected')}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtVal(c.parsed.y,taoPriceUSD,USD_MODE_VALIDATORS)}}},
-        scales:{x:{type:'category',ticks:{font:{family:'Arial',size:9},color:'#bbb',maxTicksLimit:10},grid:{display:false}},y:{ticks:{font:{family:'Arial',size:9},color:'#bbb',callback:v=>USD_MODE_VALIDATORS&&taoPriceUSD?'$'+(v*taoPriceUSD).toFixed(0):fmtAlpha(v)},grid:{color:'#f5f5f5'},beginAtZero:false}}
-      }});
-    }
-  }
-}
-
 </script>
-<div style="padding:16px 32px;border-top:1.5px solid #eee;font-size:10px;color:#ccc;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-top:24px;">
-  <span>TAO Institute · Pylon Partners · Data: <a href="https://taostats.io" target="_blank" style="color:#aaa;text-decoration:none;font-weight:700;">Taostats</a></span>
-  <span>For institutional research only. Not investment advice. Past performance does not predict future results.</span>
-</div>
 </body>
 </html>
