@@ -1373,7 +1373,7 @@ async function fetchAndRenderMiners(netuid) {
   el.innerHTML = '<p style="color:#999;font-size:11px;padding:8px 0;">Loading miners...</p>';
 
   try {
-    const url = `https://api.taostats.io/api/dtao/neuron/v1?netuid=${netuid}&limit=256`;
+    const url = `https://api.taostats.io/api/neuron/latest/v1?netuid=${netuid}&limit=256`;
     const resp = await fetch(url, { headers: { Authorization: 'tao-8c2e099e-9e07-45c1-9069-727768f8f7a1:3f972bae' } });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const json = await resp.json();
@@ -1381,7 +1381,7 @@ async function fetchAndRenderMiners(netuid) {
     if (!rows.length) { el.innerHTML = '<p style="color:#999;font-size:11px;">No miner data available.</p>'; return; }
 
     // Filter to miners only (is_validator false or trust < 0.5), sort by incentive desc
-    const miners = rows.filter(n => !n.is_validator && !(toF(n.validator_trust) > 0.5));
+    const miners = rows.filter(n => !n.validator_permit);
     const sorted = miners.length ? miners : rows;
     sorted.sort((a, b) => (toF(b.incentive) || 0) - (toF(a.incentive) || 0));
 
@@ -1395,17 +1395,17 @@ async function fetchAndRenderMiners(netuid) {
           <th style="${hdStyle}text-align:left;">UID</th>
           <th style="${hdStyle}text-align:left;">Hotkey</th>
           <th style="${hdStyle}text-align:right;">Incentive</th>
-          <th style="${hdStyle}text-align:right;">Alpha Stake</th>
-          <th style="${hdStyle}text-align:right;">Daily Emission</th>
+          <th style="${hdStyle}text-align:right;">Emission</th>
           <th style="${hdStyle}text-align:right;">Trust</th>
+          <th style="${hdStyle}text-align:right;">Pruning Score</th>
         </tr></thead><tbody>`;
 
     sorted.slice(0, 100).forEach((n, i) => {
       const incentive = (toF(n.incentive) || 0).toFixed(4);
-      const alphaStk  = fmt2(toF(n.alpha_stake)   / 1e9 || 0);
-      const emission  = fmt2(toF(n.daily_emission) / 1e9 || 0);
+      const emission  = fmt2(toF(n.emission) / 1e9 || 0);
       const trust     = (toF(n.trust) || 0).toFixed(4);
-      const hotkey    = n.hotkey || n.hotkey_ss58 || '';
+      const pruning   = toF(n.pruning_score) || 0;
+      const hotkey    = n.hotkey?.ss58 || n.hotkey_ss58 || '';
       const uid       = n.uid ?? n.neuron_uid ?? '';
       const shortKey  = hotkey ? hotkey.slice(0, 8) + '...' + hotkey.slice(-6) : '-';
 
@@ -1414,9 +1414,9 @@ async function fetchAndRenderMiners(netuid) {
         <td style="${colStyle}">${uid}</td>
         <td style="${colStyle}font-family:monospace;font-size:10px;" title="${hotkey}">${shortKey}</td>
         <td style="${colStyle}text-align:right;">${incentive}</td>
-        <td style="${colStyle}text-align:right;">${alphaStk}</td>
         <td style="${colStyle}text-align:right;">${emission}</td>
         <td style="${colStyle}text-align:right;">${trust}</td>
+        <td style="${colStyle}text-align:right;">${pruning}</td>
       </tr>`;
     });
 
