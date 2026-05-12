@@ -1366,6 +1366,7 @@ async function fetchAndRenderValidators(netuid) {
     html += '</tbody></table></div>';
     if (rows.length > 100) html += `<p style="font-size:10px;color:#999;margin-top:6px;">Showing top 100 of ${rows.length} validators.</p>`;
     el.innerHTML = html;
+    makeSortable(el.querySelector('table'));
   } catch (e) {
     el.innerHTML = `<p style="color:#c0392b;font-size:11px;">Failed to load validators: ${e.message}</p>`;
     _lazyFetched['validators_' + netuid] = false;  // allow retry
@@ -1428,6 +1429,7 @@ async function fetchAndRenderMiners(netuid) {
     html += '</tbody></table></div>';
     if (sorted.length > 100) html += `<p style="font-size:10px;color:#999;margin-top:6px;">Showing top 100 of ${sorted.length} miners.</p>`;
     el.innerHTML = html;
+    makeSortable(el.querySelector('table'));
   } catch (e) {
     el.innerHTML = `<p style="color:#c0392b;font-size:11px;">Failed to load miners: ${e.message}</p>`;
     _lazyFetched['miners_' + netuid] = false;  // allow retry
@@ -2894,6 +2896,48 @@ function fmtPrice6(v) {
   if (f < 0.0001) return f.toExponential(3);
   if (f < 1)      return f.toFixed(6);
   return f.toFixed(4);
+}
+
+// ── Sortable tables ──────────────────────────────────────────────────────────
+function makeSortable(tableEl) {
+  if (!tableEl) return;
+  const ths = tableEl.querySelectorAll('thead th');
+  let sortCol = -1, sortAsc = true;
+
+  ths.forEach((th, colIdx) => {
+    th.style.cursor = 'pointer';
+    th.style.userSelect = 'none';
+    th.style.whiteSpace = 'nowrap';
+    const arrow = document.createElement('span');
+    arrow.style.cssText = 'margin-left:4px;opacity:0.35;font-size:9px;';
+    arrow.textContent = '⇅';
+    th.appendChild(arrow);
+
+    th.addEventListener('click', () => {
+      if (sortCol === colIdx) { sortAsc = !sortAsc; }
+      else { sortCol = colIdx; sortAsc = true; }
+
+      // Reset all arrows
+      ths.forEach((t, i) => {
+        const a = t.querySelector('span');
+        if (a) { a.textContent = i === colIdx ? (sortAsc ? '▲' : '▼') : '⇅'; a.style.opacity = i === colIdx ? '0.8' : '0.35'; }
+      });
+
+      const tbody = tableEl.querySelector('tbody');
+      const rows  = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aText = (a.cells[colIdx]?.textContent || '').trim();
+        const bText = (b.cells[colIdx]?.textContent || '').trim();
+        const aNum = parseFloat(aText.replace(/[^0-9.\-]/g, ''));
+        const bNum = parseFloat(bText.replace(/[^0-9.\-]/g, ''));
+        let cmp = (!isNaN(aNum) && !isNaN(bNum))
+          ? aNum - bNum
+          : aText.localeCompare(bText, undefined, { numeric: true });
+        return sortAsc ? cmp : -cmp;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
 }
 
 function fmtTao(v) {
