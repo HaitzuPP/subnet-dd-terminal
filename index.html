@@ -1313,15 +1313,17 @@ async function fetchAndRenderValidators(netuid) {
   el.innerHTML = '<p style="color:#999;font-size:11px;padding:8px 0;">Loading validators...</p>';
 
   try {
-    const url = `https://api.taostats.io/api/dtao/validator/v1?netuid=${netuid}&limit=256`;
+    // /api/dtao/validator/v1 is gone (404) — use the neuron endpoint and filter by validator_permit
+    const url = `https://api.taostats.io/api/neuron/latest/v1?netuid=${netuid}&limit=256`;
     const resp = await fetch(url, { headers: { Authorization: 'tao-8c2e099e-9e07-45c1-9069-727768f8f7a1:3f972bae' } });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const json = await resp.json();
-    const rows = json.data || json.validators || json.results || [];
+    const all  = json.data || json.results || [];
+    const rows = all.filter(n => n.validator_permit);
     if (!rows.length) { el.innerHTML = '<p style="color:#999;font-size:11px;">No validator data available.</p>'; return; }
 
-    // Sort by stake desc
-    rows.sort((a, b) => (toF(b.stake) || 0) - (toF(a.stake) || 0));
+    // Sort by stake_weight desc
+    rows.sort((a, b) => (toF(b.stake_weight) || 0) - (toF(a.stake_weight) || 0));
 
     const colStyle = 'padding:7px 10px;border-bottom:1px solid #f0f0f0;font-size:11px;vertical-align:middle;';
     const hdStyle  = 'padding:7px 10px;font-size:10px;font-weight:700;color:#666;border-bottom:2px solid #eee;text-transform:uppercase;letter-spacing:0.3px;';
@@ -1331,30 +1333,33 @@ async function fetchAndRenderValidators(netuid) {
         <thead><tr>
           <th style="${hdStyle}text-align:left;">#</th>
           <th style="${hdStyle}text-align:left;">UID</th>
+          <th style="${hdStyle}text-align:left;">Name</th>
           <th style="${hdStyle}text-align:left;">Hotkey</th>
-          <th style="${hdStyle}text-align:right;">Stake (TAO)</th>
-          <th style="${hdStyle}text-align:right;">Alpha Stake</th>
+          <th style="${hdStyle}text-align:right;">Stake Weight</th>
           <th style="${hdStyle}text-align:right;">Daily Emission</th>
           <th style="${hdStyle}text-align:right;">Vtrust</th>
+          <th style="${hdStyle}text-align:right;">Dividends</th>
         </tr></thead><tbody>`;
 
     rows.slice(0, 100).forEach((v, i) => {
-      const stakeTAO  = fmt2(toF(v.stake)        / 1e9 || 0);
-      const alphaStk  = fmt2(toF(v.alpha_stake)  / 1e9 || 0);
-      const emission  = fmt2(toF(v.daily_emission)/ 1e9 || 0);
+      const stakeW    = (toF(v.stake_weight) || 0).toFixed(4);
+      const emission  = fmt2(toF(v.emission) / 1e9 || 0);
       const vtrust    = (toF(v.validator_trust) || 0).toFixed(4);
-      const hotkey    = v.hotkey || v.hotkey_ss58 || '';
-      const uid       = v.uid ?? v.neuron_uid ?? '';
+      const dividends = (toF(v.dividends) || 0).toFixed(4);
+      const hotkey    = (v.hotkey && v.hotkey.ss58) ? v.hotkey.ss58 : (v.hotkey || '');
+      const uid       = v.uid ?? '';
+      const name      = v.name || '-';
       const shortKey  = hotkey ? hotkey.slice(0, 8) + '...' + hotkey.slice(-6) : '-';
 
       html += `<tr>
         <td style="${colStyle}color:#999;">${i + 1}</td>
         <td style="${colStyle}">${uid}</td>
+        <td style="${colStyle}">${name}</td>
         <td style="${colStyle}font-family:monospace;font-size:10px;" title="${hotkey}">${shortKey}</td>
-        <td style="${colStyle}text-align:right;">${stakeTAO}</td>
-        <td style="${colStyle}text-align:right;">${alphaStk}</td>
+        <td style="${colStyle}text-align:right;">${stakeW}</td>
         <td style="${colStyle}text-align:right;">${emission}</td>
         <td style="${colStyle}text-align:right;">${vtrust}</td>
+        <td style="${colStyle}text-align:right;">${dividends}</td>
       </tr>`;
     });
 
@@ -3024,3 +3029,4 @@ updateBadge();
 </script>
 </body>
 </html>
+
