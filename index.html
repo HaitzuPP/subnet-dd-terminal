@@ -1343,7 +1343,7 @@ async function fetchAndRenderValidators(netuid) {
 
     rows.slice(0, 100).forEach((v, i) => {
       const stakeW    = (toF(v.stake_weight) || 0).toFixed(4);
-      const emission  = fmt2(toF(v.emission) / 1e9 || 0);
+      const emission  = fmtTao(toF(v.emission) / 1e9 || 0);
       const vtrust    = (toF(v.validator_trust) || 0).toFixed(4);
       const dividends = (toF(v.dividends) || 0).toFixed(4);
       const hotkey    = (v.hotkey && v.hotkey.ss58) ? v.hotkey.ss58 : (v.hotkey || '');
@@ -1407,7 +1407,7 @@ async function fetchAndRenderMiners(netuid) {
 
     sorted.slice(0, 100).forEach((n, i) => {
       const incentive = (toF(n.incentive) || 0).toFixed(4);
-      const emission  = fmt2(toF(n.emission) / 1e9 || 0);
+      const emission  = fmtTao(toF(n.emission) / 1e9 || 0);
       const trust     = (toF(n.trust) || 0).toFixed(4);
       const pruning   = toF(n.pruning_score) || 0;
       const hotkey    = n.hotkey?.ss58 || n.hotkey_ss58 || '';
